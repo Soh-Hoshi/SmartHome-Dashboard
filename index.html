@@ -157,6 +157,24 @@
       animation: cleaner-wobble-spin 8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
       transform-origin: center center;
     }
+
+    /* 音声認識 録音中パルスアニメーション */
+    @keyframes voice-pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.45);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
+        transform: scale(1.06);
+      }
+    }
+    .voice-listening {
+      animation: voice-pulse 1.3s infinite ease-in-out !important;
+      background-color: rgba(244, 63, 94, 0.25) !important;
+      color: #fb7185 !important;
+      border-color: rgba(244, 63, 94, 0.6) !important;
+    }
   </style>
 </head>
 <body class="bg-app-bg text-white min-h-screen w-full flex flex-col antialiased font-sans">
@@ -2403,9 +2421,12 @@
       }
     }
 
-    // 音声認識 (Web Speech API)
+    // =========================================================================
+    // 高速ストリーミング音声認識 (Web Speech API / Google & Apple Engine)
+    // =========================================================================
     let recognition = null;
     let isRecording = false;
+    let finalTranscript = '';
 
     function initSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2413,28 +2434,55 @@
 
       const rec = new SpeechRecognition();
       rec.lang = 'ja-JP';
-      rec.interimResults = false;
+      rec.interimResults = true; // リアルタイムでストリーミング認識
       rec.maxAlternatives = 1;
+      rec.continuous = false;
 
       rec.onstart = () => {
         isRecording = true;
+        finalTranscript = '';
         const micIcon = document.getElementById('voice-mic-icon');
         const micBtn = document.getElementById('btn-voice-command');
-        if (micBtn) micBtn.classList.add('bg-rose-500/20', 'text-rose-400', 'ring-2', 'ring-rose-500/50');
+        const cmdBar = document.getElementById('command-bar-container');
+        const inputEl = document.getElementById('command-search-input');
+
+        if (micBtn) micBtn.classList.add('voice-listening');
         if (micIcon) micIcon.textContent = 'graphic_eq';
-        showAssistantToast('お話しください... 🎤', 'mic', false);
+        if (cmdBar) cmdBar.classList.add('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
+        if (inputEl) inputEl.placeholder = 'お話しください...（例: 電気消して、エアコン24度）';
+
+        showAssistantToast('音声を認識しています... 🎤', 'mic', false);
       };
 
       rec.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
+        let interimTranscript = '';
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          const res = e.results[i];
+          if (res.isFinal) {
+            finalTranscript += res[0].transcript;
+          } else {
+            interimTranscript += res[0].transcript;
+          }
+        }
+
         const inputEl = document.getElementById('command-search-input');
-        if (inputEl) inputEl.value = transcript;
-        submitAssistantCommand(transcript);
+        const displayText = finalTranscript || interimTranscript;
+        if (inputEl && displayText) {
+          inputEl.value = displayText;
+        }
+
+        // 最終結果が確定したら即時実行
+        if (finalTranscript) {
+          stopVoiceRecognition();
+          submitAssistantCommand(finalTranscript);
+        }
       };
 
       rec.onerror = (e) => {
         console.warn('[Speech Recognition Error]', e.error);
-        if (e.error !== 'no-speech') {
+        if (e.error === 'not-allowed') {
+          showAssistantToast('マイクの使用が許可されていません。ブラウザ設定をご確認ください。', 'mic_off', true);
+        } else if (e.error !== 'no-speech') {
           showAssistantToast('音声を認識できませんでした。', 'mic_off', true);
         }
         stopVoiceRecognition();
@@ -2442,6 +2490,10 @@
 
       rec.onend = () => {
         stopVoiceRecognition();
+        // 最終確定テキストがあり未送信なら送信
+        if (finalTranscript && isRecording) {
+          submitAssistantCommand(finalTranscript);
+        }
       };
 
       return rec;
@@ -2462,7 +2514,12 @@
         try {
           recognition.start();
         } catch (err) {
-          recognition.stop();
+          try {
+            recognition.abort();
+            setTimeout(() => recognition.start(), 150);
+          } catch (e2) {
+            stopVoiceRecognition();
+          }
         }
       }
     }
@@ -2471,8 +2528,13 @@
       isRecording = false;
       const micIcon = document.getElementById('voice-mic-icon');
       const micBtn = document.getElementById('btn-voice-command');
-      if (micBtn) micBtn.classList.remove('bg-rose-500/20', 'text-rose-400', 'ring-2', 'ring-rose-500/50');
+      const cmdBar = document.getElementById('command-bar-container');
+      const inputEl = document.getElementById('command-search-input');
+
+      if (micBtn) micBtn.classList.remove('voice-listening');
       if (micIcon) micIcon.textContent = 'mic';
+      if (cmdBar) cmdBar.classList.remove('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
+      if (inputEl) inputEl.placeholder = '家電を操作... またはコマンドを入力';
     }
 
     window.addEventListener('DOMContentLoaded', () => {
