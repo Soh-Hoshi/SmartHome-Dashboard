@@ -181,7 +181,7 @@ def cmd_cleaner(args):
     if speed: payload['speed'] = speed
 
     res = send_api_request('/api/cleaner', payload)
-    print(f"🤖 ロボット掃除機: {res.get('message', res.get('status'))}")
+    print(f"🤖 クリーナー: {res.get('message', res.get('status'))}")
     return True
 
 def cmd_status():
@@ -193,7 +193,7 @@ def cmd_status():
             print(f"💡 ライト:       {'ON (' + ('全灯' if state.get('lightFull') else ('常夜灯' if state.get('lightNight') else '点灯')) + ')' if state.get('lightOn') else 'OFF'}")
             print(f"❄️  エアコン:     {state.get('acMode', 'off').upper()} / {state.get('acTemp', 26)}℃ / 風量:{state.get('acFan', 'auto')}")
             print(f"🔥 ヒーター:     {state.get('heaterMode', 'off').upper()} / {state.get('heaterTemp', 24)}℃ / ECO:{state.get('heaterEco', False)}")
-            print(f"🤖 掃除機:       {state.get('cleanerStatus', 'standby').upper()}")
+            print(f"🤖 クリーナー:   {state.get('cleanerStatus', 'standby').upper()}")
             return
         except Exception:
             pass

@@ -40,11 +40,11 @@ def format_standard_message(device, action, params=None):
         return f"🔥 ヒーターを暖房{temp}℃に設定しました。"
     
     elif device == 'cleaner':
-        if action in ('start', 'run', 'clean', 'play'): return "🤖 ロボット掃除機のお掃除を開始しました。"
-        if action in ('pause', 'stop'): return "🤖 ロボット掃除機を一時停止しました。"
-        if action in ('home', 'dock', 'return'): return "🤖 ロボット掃除機を充電ドックへ戻します。"
-        if action in ('find', 'find_me', 'beep'): return "🤖 ロボット掃除機の位置探索アラームを鳴らします。"
-        return "🤖 ロボット掃除機を設定しました。"
+        if action in ('start', 'run', 'clean', 'play'): return "🤖 クリーナーのお掃除を開始しました。"
+        if action in ('pause', 'stop'): return "🤖 クリーナーを一時停止しました。"
+        if action in ('home', 'dock', 'return'): return "🤖 クリーナーを充電ドックへ戻します。"
+        if action in ('find', 'find_me', 'beep'): return "🤖 クリーナーの位置探索アラームを鳴らします。"
+        return "🤖 クリーナーを設定しました。"
     
     elif device == 'scene':
         if action == 'all_off': return "🌙 おやすみなさい。ライトと空調をすべてオフにしました。"
@@ -119,7 +119,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
                 cleaner_map = {'running': '掃除中', 'charging': '充電中', 'recharge': '充電に戻り中', 'standby': '待機中', 'completed': '掃除完了'}
                 cleaner_desc = cleaner_map.get(cleaner_st, cleaner_st)
 
-                msg = f"現在の状態：ライトは{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、掃除機は{cleaner_desc}です。"
+                msg = f"現在の状態：ライトは{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}です。"
                 return {"success": True, "message": msg, "action": "status"}
             except Exception:
                 pass
