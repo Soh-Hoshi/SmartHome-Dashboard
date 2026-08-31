@@ -102,6 +102,13 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     # 全角英数→半角正規化、小文字化、前後の空白除去
     text = unicodedata.normalize('NFKC', prompt).strip().lower()
 
+    # 「Nova」「ノバ」「のば」単体で呼ばれた場合
+    if text in ('nova', 'ノバ', 'のば', 'nova!', 'nova?'):
+        return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
+
+    # 先頭の「Nova、」「ノバ 」などの呼びかけを除去
+    text = re.sub(r'^(nova|ノバ|のば)[、,\s]*', '', text).strip()
+
     # =============================================================
     # 第1段階：ミリ秒レベルの超高速ルールベース（日常の98%を即答）
     # =============================================================
