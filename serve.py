@@ -83,6 +83,7 @@ import eufy_client
 import presence_service
 import tile_service
 import automation_service
+import weather_service
 import assistant_engine
 
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')

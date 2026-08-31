@@ -293,13 +293,10 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = f"現在の状況は{status_str}です。（最終検知: {p['last_seen_str']}）"
         return {"success": True, "message": msg, "action": "presence_status"}
 
-    # 4. 鍵（Tile）置き忘れ・所在確認 (Key Tracker)
+    # 4. 鍵（Tile）置き忘れ・所在確認 (Key Tracker: あるかないかだけ即答)
     if any(k in text for k in ['鍵', 'カギ', 'かぎ', 'キー', 'tile', 'ポスト', 'ぽすと']):
         t = tile_service.get_tile_status()
-        if t["in_home"]:
-            msg = f"⚠️ 鍵が室内に検知されています！締め出し防止のためポストへ戻してください。（最終検知: {t['last_seen_str']}、電波強度: {t['rssi']}dBm）"
-        else:
-            msg = f"鍵は室内に検知されていません。ポストに保管されています。（最終確認: {t['last_seen_str']}）"
+        msg = "あります" if t["in_home"] else "ありません"
         return {"success": True, "message": msg, "action": "tile_key_status"}
 
     # 4. スマートシーン一括操作 (優先度高)
