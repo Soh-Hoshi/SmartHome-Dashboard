@@ -3000,10 +3000,10 @@
 
       // クリーナーの定期状態同期 (10秒ごと)
       setInterval(syncCleanerStatus, 10000);
-      // 在宅センサーの定期同期 (10秒ごと)
-      setInterval(fetchPresenceData, 10000);
-      // 鍵（Tile）センサーの定期同期 (10秒ごと)
-      setInterval(fetchTileData, 10000);
+      // 在宅センサーの定期同期 (2秒ごと・リアルタイム帰宅/外出反映)
+      setInterval(fetchPresenceData, 2000);
+      // 鍵（Tile）センサーの定期同期 (5秒ごと)
+      setInterval(fetchTileData, 5000);
       // 天気・気象データの定期同期 (10分ごと)
       setInterval(fetchWeatherData, 600000);
 
