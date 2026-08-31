@@ -1517,7 +1517,7 @@
                 onclick="runSceneFromSheet()"
                 class="w-full py-3.5 rounded-2xl bg-[#253546] hover:bg-[#2e4156] text-[#2196f3] font-bold text-sm flex items-center justify-center space-x-2 transition-all active:scale-[0.98] border border-[#2196f3]/20 shadow-lg">
           <span class="material-symbols-rounded text-xl">play_arrow</span>
-          <span id="sheet-scene-run-btn-text">このシーンを実行</span>
+          <span id="sheet-scene-run-btn-text">実行</span>
         </button>
       </div>
 
@@ -3220,23 +3220,23 @@
       const btnText = document.getElementById('sheet-scene-run-btn-text');
 
       if (titleEl) titleEl.textContent = flow.title;
-      if (btnText) btnText.textContent = `「${flow.title}」を実行`;
+      if (btnText) btnText.textContent = '実行';
 
       if (container) {
         container.innerHTML = flow.steps.map((step, idx) => {
           const isLast = idx === flow.steps.length - 1;
           return `
-            <div class="relative flex items-center space-x-3.5">
-              <!-- 左側: アイコン (完全縦中央) -->
-              <div class="relative z-10 w-11 h-11 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-                <span class="material-symbols-rounded text-xl">${step.icon}</span>
+            <div class="flex items-stretch space-x-3.5">
+              <!-- 左側: アイコン列 ＆ 縦線 (幅44px / 中央揃えで絶対にズレない) -->
+              <div class="flex flex-col items-center w-11 shrink-0">
+                <div class="w-11 h-11 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
+                  <span class="material-symbols-rounded text-xl">${step.icon}</span>
+                </div>
+                ${!isLast ? '<div class="w-[2px] flex-1 bg-white/[0.12] my-1 rounded-full min-h-[14px]"></div>' : ''}
               </div>
 
-              <!-- 次のステップへのコネクタ線 (背景配置でレイアウトに影響なし) -->
-              ${!isLast ? '<div class="absolute left-[21px] top-[44px] bottom-[-10px] w-0.5 bg-white/[0.08] z-0"></div>' : ''}
-
-              <!-- 右側: アクションカード (完全縦中央) -->
-              <div class="relative z-10 flex-1 bg-[#2a2d36] rounded-2xl px-4 py-3.5 border border-white/[0.03] flex items-center justify-between shadow-sm min-w-0">
+              <!-- 右側: アクションカード -->
+              <div class="flex-1 bg-[#2a2d36] rounded-2xl px-4 py-3.5 border border-white/[0.03] flex items-center justify-between shadow-sm min-w-0 ${!isLast ? 'mb-2' : ''}">
                 <div class="text-[15px] font-semibold text-white truncate">
                   「${step.target}」を ${step.action}
                 </div>
