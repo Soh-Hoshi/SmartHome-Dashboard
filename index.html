@@ -407,41 +407,7 @@
           <h2 class="text-base font-bold text-white px-1">センサー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- 鍵（Tile）置き忘れセンサータイル (タップで詳細シートへ) -->
-            <div onclick="openSheet('tile-sheet')" 
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-              
-              <!-- 鍵アイコン (室内検知時: アンバー警告 / ポスト時: グリーン/グレー) -->
-              <div id="tile-key-icon-wrap" 
-                   class="w-11 h-11 rounded-full bg-[#3d2d1d] text-amber-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
-                <span id="tile-key-icon" class="material-symbols-rounded text-2xl">vpn_key_alert</span>
-              </div>
-
-              <!-- テキスト -->
-              <div class="flex-1 min-w-0">
-                <div class="text-[15px] font-semibold text-white leading-tight">鍵（ポスト）</div>
-                <div id="tile-key-status" class="text-xs text-amber-400 font-normal mt-0.5 truncate transition-colors">室内で検知（注意）</div>
-              </div>
-            </div>
-
-            <!-- 在宅状況タイル (タップで詳細シートへ) -->
-            <div onclick="openSheet('presence-sheet')" 
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-              
-              <!-- 在宅アイコン (在宅: 緑系 / 外出: グレー) -->
-              <div id="tile-presence-icon-wrap" 
-                   class="w-11 h-11 rounded-full bg-[#1b332b] text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
-                <span id="tile-presence-icon" class="material-symbols-rounded text-2xl">home_pin</span>
-              </div>
-
-              <!-- テキスト -->
-              <div class="flex-1 min-w-0">
-                <div class="text-[15px] font-semibold text-white leading-tight">在宅</div>
-                <div id="tile-presence-status" class="text-xs text-emerald-400 font-normal mt-0.5 truncate transition-colors">在宅中</div>
-              </div>
-            </div>
-
-            <!-- 気象タイル (タップで詳細シートへ) -->
+            <!-- 1. 気象タイル (タップで詳細シートへ) -->
             <div onclick="openSheet('weather-sheet')" 
                  class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
               
@@ -455,6 +421,39 @@
               <div class="flex-1 min-w-0">
                 <div class="text-[15px] font-semibold text-white leading-tight">気象</div>
                 <div id="tile-weather-status" class="text-xs text-neutral-400 font-normal mt-0.5 truncate transition-colors">-- / --.-℃</div>
+              </div>
+            </div>
+
+            <!-- 2. 在宅センサータイル (タイトルが在宅/不在で切り替え、サブテキストなし) -->
+            <div onclick="openSheet('presence-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              
+              <!-- 在宅アイコン (在宅: 緑系 / 不在: グレー) -->
+              <div id="tile-presence-icon-wrap" 
+                   class="w-11 h-11 rounded-full bg-[#1b332b] text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
+                <span id="tile-presence-icon" class="material-symbols-rounded text-2xl">home_pin</span>
+              </div>
+
+              <!-- テキスト (タイトルのみ) -->
+              <div class="flex-1 min-w-0">
+                <div id="tile-presence-title" class="text-[15px] font-semibold text-white leading-tight">在宅</div>
+              </div>
+            </div>
+
+            <!-- 3. 鍵（Tile）センサータイル (タイトル鍵、サブテキスト検知/検知なし) -->
+            <div onclick="openSheet('tile-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              
+              <!-- 鍵アイコン (室内検知時: アンバー / 検知なし時: グレー) -->
+              <div id="tile-key-icon-wrap" 
+                   class="w-11 h-11 rounded-full bg-[#3d2d1d] text-amber-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
+                <span id="tile-key-icon" class="material-symbols-rounded text-2xl">vpn_key_alert</span>
+              </div>
+
+              <!-- テキスト -->
+              <div class="flex-1 min-w-0">
+                <div class="text-[15px] font-semibold text-white leading-tight">鍵</div>
+                <div id="tile-key-status" class="text-xs text-neutral-400 font-normal mt-0.5 truncate transition-colors">検知</div>
               </div>
             </div>
           </div>
@@ -2901,14 +2900,11 @@
           const p = data.presence;
           const isHome = p.is_home;
 
-          // 1. ダッシュボードの在宅タイル更新
-          const tileStatus = document.getElementById('tile-presence-status');
+          // 1. ダッシュボードの在宅タイル更新 (タイトルを在宅/不在で切り替え、サブテキストなし)
+          const tileTitle = document.getElementById('tile-presence-title');
           const tileIconWrap = document.getElementById('tile-presence-icon-wrap');
-          if (tileStatus) {
-            tileStatus.textContent = isHome ? '在宅中' : '外出中';
-            tileStatus.className = isHome 
-              ? "text-xs text-emerald-400 font-normal mt-0.5 truncate transition-colors"
-              : "text-xs text-neutral-400 font-normal mt-0.5 truncate transition-colors";
+          if (tileTitle) {
+            tileTitle.textContent = isHome ? '在宅' : '不在';
           }
           if (tileIconWrap) {
             tileIconWrap.className = isHome
@@ -2955,21 +2951,19 @@
           const t = data.tile;
           const inHome = t.in_home;
 
-          // 1. ダッシュボードの鍵タイル更新
+          // 1. ダッシュボードの鍵タイル更新 (サブテキストは検知/検知なし・色付けなしの通常色)
           const tileStatus = document.getElementById('tile-key-status');
           const tileIconWrap = document.getElementById('tile-key-icon-wrap');
           const tileIcon = document.getElementById('tile-key-icon');
 
           if (tileStatus) {
-            tileStatus.textContent = inHome ? '室内で検知（注意）' : 'ポスト保管中';
-            tileStatus.className = inHome 
-              ? "text-xs text-amber-400 font-normal mt-0.5 truncate transition-colors font-medium"
-              : "text-xs text-emerald-400 font-normal mt-0.5 truncate transition-colors";
+            tileStatus.textContent = inHome ? '検知' : '検知なし';
+            tileStatus.className = "text-xs text-neutral-400 font-normal mt-0.5 truncate transition-colors";
           }
           if (tileIconWrap) {
             tileIconWrap.className = inHome
               ? "w-11 h-11 rounded-full bg-[#3d2d1d] text-amber-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0"
-              : "w-11 h-11 rounded-full bg-[#1b332b] text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0";
+              : "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0";
           }
           if (tileIcon) {
             tileIcon.textContent = inHome ? 'vpn_key_alert' : 'key';
@@ -2997,7 +2991,7 @@
           if (sheetIconWrap) {
             sheetIconWrap.className = inHome
               ? "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 shadow-inner"
-              : "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-inner";
+              : "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-neutral-400 mb-3 shadow-inner";
           }
           if (sheetIcon) {
             sheetIcon.textContent = inHome ? 'vpn_key_alert' : 'key';
