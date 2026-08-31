@@ -503,9 +503,9 @@
         <div></div>
       </div>
 
-      <!-- 中央: 蹄型 (Horseshoe) 温度ゲージ & 純白ノブ -->
-      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative py-2">
-        <div class="relative w-72 h-72 sm:w-80 sm:h-80 max-w-[min(20rem,42vh)] max-h-[min(20rem,42vh)] flex items-center justify-center" id="ac-gauge-container">
+      <!-- 中央: 蹄型 (Horseshoe) 温度ゲージ & 純白ノブ (画面サイズ非依存・完全固定グループ) -->
+      <div class="flex-1 flex flex-col items-center justify-center my-auto relative py-2 shrink-0">
+        <div class="relative w-72 h-72 flex items-center justify-center shrink-0" id="ac-gauge-container">
           
           <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) -->
           <svg id="ac-gauge-svg" class="w-full h-full cursor-pointer touch-none" viewBox="0 0 280 280">
@@ -543,7 +543,7 @@
           <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none pb-4">
             <span id="detail-ac-mode-text" class="text-sm font-medium text-neutral-300 mb-1 tracking-wide">冷房</span>
             <div id="detail-ac-temp-wrap" class="flex items-start justify-center">
-              <span id="detail-ac-temp" class="text-5xl sm:text-6xl font-bold tracking-tight text-white leading-none font-num">26</span>
+              <span id="detail-ac-temp" class="text-5xl font-bold tracking-tight text-white leading-none font-num">26</span>
               <span id="detail-ac-temp-unit" class="text-2xl font-bold text-neutral-300 ml-1 mt-0.5 font-num">℃</span>
             </div>
           </div>
@@ -551,13 +551,13 @@
           <!-- 温度調節ボタン (ー / ＋) -->
           <div class="absolute bottom-1 inset-x-0 flex items-center justify-center space-x-7 z-10">
             <button onclick="changeAcTemp(-1)" 
-                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95 shrink-0"
                     aria-label="温度を下げる">
               <span class="material-symbols-rounded text-2xl font-bold">remove</span>
             </button>
 
             <button onclick="changeAcTemp(1)" 
-                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95 shrink-0"
                     aria-label="温度を上げる">
               <span class="material-symbols-rounded text-2xl font-bold">add</span>
             </button>
@@ -713,17 +713,17 @@
         <div></div>
       </div>
 
-      <!-- 中央: オン/オフ表示 ＆ 縦型スイッチスライダー (オフ=○, オン=電源マーク) -->
-      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto py-2">
-        <div id="detail-light-title" class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4 sm:mb-7 transition-all duration-300">オフ</div>
+      <!-- 中央: オン/オフ表示 ＆ 縦型スイッチスライダー (画面サイズ非依存・完全固定グループ) -->
+      <div class="flex-1 flex flex-col items-center justify-center my-auto py-2 shrink-0">
+        <div id="detail-light-title" class="text-3xl font-bold tracking-tight text-white mb-5 transition-all duration-300">オフ</div>
         
         <div id="light-slider-container"
              onclick="toggleLightDetail()" 
-             class="slider-track relative w-32 sm:w-36 h-[260px] sm:h-[300px] max-h-[38vh] bg-[#282b32] rounded-[36px] sm:rounded-[40px] overflow-hidden p-2 cursor-pointer shadow-inner">
+             class="slider-track relative w-32 h-[260px] bg-[#282b32] rounded-[36px] overflow-hidden p-2 cursor-pointer shadow-inner shrink-0">
           
           <div id="light-detail-block" 
                style="transform: translateY(0);"
-               class="slider-thumb absolute inset-x-2 bottom-2 h-[136px] rounded-[30px] sm:rounded-[32px] bg-[#434752] flex items-center justify-center text-white shadow-md">
+               class="slider-thumb absolute inset-x-2 bottom-2 h-[122px] rounded-[28px] bg-[#434752] flex items-center justify-center text-white shadow-md">
             
             <div id="light-detail-icon-wrap" class="transition-transform duration-300 flex items-center justify-center">
               <div class="w-7 h-7 rounded-full border-2 border-neutral-300"></div>
@@ -815,9 +815,9 @@
         <div></div>
       </div>
 
-      <!-- 中央: 蹄型 (Horseshoe) 温度ゲージ (ノブなし) ＆ 温度調節ボタン -->
-      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative py-2">
-        <div class="relative w-72 h-72 sm:w-80 sm:h-80 max-w-[min(20rem,42vh)] max-h-[min(20rem,42vh)] flex items-center justify-center" id="heater-gauge-container">
+      <!-- 中央: 蹄型 (Horseshoe) 温度ゲージ (ノブなし) ＆ 温度調節ボタン (画面サイズ非依存・完全固定グループ) -->
+      <div class="flex-1 flex flex-col items-center justify-center my-auto relative py-2 shrink-0">
+        <div class="relative w-72 h-72 flex items-center justify-center shrink-0" id="heater-gauge-container">
           
           <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) ※ノブなし・タップ判定なし -->
           <svg id="heater-gauge-svg" class="w-full h-full select-none pointer-events-none" viewBox="0 0 280 280">
@@ -844,7 +844,7 @@
           <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none pb-4">
             <span id="detail-heater-mode-text" class="text-sm font-medium text-neutral-300 mb-1 tracking-wide">暖房</span>
             <div id="detail-heater-temp-wrap" class="flex items-start justify-center">
-              <span id="detail-heater-temp" class="text-5xl sm:text-6xl font-bold tracking-tight text-white leading-none font-num">22</span>
+              <span id="detail-heater-temp" class="text-5xl font-bold tracking-tight text-white leading-none font-num">22</span>
               <span id="detail-heater-temp-unit" class="text-2xl font-bold text-neutral-300 ml-1 mt-0.5 font-num">℃</span>
             </div>
           </div>
@@ -852,13 +852,13 @@
           <!-- 温度調節ボタン (ー / ＋) -->
           <div class="absolute bottom-1 inset-x-0 flex items-center justify-center space-x-7 z-10">
             <button onclick="changeHeaterTemp(-1)" 
-                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95 shrink-0"
                     aria-label="温度を下げる">
               <span class="material-symbols-rounded text-2xl font-bold">remove</span>
             </button>
 
             <button onclick="changeHeaterTemp(1)" 
-                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95 shrink-0"
                     aria-label="温度を上げる">
               <span class="material-symbols-rounded text-2xl font-bold">add</span>
             </button>
@@ -956,15 +956,15 @@
         <div></div>
       </div>
 
-      <!-- 中央: ロボット掃除機ステータスビジュアル (大円 ＆ バッテリー ＆ メトリクス) -->
-      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative space-y-4 sm:space-y-6 py-2">
+      <!-- 中央: ロボット掃除機ステータスビジュアル (画面サイズ非依存・完全固定グループ) -->
+      <div class="flex-1 flex flex-col items-center justify-center my-auto relative space-y-4 py-2 shrink-0">
         
-        <!-- 円形ステータスカード (背景色は常に一定) -->
-        <div class="relative w-52 h-52 sm:w-64 sm:h-64 max-w-[min(16rem,34vh)] max-h-[min(16rem,34vh)] rounded-full bg-[#262932] border border-white/[0.06] flex flex-col items-center justify-center shadow-2xl overflow-hidden group">
+        <!-- 円形ステータスカード (固定192px) -->
+        <div class="relative w-48 h-48 rounded-full bg-[#242730] border border-white/[0.05] flex flex-col items-center justify-center shadow-xl overflow-hidden shrink-0">
 
-          <!-- ロボット掃除機アイコン (外枠なし、クリーン表示) -->
+          <!-- ロボット掃除機アイコン -->
           <div id="detail-cleaner-hero-icon" class="relative z-10 text-neutral-400 transition-colors duration-300">
-            <svg class="w-14 h-14 sm:w-16 sm:h-16" viewBox="0 0 24 24" fill="currentColor">
+            <svg class="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.2A8.2 8.2 0 1 1 20.2 12 8.21 8.21 0 0 1 12 20.2z"/>
               <path d="M4.8 9.2a8 8 0 0 1 14.4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
               <circle cx="12" cy="6.2" r="1.4"/>
@@ -974,31 +974,31 @@
           </div>
 
           <!-- 中央ステータステキスト ＆ バッテリー残量 -->
-          <div class="relative z-10 mt-2 sm:mt-3 text-center space-y-0.5 sm:space-y-1">
-            <div id="detail-cleaner-main-status" class="text-2xl sm:text-3xl font-bold text-white tracking-wide">充電中</div>
+          <div class="relative z-10 mt-2 text-center space-y-0.5">
+            <div id="detail-cleaner-main-status" class="text-2xl font-bold text-white tracking-wide">充電中</div>
             <div class="flex items-center justify-center space-x-1.5 text-sm font-semibold text-neutral-300 font-num pt-0.5">
-              <span id="detail-cleaner-battery-icon" class="material-symbols-rounded text-base text-sky-400">battery_charging_full</span>
+              <span id="detail-cleaner-battery-icon" class="material-symbols-rounded text-base text-[#2196f3]">battery_charging_full</span>
               <span id="detail-cleaner-battery-text">66%</span>
             </div>
           </div>
         </div>
 
-        <!-- 3つの情報チップス (時間、面積、モップ) - コンパクト表示 -->
-        <div class="grid grid-cols-3 gap-2.5 w-full max-w-xs">
+        <!-- 3つの情報チップス (時間、面積、モップ) - 固定幅グループ -->
+        <div class="grid grid-cols-3 gap-2.5 w-72 shrink-0">
           <!-- 清掃時間 -->
-          <div class="bg-[#22252c]/90 border border-white/[0.03] rounded-xl py-2 px-2 text-center shadow-sm">
+          <div class="bg-[#242730]/90 border border-white/[0.04] rounded-2xl py-2 px-2 text-center shadow-sm">
             <div class="text-[10px] text-neutral-400 font-normal">清掃時間</div>
             <div id="detail-cleaner-stat-time" class="text-sm font-bold text-neutral-200 font-num mt-0.5">--<span class="text-[11px] font-normal text-neutral-400 ml-0.5">分</span></div>
           </div>
 
           <!-- 清掃面積 -->
-          <div class="bg-[#22252c]/90 border border-white/[0.03] rounded-xl py-2 px-2 text-center shadow-sm">
+          <div class="bg-[#242730]/90 border border-white/[0.04] rounded-2xl py-2 px-2 text-center shadow-sm">
             <div class="text-[10px] text-neutral-400 font-normal">清掃面積</div>
             <div id="detail-cleaner-stat-area" class="text-sm font-bold text-neutral-200 font-num mt-0.5">--<span class="text-[11px] font-normal text-neutral-400 ml-0.5">㎡</span></div>
           </div>
 
           <!-- モップ状態 -->
-          <div class="bg-[#22252c]/90 border border-white/[0.03] rounded-xl py-2 px-2 text-center shadow-sm">
+          <div class="bg-[#242730]/90 border border-white/[0.04] rounded-2xl py-2 px-2 text-center shadow-sm">
             <div class="text-[10px] text-neutral-400 font-normal">モップ</div>
             <div id="detail-cleaner-stat-mop" class="text-sm font-bold text-neutral-300 mt-0.5">未装着</div>
           </div>
@@ -1917,9 +1917,9 @@
         if (titleEl) titleEl.textContent = 'オン';
         if (containerEl) containerEl.style.backgroundColor = '#443717';
         if (blockEl) {
-          blockEl.style.transform = 'translateY(-148px)';
+          blockEl.style.transform = 'translateY(-122px)';
           blockEl.style.backgroundColor = '#fbc02d';
-          blockEl.style.boxShadow = '0 10px 25px -5px rgba(251, 192, 45, 0.4)';
+          blockEl.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.35)';
         }
         
         if (iconWrap) iconWrap.innerHTML = `<span class="material-symbols-rounded text-3xl text-white">power_settings_new</span>`;
