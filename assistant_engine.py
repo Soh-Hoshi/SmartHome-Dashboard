@@ -67,12 +67,13 @@ def format_standard_message(device, action, params=None):
         if action == 'welcome':
             light_note = "日没後のためライトを点灯し、" if params.get('light') else ""
             hvac = params.get('hvac')
+            feels_like = params.get('feels_like')
             if hvac == 'ac':
-                hvac_note = f"外気温が{params.get('out_temp')}℃のためエアコンを冷房{params.get('temp', 26)}℃で起動しました。"
+                hvac_note = f"体感温度が{feels_like}℃のためエアコンを冷房{params.get('temp', 26)}℃で起動しました。"
             elif hvac == 'heater':
-                hvac_note = f"外気温が{params.get('out_temp')}℃で肌寒いためヒーターをオンにしました。"
+                hvac_note = f"体感温度が{feels_like}℃で肌寒いためヒーターをオンにしました。"
             else:
-                hvac_note = f"外気温が{params.get('out_temp')}℃で快適なため空調はオフのままにしました。"
+                hvac_note = f"体感温度が{feels_like}℃で快適なため空調はオフのままにしました。"
             return f"おかえりなさい。{light_note}{hvac_note}"
     
     return "操作を完了しました。"
@@ -115,24 +116,24 @@ def query_local_llm(prompt_text):
 
 def execute_smart_welcome(send_api_fn=None):
     """
-    川崎市中原区木月のリアルタイム日没・日照 ＆ 外気温データに基づくスマート帰宅シーン
+    川崎市中原区木月のリアルタイム日没・日照 ＆ 体感温度データに基づくスマート帰宅シーン
     """
     wdata = weather_service.get_weather_data()
-    out_temp = wdata.get('temp', 24.0)
+    feels_like = wdata.get('feels_like', wdata.get('temp', 24.0))
     is_night = not wdata.get('is_day', True)
 
     # 1. 日没判定 (暗ければライトON、昼間なら操作なし)
     if is_night and send_api_fn:
         send_api_fn('/api/light', {'action': 'on'})
 
-    # 2. 外気温判定 (24℃以上はエアコン冷房26℃、19℃以下はヒーターON)
-    if out_temp >= 24.0:
+    # 2. 体感温度判定 (24.0℃以上はエアコン冷房26℃、19.0℃以下はヒーターON)
+    if feels_like >= 24.0:
         hvac_type = 'ac'
         temp = 26
         if send_api_fn:
             send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
             send_api_fn('/api/heater', {'action': 'off'})
-    elif out_temp <= 19.0:
+    elif feels_like <= 19.0:
         hvac_type = 'heater'
         temp = None
         if send_api_fn:
@@ -149,7 +150,7 @@ def execute_smart_welcome(send_api_fn=None):
         'light': is_night,
         'hvac': hvac_type,
         'temp': temp,
-        'out_temp': out_temp
+        'feels_like': feels_like
     })
     return {
         "success": True,
