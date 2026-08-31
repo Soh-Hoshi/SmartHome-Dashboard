@@ -77,6 +77,15 @@
       font-feature-settings: "tnum" 1;
     }
 
+    /* スクロールバー完全非表示 (ネイティブアプリ風の洗練されたスワイプ操作) */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     /* ボトムシート & モーダル トランジション（下へスッとスライドダウンして閉じる） */
     .sheet-backdrop {
       transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.3s;
@@ -1193,7 +1202,7 @@
           </button>
           <h2 class="text-xl font-bold text-white tracking-tight">気象情報</h2>
         </div>
-        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300">中原区木月</span>
+        <div></div>
       </div>
 
       <!-- 中央メインヒーロー: 現在の天気・気温 -->
@@ -1211,10 +1220,10 @@
         </div>
       </div>
 
-      <!-- 1日の時間帯別予報 (横スクロール) -->
+      <!-- 1日の時間帯別予報 (横スクロール: スクロールバー完全非表示でネイティブアプリ風) -->
       <div class="shrink-0 space-y-1.5 py-1">
         <div class="text-xs font-bold text-neutral-400 px-1">今日の時間別予報</div>
-        <div id="sheet-weather-hourly" class="flex space-x-2 overflow-x-auto pb-1.5 scrollbar-thin">
+        <div id="sheet-weather-hourly" class="flex space-x-2 overflow-x-auto pb-1 no-scrollbar select-none">
           <!-- JSで動的生成 -->
         </div>
       </div>
@@ -2725,6 +2734,17 @@
             submitAssistantCommand(cmdInput.value);
           }
         });
+      }
+
+      // 時間別予報の横ホイールスクロール連動
+      const hourlyBox = document.getElementById('sheet-weather-hourly');
+      if (hourlyBox) {
+        hourlyBox.addEventListener('wheel', (e) => {
+          if (e.deltaY !== 0) {
+            e.preventDefault();
+            hourlyBox.scrollLeft += e.deltaY;
+          }
+        }, { passive: false });
       }
 
       // 音声認識中にNovaのバー以外をタップ/クリックしたら録音を即座に終了する
