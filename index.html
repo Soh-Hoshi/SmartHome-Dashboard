@@ -221,8 +221,8 @@
       </nav>
     </aside>
 
-    <!-- メインコンテンツ表示エリア (下部フローティング入力バー用の余白 pb-36 sm:pb-28) -->
-    <div class="flex-1 min-w-0 pt-6 pb-36 sm:pb-28 flex flex-col">
+    <!-- メインコンテンツ表示エリア (スマホ: 上部ヘッダー用 pt-20 / 下部ボトムナビ用 pb-28) -->
+    <div class="flex-1 min-w-0 pt-20 md:pt-6 pb-28 flex flex-col">
       
       <!-- ======================================================================= -->
       <!-- タブ1：メインダッシュボード                                             -->
@@ -457,89 +457,90 @@
   </div>
 
   <!-- ======================================================================= -->
-  <!-- 画面下部：固定フッター統合コンテナ (Novaバー ＆ モバイルボトムナビ)           -->
+  <!-- Nova プロンプトバー (スマホ: 画面最上部固定ヘッダー / PC: 画面最下部フローティング) -->
   <!-- ======================================================================= -->
-  <div class="fixed bottom-0 inset-x-0 z-40 flex flex-col items-center pointer-events-none pb-[max(0.25rem,env(safe-area-inset-bottom))] md:pb-6">
+  <div class="fixed top-0 md:top-auto md:bottom-6 inset-x-0 z-40 flex flex-col items-center pointer-events-none pt-[max(0.5rem,env(safe-area-inset-top))] md:pt-0 pb-2 md:pb-0 px-3 sm:px-6 bg-[#121316]/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-white/[0.04] md:border-b-0">
     
-    <!-- アシスタント応答トースト吹き出し (実行結果フィードバック) -->
+    <!-- アシスタント応答トースト吹き出し (スマホはバー直下、PCはバー直上に表示) -->
     <div id="assistant-toast" 
-         class="pointer-events-auto mb-2 opacity-0 translate-y-2 transition-all duration-300 max-w-xl bg-[#1e222a]/95 backdrop-blur-xl border border-white/[0.1] text-white text-sm px-4 py-2.5 rounded-2xl shadow-2xl flex items-center space-x-2.5 select-none hidden">
+         class="pointer-events-auto order-last md:order-first mt-2 md:mt-0 md:mb-2 opacity-0 translate-y-2 transition-all duration-300 max-w-xl bg-[#1e222a]/95 backdrop-blur-xl border border-white/[0.1] text-white text-sm px-4 py-2.5 rounded-2xl shadow-2xl flex items-center space-x-2.5 select-none hidden">
       <span id="assistant-toast-icon" class="material-symbols-rounded text-lg text-[#2196f3]">auto_awesome</span>
       <span id="assistant-toast-text" class="font-medium tracking-wide"></span>
     </div>
 
-    <!-- Nova プロンプトバー本体 (スマホ版はボトムナビのすぐ上に固定マージンで常時一定配置) -->
-    <div class="w-full max-w-2xl px-3 sm:px-6 mb-2 md:mb-0">
+    <!-- Nova プロンプトバー本体 -->
+    <div class="w-full max-w-2xl">
       <div id="command-bar-container"
-           class="pointer-events-auto w-full bg-[#1e2129]/95 backdrop-blur-xl border border-[#2196f3]/25 focus-within:border-[#2196f3]/70 focus-within:ring-2 focus-within:ring-[#2196f3]/25 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_14px_rgba(33,150,243,0.12)] focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.55),0_0_20px_rgba(33,150,243,0.22)] p-2 sm:p-2.5 min-h-[54px] sm:min-h-[58px] flex items-center gap-2.5 sm:gap-3.5 transition-all duration-200">
+           class="pointer-events-auto w-full bg-[#1e2129]/95 backdrop-blur-xl border border-[#2196f3]/25 focus-within:border-[#2196f3]/70 focus-within:ring-2 focus-within:ring-[#2196f3]/25 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_14px_rgba(33,150,243,0.12)] focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.55),0_0_20px_rgba(33,150,243,0.22)] p-1.5 sm:p-2.5 min-h-[50px] sm:min-h-[58px] flex items-center gap-2 sm:gap-3.5 transition-all duration-200">
         
         <!-- Nova アイコン (Gemini風 キラキラ) -->
-        <div id="assistant-sparkle-icon" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] flex items-center justify-center text-neutral-300 shrink-0 select-none ml-0.5 transition-transform duration-300">
-          <span class="material-symbols-rounded text-2xl text-[#2196f3]">auto_awesome</span>
+        <div id="assistant-sparkle-icon" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] flex items-center justify-center text-neutral-300 shrink-0 select-none ml-0.5 transition-transform duration-300">
+          <span class="material-symbols-rounded text-xl sm:text-2xl text-[#2196f3]">auto_awesome</span>
         </div>
 
         <!-- コマンド入力フォーム -->
         <input type="text" 
                id="command-search-input" 
                placeholder="Novaに話しかける..." 
-               class="flex-1 bg-transparent text-[15px] sm:text-base text-white placeholder-neutral-400 focus:outline-none px-1.5 py-1.5 font-normal"
+               class="flex-1 bg-transparent text-[14px] sm:text-base text-white placeholder-neutral-400 focus:outline-none px-1.5 py-1 font-normal"
                autocomplete="off" />
 
         <!-- 音声コマンド マイクボタン -->
         <button id="btn-voice-command"
                 onclick="toggleVoiceRecognition()"
-                class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-sm"
+                class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-sm"
                 aria-label="Nova音声入力">
-          <span id="voice-mic-icon" class="material-symbols-rounded text-2xl">mic</span>
+          <span id="voice-mic-icon" class="material-symbols-rounded text-xl sm:text-2xl">mic</span>
         </button>
 
       </div>
     </div>
-
-    <!-- モバイル用ボトムナビゲーションバー (Novaバーの下に一体化して配置) -->
-    <nav id="bottom-nav" class="md:hidden pointer-events-auto w-full bg-[#16181d]/95 backdrop-blur-md px-3 pt-1.5 pb-1 border-t border-white/[0.04] select-none">
-      <div class="grid grid-cols-4 items-center max-w-md mx-auto">
-        
-        <!-- ダッシュボード -->
-        <button onclick="switchTab('dashboard')" id="bottom-nav-dashboard"
-                class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-[#2196f3]">
-          <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-[#253546] text-[#2196f3]">
-            <span class="material-symbols-rounded symbol-fill text-[22px]">grid_view</span>
-          </div>
-          <span class="bottom-nav-label text-[11px] font-semibold mt-1 tracking-tight text-[#2196f3]">ダッシュボード</span>
-        </button>
-
-        <!-- オートメーション -->
-        <button onclick="switchTab('automations')" id="bottom-nav-automations"
-                class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
-          <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
-            <span class="material-symbols-rounded text-[22px]">bolt</span>
-          </div>
-          <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">オートメーション</span>
-        </button>
-
-        <!-- シーン -->
-        <button onclick="switchTab('scenes')" id="bottom-nav-scenes"
-                class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
-          <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
-            <span class="material-symbols-rounded text-[22px]">palette</span>
-          </div>
-          <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">シーン</span>
-        </button>
-
-        <!-- データ -->
-        <button onclick="switchTab('data')" id="bottom-nav-data"
-                class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
-          <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
-            <span class="material-symbols-rounded text-[22px]">insights</span>
-          </div>
-          <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">データ</span>
-        </button>
-
-      </div>
-    </nav>
-
   </div>
+
+  <!-- ======================================================================= -->
+  <!-- モバイル用ボトムナビゲーションバー (Google Home / Material 3 スタイル)    -->
+  <!-- ======================================================================= -->
+  <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#16181d]/95 backdrop-blur-md px-3 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-white/[0.04] select-none">
+    <div class="grid grid-cols-4 items-center max-w-md mx-auto">
+      
+      <!-- ダッシュボード -->
+      <button onclick="switchTab('dashboard')" id="bottom-nav-dashboard"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-[#2196f3]">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-[#253546] text-[#2196f3]">
+          <span class="material-symbols-rounded symbol-fill text-[22px]">grid_view</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-semibold mt-1 tracking-tight text-[#2196f3]">ダッシュボード</span>
+      </button>
+
+      <!-- オートメーション -->
+      <button onclick="switchTab('automations')" id="bottom-nav-automations"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
+          <span class="material-symbols-rounded text-[22px]">bolt</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">オートメーション</span>
+      </button>
+
+      <!-- シーン -->
+      <button onclick="switchTab('scenes')" id="bottom-nav-scenes"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
+          <span class="material-symbols-rounded text-[22px]">palette</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">シーン</span>
+      </button>
+
+      <!-- データ -->
+      <button onclick="switchTab('data')" id="bottom-nav-data"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
+          <span class="material-symbols-rounded text-[22px]">insights</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">データ</span>
+      </button>
+
+    </div>
+  </nav>
 
   <!-- ======================================================================= -->
   <!-- 画面2：エアコン詳細操作画面 (Bottom Sheet Modal)                         -->
