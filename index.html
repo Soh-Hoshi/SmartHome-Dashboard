@@ -3065,7 +3065,6 @@
           {
             target: 'リビング',
             action: 'オン',
-            actionColor: 'text-amber-400',
             condition: null,
             icon: 'lightbulb',
             iconColor: 'text-amber-400',
@@ -3074,7 +3073,6 @@
           {
             target: '気象',
             action: '取得',
-            actionColor: 'text-sky-400',
             condition: null,
             icon: 'partly_cloudy_day',
             iconColor: 'text-sky-400',
@@ -3083,7 +3081,6 @@
           {
             target: 'エアコン',
             action: 'オン',
-            actionColor: 'text-sky-400',
             condition: '体感24℃以上',
             icon: 'ac_unit',
             iconColor: 'text-sky-400',
@@ -3092,7 +3089,6 @@
           {
             target: 'ヒーター',
             action: 'オン',
-            actionColor: 'text-orange-400',
             condition: '体感19℃以下',
             icon: 'mode_heat',
             iconColor: 'text-orange-400',
@@ -3107,7 +3103,6 @@
           {
             target: 'リビング',
             action: 'オフ',
-            actionColor: 'text-neutral-400',
             condition: null,
             icon: 'lightbulb',
             iconColor: 'text-neutral-400',
@@ -3116,7 +3111,6 @@
           {
             target: '気象',
             action: '取得',
-            actionColor: 'text-sky-400',
             condition: null,
             icon: 'partly_cloudy_day',
             iconColor: 'text-sky-400',
@@ -3125,7 +3119,6 @@
           {
             target: 'エアコン',
             action: 'オン (27℃)',
-            actionColor: 'text-sky-400',
             condition: '体感24℃以上',
             icon: 'ac_unit',
             iconColor: 'text-sky-400',
@@ -3134,7 +3127,6 @@
           {
             target: 'ヒーター',
             action: 'オン',
-            actionColor: 'text-orange-400',
             condition: '体感19℃以下',
             icon: 'mode_heat',
             iconColor: 'text-orange-400',
@@ -3149,7 +3141,6 @@
           {
             target: 'リビング',
             action: 'オフ',
-            actionColor: 'text-neutral-400',
             condition: null,
             icon: 'lightbulb',
             iconColor: 'text-neutral-400',
@@ -3158,7 +3149,6 @@
           {
             target: 'エアコン',
             action: 'オフ',
-            actionColor: 'text-neutral-400',
             condition: null,
             icon: 'ac_unit',
             iconColor: 'text-neutral-400',
@@ -3167,7 +3157,6 @@
           {
             target: 'ヒーター',
             action: 'オフ',
-            actionColor: 'text-neutral-400',
             condition: null,
             icon: 'mode_heat',
             iconColor: 'text-neutral-400',
@@ -3182,7 +3171,6 @@
           {
             target: '気象',
             action: '取得',
-            actionColor: 'text-sky-400',
             condition: null,
             icon: 'partly_cloudy_day',
             iconColor: 'text-sky-400',
@@ -3191,7 +3179,6 @@
           {
             target: 'リビング',
             action: 'オン',
-            actionColor: 'text-amber-400',
             condition: '日没後のみ',
             icon: 'lightbulb',
             iconColor: 'text-amber-400',
@@ -3200,7 +3187,6 @@
           {
             target: 'エアコン',
             action: 'オン',
-            actionColor: 'text-sky-400',
             condition: '体感24℃以上',
             icon: 'ac_unit',
             iconColor: 'text-sky-400',
@@ -3209,7 +3195,6 @@
           {
             target: 'ヒーター',
             action: 'オン',
-            actionColor: 'text-orange-400',
             condition: '体感19℃以下',
             icon: 'mode_heat',
             iconColor: 'text-orange-400',
@@ -3222,7 +3207,7 @@
     let currentActiveFlowScene = null;
 
     /**
-     * シーンのアクションフロー詳細シートを開く (デバイス名×操作の画一的表示)
+     * シーンのアクションフロー詳細シートを開く (完璧な縦中央揃え ＆ 文字色なしの画一的表示)
      */
     function openSceneFlowSheet(sceneKey) {
       const flow = SCENE_FLOWS[sceneKey];
@@ -3241,21 +3226,21 @@
         container.innerHTML = flow.steps.map((step, idx) => {
           const isLast = idx === flow.steps.length - 1;
           return `
-            <div class="relative flex items-center space-x-3.5 group">
-              <!-- 左側: アイコン ＆ コネクタ線 -->
-              <div class="flex flex-col items-center shrink-0 self-stretch justify-center">
-                <div class="w-10 h-10 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold text-xs border border-white/[0.04] shadow-sm shrink-0">
-                  <span class="material-symbols-rounded text-xl">${step.icon}</span>
-                </div>
-                ${!isLast ? '<div class="w-0.5 flex-1 bg-white/[0.08] my-1 rounded-full min-h-[14px]"></div>' : ''}
+            <div class="relative flex items-center space-x-3.5">
+              <!-- 左側: アイコン (完全縦中央) -->
+              <div class="relative z-10 w-11 h-11 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
+                <span class="material-symbols-rounded text-xl">${step.icon}</span>
               </div>
 
-              <!-- 右側: アクションカード (「デバイス名」を 操作 + 条件) -->
-              <div class="flex-1 bg-[#2a2d36] rounded-2xl px-4 py-3.5 border border-white/[0.03] flex items-center justify-between shadow-sm min-w-0">
+              <!-- 次のステップへのコネクタ線 (背景配置でレイアウトに影響なし) -->
+              ${!isLast ? '<div class="absolute left-[21px] top-[44px] bottom-[-10px] w-0.5 bg-white/[0.08] z-0"></div>' : ''}
+
+              <!-- 右側: アクションカード (完全縦中央) -->
+              <div class="relative z-10 flex-1 bg-[#2a2d36] rounded-2xl px-4 py-3.5 border border-white/[0.03] flex items-center justify-between shadow-sm min-w-0">
                 <div class="text-[15px] font-semibold text-white truncate">
-                  「${step.target}」を <span class="${step.actionColor} font-bold">${step.action}</span>
+                  「${step.target}」を ${step.action}
                 </div>
-                ${step.condition ? `<span class="text-xs text-neutral-400 font-medium px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
+                ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
               </div>
             </div>
           `;
