@@ -4,6 +4,7 @@ SmartHome Natural Language Assistant Engine (Nova)
 Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Local LLM (Qwen 2.5 via Ollama) fallback
 100% Private, Local, Free & Standardized Responses.
 Integrated with Kawasaki Nakahara Kizuki Weather & Solar Data.
+Heater control is strictly relative (on/off, eco, plus/minus count) without direct temperature setting.
 """
 
 import re
@@ -39,10 +40,16 @@ def format_standard_message(device, action, params=None):
         return f"エアコンを{mode_label}{temp}℃に設定しました。"
     
     elif device == 'heater':
+        if action in ('on', 'turnOn', 'heat'): return "ヒーターをオンにしました。"
         if action in ('off', 'turnOff'): return "ヒーターをオフにしました。"
         if action == 'eco': return "ヒーターのエコモードを設定しました。"
-        temp = params.get('temp', 22)
-        return f"ヒーターを暖房{temp}℃に設定しました。"
+        if action == 'plus':
+            count = params.get('count', 1)
+            return f"ヒーターの温度を{count}度上げました。" if count > 1 else "ヒーターの温度を上げました。"
+        if action == 'minus':
+            count = params.get('count', 1)
+            return f"ヒーターの温度を{count}度下げました。" if count > 1 else "ヒーターの温度を下げました。"
+        return "ヒーターを設定しました。"
     
     elif device == 'cleaner':
         if action in ('start', 'run', 'clean', 'play'): return "クリーナーのお掃除を開始しました。"
@@ -62,7 +69,7 @@ def format_standard_message(device, action, params=None):
             if hvac == 'ac':
                 hvac_note = f"外気温が{params.get('out_temp')}℃のためエアコンを冷房{params.get('temp', 26)}℃で起動しました。"
             elif hvac == 'heater':
-                hvac_note = f"外気温が{params.get('out_temp')}℃で肌寒いためヒーターを暖房{params.get('temp', 22)}℃で起動しました。"
+                hvac_note = f"外気温が{params.get('out_temp')}℃で肌寒いためヒーターをオンにしました。"
             else:
                 hvac_note = f"外気温が{params.get('out_temp')}℃で快適なため空調はオフのままにしました。"
             return f"おかえりなさい。{light_note}{hvac_note}"
@@ -75,13 +82,13 @@ def query_local_llm(prompt_text):
 操作可能デバイス:
 - light: {"device": "light", "action": "on"|"off"|"full"|"night"}
 - ac: {"device": "ac", "mode": "cool"|"dry"|"off", "temp": 22..28, "fan": "auto"}
-- heater: {"device": "heater", "action": "heat"|"off"|"eco", "temp": 22..28}
+- heater: {"device": "heater", "action": "on"|"off"|"eco"|"plus"|"minus", "count": 1..5} (※ヒーターは温度直指定不可。plus/minusの回数指定のみ)
 - cleaner: {"device": "cleaner", "action": "start"|"pause"|"home"|"find"}
 - scene: {"device": "scene", "action": "morning"|"goodnight"|"leaving"|"welcome"|"all_off"}
 
 重要: 雑談や家電操作と無関係な言葉の場合は {"device": "none"} を出力してください。
 出力形式(JSONのみ):
-{"device": "...", "action": "...", "temp": 24, "mode": "cool"}"""
+{"device": "...", "action": "...", "temp": 24, "mode": "cool", "count": 1}"""
 
     req_data = {
         'model': 'qwen2.5:1.5b',
@@ -117,7 +124,7 @@ def execute_smart_welcome(send_api_fn=None):
     if is_night and send_api_fn:
         send_api_fn('/api/light', {'action': 'on'})
 
-    # 2. 外気温判定
+    # 2. 外気温判定 (24℃以上はエアコン冷房26℃、19℃以下はヒーターON)
     if out_temp >= 24.0:
         hvac_type = 'ac'
         temp = 26
@@ -126,9 +133,9 @@ def execute_smart_welcome(send_api_fn=None):
             send_api_fn('/api/heater', {'action': 'off'})
     elif out_temp <= 19.0:
         hvac_type = 'heater'
-        temp = 22
+        temp = None
         if send_api_fn:
-            send_api_fn('/api/heater', {'action': 'heat', 'temp': temp})
+            send_api_fn('/api/heater', {'action': 'on'})
             send_api_fn('/api/ac', {'mode': 'off'})
     else:
         hvac_type = 'none'
@@ -167,11 +174,9 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     # -------------------------------------------------------------
     # 0. 呼びかけ・挨拶・軽い雑談ガード（家電を一切誤作動させない）
     # -------------------------------------------------------------
-    # 呼びかけ単体
     if text in ('nova', 'ノヴァ', 'ノバ', 'のゔぁ', 'のば', 'nova!', 'nova?', 'ノヴァ！', 'ノヴァ？', 'ノバ！', 'ノバ？'):
         return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
 
-    # 挨拶・軽い雑談
     if text in ('やあ', 'やあやあ', 'こんにちは', 'こんばんは', 'どうも', 'ヘイ', 'へい', 'おーい', 'おい', 'hi', 'hello', 'hey'):
         return {"success": True, "message": "こんにちは！何か操作しますか？", "action": "greeting"}
 
@@ -181,7 +186,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     if text in ('テスト', 'test', 'てすと', 'チェック', 'あ', 'ああ', 'うん'):
         return {"success": True, "message": "はい、待機しています。", "action": "test"}
 
-    # 先頭の「Nova、」「ノヴァ、」「ノバ 」などの呼びかけを除去
+    # 先頭の呼びかけを除去
     clean_text = re.sub(r'^(nova|ノヴァ|ノバ|のゔぁ|のば)[、,\s]*', '', text).strip()
     if not clean_text:
         return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
@@ -296,7 +301,46 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/light', {'action': 'toggle'})
             return {"success": True, "message": format_standard_message('light', 'toggle'), "action": "light_toggle"}
 
-    # 6. エアコン / クーラー / 冷房 / 除湿 (AC)
+    # 6. ヒーター / 暖房 (Heater: 温度直指定不可、相対上下またはオンオフ/エコのみ)
+    if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater']):
+        # オフ
+        if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す']):
+            if send_api_fn: send_api_fn('/api/heater', {'action': 'off'})
+            return {"success": True, "message": format_standard_message('heater', 'off'), "action": "heater_off"}
+        # エコ
+        elif any(k in text for k in ['エコ', 'えこ', 'eco']):
+            if send_api_fn: send_api_fn('/api/heater', {'action': 'eco'})
+            return {"success": True, "message": format_standard_message('heater', 'eco'), "action": "heater_eco"}
+        # 上げて / プラス (例: 3度上げて、温度上げて、もっと暖かく)
+        elif any(k in text for k in ['上げて', 'あげて', 'プラス', 'ぷらす', 'あつく', '暖かく', 'あたたかく', 'ぬくく', 'up', '強く', 'つよく']):
+            num_match = re.search(r'(\d+)\s*(度|℃|段階|ステップ)?', text)
+            count = int(num_match.group(1)) if num_match else 1
+            count = max(1, min(5, count))
+            if send_api_fn: send_api_fn('/api/heater', {'action': 'plus', 'count': count})
+            return {"success": True, "message": format_standard_message('heater', 'plus', {'count': count}), "action": f"heater_plus_{count}"}
+        # 下げて / マイナス (例: 2度下げて、温度下げて、ぬるく)
+        elif any(k in text for k in ['下げて', 'さげて', 'マイナス', 'まいなす', 'ぬるく', 'ひくく', '低く', 'down', '弱く', 'よわく']):
+            num_match = re.search(r'(\d+)\s*(度|℃|段階|ステップ)?', text)
+            count = int(num_match.group(1)) if num_match else 1
+            count = max(1, min(5, count))
+            if send_api_fn: send_api_fn('/api/heater', {'action': 'minus', 'count': count})
+            return {"success": True, "message": format_standard_message('heater', 'minus', {'count': count}), "action": f"heater_minus_{count}"}
+        # 温度直指定（例: 「ヒーター24度にして」）に対する注意ガード
+        elif re.search(r'(\d{2})\s*(度|℃)', text):
+            return {
+                "success": False,
+                "message": "ヒーターは温度の直接指定に対応していないため、オン/オフまたは温度の上下（上げて/下げて）でご指定ください。",
+                "action": None
+            }
+        # つけて / オン
+        elif any(k in text for k in ['つけて', '点けて', 'オン', 'おん', 'on', 'つける', '起動', 'スタート']):
+            if send_api_fn: send_api_fn('/api/heater', {'action': 'on'})
+            return {"success": True, "message": format_standard_message('heater', 'on'), "action": "heater_on"}
+        else:
+            if send_api_fn: send_api_fn('/api/heater', {'action': 'on'})
+            return {"success": True, "message": format_standard_message('heater', 'on'), "action": "heater_on"}
+
+    # 7. エアコン / クーラー / 冷房 / 除湿 (AC: 温度直指定可)
     if any(k in text for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ドライ', 'どらい', 'ac', 'aircon']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す', 'けす']):
             if send_api_fn: send_api_fn('/api/ac', {'mode': 'off'})
@@ -309,27 +353,12 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         if send_api_fn: send_api_fn('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
 
-    # 温度のみの指定（「24度」「24度にして」「25℃設定」など）
+    # 温度のみの指定（「24度」「24度にして」「25℃設定」など ──▶ エアコン冷房）
     if re.search(r'^\s*(\d{2})\s*(度|℃|c)?(にして|に設定|にしてよ|設定|)?\s*$', text):
         temp = int(re.search(r'(\d{2})', text).group(1))
         temp = max(22, min(28, temp))
         if send_api_fn: send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': 'cool', 'temp': temp}), "action": f"ac_cool_{temp}"}
-
-    # 7. ヒーター / 暖房 (Heater)
-    if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater', 'heat']):
-        if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop']):
-            if send_api_fn: send_api_fn('/api/heater', {'action': 'off'})
-            return {"success": True, "message": format_standard_message('heater', 'off'), "action": "heater_off"}
-        elif any(k in text for k in ['エコ', 'えこ', 'eco']):
-            if send_api_fn: send_api_fn('/api/heater', {'action': 'eco'})
-            return {"success": True, "message": format_standard_message('heater', 'eco'), "action": "heater_eco"}
-        else:
-            temp_match = re.search(r'(\d{2})\s*(度|℃|c)?', text)
-            temp = int(temp_match.group(1)) if temp_match else 22
-            temp = max(22, min(28, temp))
-            if send_api_fn: send_api_fn('/api/heater', {'action': 'heat', 'temp': temp})
-            return {"success": True, "message": format_standard_message('heater', 'heat', {'temp': temp}), "action": f"heater_heat_{temp}"}
 
     # -------------------------------------------------------------
     # 第2段階：ローカルAI（Qwen 2.5 1.5B）による高度推論フォールバック
@@ -370,10 +399,14 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             return {"success": True, "message": format_standard_message('ac', 'on' if mode != 'off' else 'off', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
 
         elif device == 'heater':
-            act = llm_res.get('action', 'heat')
-            temp = int(llm_res.get('temp', 22))
-            if send_api_fn: send_api_fn('/api/heater', {'action': act, 'temp': temp})
-            return {"success": True, "message": format_standard_message('heater', act, {'temp': temp}), "action": f"heater_{act}"}
+            act = llm_res.get('action', 'on')
+            count = int(llm_res.get('count', 1))
+            if act in ('on', 'off', 'eco'):
+                if send_api_fn: send_api_fn('/api/heater', {'action': act})
+                return {"success": True, "message": format_standard_message('heater', act), "action": f"heater_{act}"}
+            elif act in ('plus', 'minus'):
+                if send_api_fn: send_api_fn('/api/heater', {'action': act, 'count': count})
+                return {"success": True, "message": format_standard_message('heater', act, {'count': count}), "action": f"heater_{act}_{count}"}
 
         elif device == 'cleaner':
             act = llm_res.get('action', 'start')
@@ -392,12 +425,11 @@ def parse_and_execute(prompt: str, send_api_fn=None):
 if __name__ == '__main__':
     test_queries = [
         "ただいま",
-        "今の気温は？",
-        "日の入り何時？",
-        "今日の天気",
-        "いってきます",
-        "おやすみ"
+        "ヒーターつけて",
+        "暖房3度上げて",
+        "ヒーター24度にして",
+        "ヒーター消して"
     ]
     for q in test_queries:
-        res = parse_and_execute(q, lambda ep, data: None)
-        print(f"[{q}] -> {res.get('message')}")
+        res = parse_and_execute(q, lambda ep, data: print(f"  [API Call] {ep} {data}"))
+        print(f"[{q}] -> {res.get('message')}\n")

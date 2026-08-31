@@ -273,6 +273,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
         if clean_path == '/api/heater':
             action = req_data.get('action', 'toggle')
+            count = max(1, min(10, int(req_data.get('count', 1))))
             current_state = load_state()
 
             if action in ('on', 'turnOn', 'heat'):
@@ -285,6 +286,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             elif action in ('eco', 'エコ'):
                 current_state['heaterEco'] = req_data.get('eco', not current_state.get('heaterEco', False))
             elif action in ('plus', 'minus'):
+                current_temp = current_state.get('heaterTemp', 22)
+                if action == 'plus':
+                    current_state['heaterTemp'] = min(28, current_temp + count)
+                else:
+                    current_state['heaterTemp'] = max(22, current_temp - count)
                 if 'temp' in req_data:
                     current_state['heaterTemp'] = int(req_data['temp'])
 
@@ -292,7 +298,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
             def send_heater_bg():
                 try:
-                    switchbot_client.control_heater(action)
+                    for i in range(count):
+                        switchbot_client.control_heater(action)
+                        if i < count - 1:
+                            time.sleep(0.5)
                 except Exception as e:
                     print(f"[Heater Control Error] {e}")
 
@@ -300,7 +309,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
             return self.send_json_response({
                 "status": "success",
-                "message": f"Heater command dispatched ({action})",
+                "message": f"Heater command dispatched ({action}, count={count})",
                 "state": current_state
             })
 
