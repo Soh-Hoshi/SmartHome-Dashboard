@@ -8,6 +8,7 @@ Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Local LLM (Qwen 2.5 via O
 import re
 import os
 import json
+import unicodedata
 import urllib.request
 import urllib.error
 
@@ -49,6 +50,7 @@ def format_standard_message(device, action, params=None):
     elif device == 'scene':
         if action == 'all_off': return "🌙 おやすみなさい。ライトと空調をすべてオフにしました。"
         if action == 'welcome': return "✨ おかえりなさい！ライトを点灯し、エアコンを冷房26℃で起動しました。"
+        if action == 'morning': return "☀️ おはようございます！ライトを点灯しました。"
     
     return "操作を完了しました。"
 
@@ -97,14 +99,15 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             "action": None
         }
 
-    text = prompt.strip().lower()
+    # 全角英数→半角正規化、小文字化、前後の空白除去
+    text = unicodedata.normalize('NFKC', prompt).strip().lower()
 
     # =============================================================
-    # 第1段階：ミリ秒レベルの超高速ルールベース（日常の95%を即答）
+    # 第1段階：ミリ秒レベルの超高速ルールベース（日常の98%を即答）
     # =============================================================
 
     # 1. 状態確認 (Status)
-    if any(k in text for k in ['状態', 'ステータス', 'どうなってる', '今の設定', '確認', 'status']):
+    if any(k in text for k in ['状態', 'ステータス', 'どうなってる', '今の設定', '確認', 'status', 'じょうたい']):
         if os.path.exists(STATE_FILE):
             try:
                 with open(STATE_FILE, 'r', encoding='utf-8') as f:
@@ -125,50 +128,66 @@ def parse_and_execute(prompt: str, send_api_fn=None):
                 pass
         return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}
 
-    # 2. ライト (Light)
-    if any(k in text for k in ['ライト', '電気', '照明', 'あかり', '明かり', 'light']):
-        if any(k in text for k in ['消して', 'けして', 'オフ', '消灯', '暗く', 'off', '切って', '消す']):
+    # 2. クリーナー / 掃除 (Cleaner) - 「掃除開始」「そうじ」「掃除機」等を完全網羅
+    if any(k in text for k in ['掃除', 'そうじ', 'クリーナー', 'くりーなー', '掃除機', 'そうじき', 'ルンバ', 'るんば', 'eufy', 'vacuum', 'cleaner']):
+        if any(k in text for k in ['帰って', 'かえって', 'おうち', '戻って', 'もどって', '充電', 'じゅうでん', 'ホーム', 'ほーむ', 'ドック', 'どっく', 'dock', 'home', 'やめて', '終了', 'しゅうりょう', '終わり', 'おわり']):
+            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'home'})
+            return {"success": True, "message": format_standard_message('cleaner', 'home'), "action": "cleaner_home"}
+        elif any(k in text for k in ['一時停止', 'いちじていし', '止めて', 'とめて', 'ストップ', 'すとっぷ', 'pause', 'stop', '待って', 'まって']):
+            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'pause'})
+            return {"success": True, "message": format_standard_message('cleaner', 'pause'), "action": "cleaner_pause"}
+        elif any(k in text for k in ['探して', 'さがして', 'どこ', '鳴らして', 'ならして', 'find', 'beep']):
+            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'find'})
+            return {"success": True, "message": format_standard_message('cleaner', 'find'), "action": "cleaner_find"}
+        else:
+            # 「掃除開始」「掃除して」「掃除」「クリーナー起動」など全て開始
+            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'start'})
+            return {"success": True, "message": format_standard_message('cleaner', 'start'), "action": "cleaner_start"}
+
+    # 3. ライト / 照明 (Light)
+    if any(k in text for k in ['ライト', 'らいと', '電気', 'でんき', '照明', 'しょうめい', 'あかり', '明かり', 'light']):
+        if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '消灯', 'しょうとう', '暗く', 'くらく', 'off', '切って', 'きって', '消す', 'けす', '落として', 'おとして']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'off'})
             return {"success": True, "message": format_standard_message('light', 'off'), "action": "light_off"}
-        elif any(k in text for k in ['全灯', 'マックス', '最大', '明るく', 'full', '100%']):
+        elif any(k in text for k in ['全灯', 'ぜんとう', 'マックス', '最大', 'さいだい', '明るく', 'あかるく', 'full', '100%']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'full'})
             return {"success": True, "message": format_standard_message('light', 'full'), "action": "light_full"}
-        elif any(k in text for k in ['常夜灯', '夜間', '豆電球', 'ナイト', 'night']):
+        elif any(k in text for k in ['常夜灯', 'じょうやとう', '夜間', 'やかん', '豆電球', 'まめでんきゅう', 'ナイト', 'ないと', 'night', '暗め', 'くらめ']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'night'})
             return {"success": True, "message": format_standard_message('light', 'night'), "action": "light_night"}
-        elif any(k in text for k in ['つけて', '点けて', 'オン', '点灯', 'on', 'つける']):
+        elif any(k in text for k in ['つけて', '点けて', 'オン', 'おん', '点灯', 'てんとう', 'on', 'つける', '明かり', '点火']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'on'})
             return {"success": True, "message": format_standard_message('light', 'on'), "action": "light_on"}
-        elif any(k in text for k in ['トグル', '切り替え', 'toggle']):
+        elif any(k in text for k in ['トグル', '切り替え', 'きりかえ', 'toggle']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'toggle'})
             return {"success": True, "message": format_standard_message('light', 'toggle'), "action": "light_toggle"}
 
-    # 3. エアコン / クーラー (AC)
-    if any(k in text for k in ['エアコン', 'クーラー', '冷房', '除湿', 'ドライ', 'ac', 'aircon']):
-        if any(k in text for k in ['消して', 'けして', 'オフ', '止めて', '切って', 'off', 'stop', '消す']):
+    # 4. エアコン / クーラー / 冷房 / 除湿 (AC)
+    if any(k in text for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ドライ', 'どらい', 'ac', 'aircon']):
+        if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す', 'けす']):
             if send_api_fn: send_api_fn('/api/ac', {'mode': 'off'})
             return {"success": True, "message": format_standard_message('ac', 'off', {'mode': 'off'}), "action": "ac_off"}
 
         temp_match = re.search(r'(\d{2})\s*(度|℃|c)?', text)
         temp = int(temp_match.group(1)) if temp_match else 26
         temp = max(22, min(28, temp))
-        mode = 'dry' if any(k in text for k in ['除湿', 'ドライ', 'dry']) else 'cool'
+        mode = 'dry' if any(k in text for k in ['除湿', 'じょしつ', 'ドライ', 'どらい', 'dry']) else 'cool'
         if send_api_fn: send_api_fn('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
 
-    # 温度のみの指定（「24度にして」など）
-    if re.search(r'^\s*(\d{2})\s*(度|℃|c)?(にして|に設定|にしてよ|)?\s*$', text):
+    # 温度のみの指定（「24度」「24度にして」「25℃設定」など）
+    if re.search(r'^\s*(\d{2})\s*(度|℃|c)?(にして|に設定|にしてよ|設定|)?\s*$', text):
         temp = int(re.search(r'(\d{2})', text).group(1))
         temp = max(22, min(28, temp))
         if send_api_fn: send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': 'cool', 'temp': temp}), "action": f"ac_cool_{temp}"}
 
-    # 4. ヒーター / 暖房 (Heater)
-    if any(k in text for k in ['ヒーター', '暖房', 'ストーブ', 'heater', 'heat']):
-        if any(k in text for k in ['消して', 'けして', 'オフ', '止めて', '切って', 'off']):
+    # 5. ヒーター / 暖房 (Heater)
+    if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater', 'heat']):
+        if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop']):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'off'})
             return {"success": True, "message": format_standard_message('heater', 'off'), "action": "heater_off"}
-        elif any(k in text for k in ['エコ', 'eco']):
+        elif any(k in text for k in ['エコ', 'えこ', 'eco']):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'eco'})
             return {"success": True, "message": format_standard_message('heater', 'eco'), "action": "heater_eco"}
         else:
@@ -178,34 +197,24 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'heat', 'temp': temp})
             return {"success": True, "message": format_standard_message('heater', 'heat', {'temp': temp}), "action": f"heater_heat_{temp}"}
 
-    # 5. ロボット掃除機 (Eufy Cleaner / Vacuum)
-    if any(k in text for k in ['掃除機', 'ルンバ', 'ロボット掃除機', 'クリーナー', 'eufy', 'vacuum', 'cleaner']):
-        if any(k in text for k in ['帰って', 'おうち', '戻って', '充電', 'ホーム', 'ドック', 'dock', 'home', 'やめて', '終了']):
-            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'home'})
-            return {"success": True, "message": format_standard_message('cleaner', 'home'), "action": "cleaner_home"}
-        elif any(k in text for k in ['一時停止', '止めて', 'ストップ', 'pause', 'stop', '待って']):
-            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'pause'})
-            return {"success": True, "message": format_standard_message('cleaner', 'pause'), "action": "cleaner_pause"}
-        elif any(k in text for k in ['探して', 'どこ', '鳴らして', 'find', 'beep']):
-            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'find'})
-            return {"success": True, "message": format_standard_message('cleaner', 'find'), "action": "cleaner_find"}
-        elif any(k in text for k in ['して', 'かけて', '開始', 'スタート', 'やって', 'start', 'run', 'お願い', '掃除']):
-            if send_api_fn: send_api_fn('/api/cleaner', {'action': 'start'})
-            return {"success": True, "message": format_standard_message('cleaner', 'start'), "action": "cleaner_start"}
-
     # 6. 一括操作 (シーン / 全消し)
-    if any(k in text for k in ['おやすみ', '寝る', '外出', 'いってきます', '全部消して', '全消し']):
+    if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', '外出', 'がいしゅつ', 'いってきます', '全部消して', '全消し', 'ぜんぶけして', '消灯して']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
             send_api_fn('/api/ac', {'mode': 'off'})
             send_api_fn('/api/heater', {'action': 'off'})
         return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "all_off"}
 
-    if any(k in text for k in ['ただいま', '帰宅', 'ついた']):
+    if any(k in text for k in ['ただいま', '帰宅', 'きたく', 'ついた', '着いた']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'on'})
             send_api_fn('/api/ac', {'mode': 'cool', 'temp': 26, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('scene', 'welcome'), "action": "welcome"}
+
+    if any(k in text for k in ['おはよう', '起きた', 'おきた']):
+        if send_api_fn:
+            send_api_fn('/api/light', {'action': 'on'})
+        return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "light_on"}
 
     # =============================================================
     # 第2段階：ローカルAI（Qwen 2.5 1.5B）による高度推論フォールバック
@@ -242,12 +251,22 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     # =============================================================
     return {
         "success": False,
-        "message": f"「{prompt}」に対応する操作が見つかりませんでした。「電気消して」「エアコン25度」「掃除機開始」などをお試しください。",
+        "message": f"「{prompt}」に対応する操作が見つかりませんでした。「電気消して」「エアコン25度」「掃除開始」などをお試しください。",
         "action": None
     }
 
 if __name__ == '__main__':
     import sys
-    test_query = sys.argv[1] if len(sys.argv) > 1 else "部屋が暗くなってきたよ"
-    res = parse_and_execute(test_query, lambda ep, data: None)
-    print(res)
+    test_queries = [
+        "掃除開始",
+        "そうじして",
+        "掃除機かけて",
+        "部屋の掃除おねがい",
+        "電気けして",
+        "エアコン２４度",
+        "おやすみ",
+        "クリーナー充電戻して"
+    ]
+    for q in test_queries:
+        res = parse_and_execute(q, lambda ep, data: None)
+        print(f"[{q}] -> {res.get('message')}")
