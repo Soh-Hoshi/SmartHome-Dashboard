@@ -1,0 +1,18 @@
+# 機密情報・認証ファイル
+config.json
+*.pem
+*.key
+*.cert
+
+# 実行時状態・ログ
+state.json
+*.log
+
+# Pythonキャッシュ
+__pycache__/
+*.py[cod]
+
+# バックアップ・一時ファイル
+*.bak
+*.tmp
+.DS_Store

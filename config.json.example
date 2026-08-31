@@ -1,0 +1,16 @@
+{
+  "switchbot": {
+    "token": "YOUR_SWITCHBOT_TOKEN",
+    "secret": "YOUR_SWITCHBOT_SECRET",
+    "devices": {
+      "ac": "DEVICE_ID_AC",
+      "light": "DEVICE_ID_LIGHT",
+      "heater": "DEVICE_ID_HEATER"
+    }
+  },
+  "eufy": {
+    "ip": "192.168.x.x",
+    "local_key": "YOUR_LOCAL_KEY",
+    "dev_id": "YOUR_DEV_ID"
+  }
+}

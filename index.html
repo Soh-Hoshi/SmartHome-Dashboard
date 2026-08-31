@@ -1,0 +1,2293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ダッシュボード - スマートホーム</title>
+  
+  <!-- Google Fonts: 幾何学的で洗練された Outfit (数字・英字) + Noto Sans JP (日本語) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Google Material Symbols Rounded (公式アイコン) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            app: {
+              bg: '#111214',
+              surface: '#1c1e23',
+              'surface-hover': '#24272e',
+              sheet: '#1e2025',
+              btn: '#2a2d35',
+              'btn-hover': '#333742',
+              accent: '#2196f3',
+              'accent-hover': '#1e88e5',
+            }
+          },
+          fontFamily: {
+            sans: ['"Outfit"', '"Noto Sans JP"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
+    /* Material Symbols スタイル定義 */
+    .material-symbols-rounded {
+      font-family: 'Material Symbols Rounded';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .symbol-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .symbol-bold {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* 数字用の洗練された等幅タイポグラフィ */
+    .font-num {
+      font-family: 'Outfit', sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+    }
+
+    /* ボトムシート & モーダル トランジション（下へスッとスライドダウンして閉じる） */
+    .sheet-backdrop {
+      transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.3s;
+    }
+    .sheet-backdrop.hidden-sheet {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .sheet-backdrop.visible-sheet {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .bottom-sheet {
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+      will-change: transform, opacity;
+    }
+    .hidden-sheet .bottom-sheet {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    .visible-sheet .bottom-sheet {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ドロップアップ メニュー */
+    .dropup-menu {
+      transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+      transform-origin: bottom center;
+    }
+    .dropup-menu.closed {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(12px) scale(0.95);
+      pointer-events: none;
+    }
+    .dropup-menu.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    /* 縦型スライダートラック & ブロックの滑らかなトランジション */
+    .slider-track {
+      transition: background-color 0.35s ease;
+    }
+    .slider-thumb {
+      transition: transform 0.38s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.35s ease, box-shadow 0.35s ease;
+      will-change: transform;
+    }
+
+    /* ロボット掃除機 稼働中アニメーション（優雅な回転 ＆ 自走うねうね感） */
+    @keyframes cleaner-wobble-spin {
+      0% {
+        transform: rotate(0deg) scale(1) translate(0, 0);
+      }
+      20% {
+        transform: rotate(72deg) scale(1.03) translate(1.5px, -1px);
+      }
+      40% {
+        transform: rotate(144deg) scale(0.98) translate(-1px, 1.5px);
+      }
+      60% {
+        transform: rotate(216deg) scale(1.03) translate(-1.5px, -1px);
+      }
+      80% {
+        transform: rotate(288deg) scale(0.99) translate(1px, 1px);
+      }
+      100% {
+        transform: rotate(360deg) scale(1) translate(0, 0);
+      }
+    }
+    .animate-cleaner-moving {
+      animation: cleaner-wobble-spin 8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+      transform-origin: center center;
+    }
+  </style>
+</head>
+<body class="bg-app-bg text-white min-h-screen w-full flex flex-col antialiased font-sans">
+
+  <!-- ======================================================================= -->
+  <!-- 画面1：メインダッシュボード                                             -->
+  <!-- ======================================================================= -->
+
+  <!-- 全体レイアウトコンテナ (画面全幅でサイドバーを左端にピタッと配置) -->
+  <div class="flex-1 w-full flex min-h-screen">
+    
+    <!-- デスクトップ用サイドバー (画面左端に常時表示・アイコン＋ラベル) -->
+    <aside id="sidebar"
+           class="hidden md:flex flex-col w-52 xl:w-56 shrink-0 min-h-screen py-6 px-3 sticky top-0 h-screen select-none border-r border-white/[0.04] bg-[#14161a]/60">
+      
+      <nav class="space-y-1.5 w-full">
+        <!-- ダッシュボード -->
+        <button onclick="switchTab('dashboard')" id="nav-dashboard"
+                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-[#253546] text-[#2196f3] active:scale-98">
+          <span class="material-symbols-rounded symbol-fill text-[22px]">grid_view</span>
+          <span class="text-sm font-semibold text-[#2196f3]">ダッシュボード</span>
+        </button>
+
+        <!-- オートメーション -->
+        <button onclick="switchTab('automations')" id="nav-automations"
+                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
+          <span class="material-symbols-rounded text-[22px]">bolt</span>
+          <span class="text-sm font-medium text-neutral-400">オートメーション</span>
+        </button>
+
+        <!-- シーン -->
+        <button onclick="switchTab('scenes')" id="nav-scenes"
+                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
+          <span class="material-symbols-rounded text-[22px]">palette</span>
+          <span class="text-sm font-medium text-neutral-400">シーン</span>
+        </button>
+
+        <!-- データ -->
+        <button onclick="switchTab('data')" id="nav-data"
+                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
+          <span class="material-symbols-rounded text-[22px]">insights</span>
+          <span class="text-sm font-medium text-neutral-400">データ</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア (モバイルはボトムバー用の余白 pb-24) -->
+    <div class="flex-1 min-w-0 pt-4 md:pt-6 pb-24 md:pb-8">
+      
+      <!-- ======================================================================= -->
+      <!-- タブ1：メインダッシュボード                                             -->
+      <!-- ======================================================================= -->
+      <main id="view-dashboard" class="tab-view w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+        
+        <!-- セクション: ライト -->
+        <section class="space-y-3">
+          <h2 class="text-base font-bold text-white px-1">ライト</h2>
+          
+          <div class="flex flex-col gap-3.5">
+            <!-- ライトタイル (アイコンタップでオン/オフ、それ以外の部分で詳細シートへ) -->
+            <div onclick="openSheet('light-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]">
+              
+              <!-- ライト固定アイコン (色だけでオン/オフ表現) -->
+              <button onclick="toggleLightFromTile(event)"
+                      id="tile-light-icon-wrap" 
+                      class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+                      aria-label="ライトのオン/オフ切り替え">
+                <span class="material-symbols-rounded text-2xl">lightbulb</span>
+              </button>
+
+              <!-- テキスト -->
+              <div class="flex-1">
+                <div class="text-[15px] font-semibold text-white leading-tight">リビング</div>
+                <div id="tile-light-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">オフ</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- セクション: 空調 -->
+        <section class="space-y-3">
+          <h2 class="text-base font-bold text-white px-1">空調</h2>
+          
+          <div class="flex flex-col gap-3.5">
+            <!-- エアコンタイル (アイコンタップで冷房/オフのトグル、それ以外の部分で詳細シートへ) -->
+            <div onclick="openSheet('ac-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]">
+              
+              <!-- 上部情報 (固定アイコン ＆ モード・温度) -->
+              <div class="flex items-center space-x-3.5">
+                <!-- エアコン固定アイコン (オフ背景近似＋ほんのりブルー背景 ＋ 明るいブルーアイコン) -->
+                <button onclick="toggleAcPowerFromTileIcon(event)"
+                        id="tile-ac-icon-wrap" 
+                        class="w-11 h-11 rounded-full bg-[#253546] text-[#2196f3] flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+                        aria-label="エアコンのオン/オフ切り替え">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 4H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 6H5V6h14v4z"/>
+                    <rect x="17" y="7.5" width="1.5" height="1.5" rx="0.75" />
+                    <path d="M6 15c.8-.5 1.7-.5 2.5 0 .8.5 1.7.5 2.5 0 .8.5 1.7.5 2.5 0 .8.5 1.7.5 2.5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M4.5 18c1.1-.6 2.4-.6 3.5 0 1.1.6 2.4.6 3.5 0 1.1.6 2.4.6 3.5 0 1.1.6 2.4.6 3.5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <div class="flex-1">
+                  <div class="text-[15px] font-semibold text-white leading-tight">エアコン</div>
+                  <div id="tile-ac-status" class="text-xs text-neutral-400 font-normal mt-0.5 font-num flex items-center space-x-1">
+                    <span>冷房</span>
+                    <span>・</span>
+                    <span>26℃</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 下部操作ボタングループ (オフ、除湿、冷房) -->
+              <div class="grid grid-cols-3 gap-2 pt-0.5" onclick="event.stopPropagation()">
+                <!-- オフボタン -->
+                <button onclick="setAcModeFromTile('off', event)" 
+                        id="tile-ac-btn-off"
+                        class="h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all">
+                  <span class="material-symbols-rounded text-[22px]">power_settings_new</span>
+                </button>
+
+                <!-- 除湿ボタン -->
+                <button onclick="setAcModeFromTile('dry', event)" 
+                        id="tile-ac-btn-dry"
+                        class="h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-300 hover:text-white transition-all">
+                  <span class="material-symbols-rounded symbol-fill text-[22px]">water_drop</span>
+                </button>
+
+                <!-- 冷房ボタン -->
+                <button onclick="setAcModeFromTile('cool', event)" 
+                        id="tile-ac-btn-cool"
+                        class="h-11 rounded-2xl bg-[#253546] hover:bg-[#2e4156] text-[#2196f3] flex items-center justify-center transition-all">
+                  <span class="material-symbols-rounded text-[22px]">ac_unit</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- ヒータータイル (アイコンタップでオン/オフ、それ以外の部分で詳細シートへ) -->
+            <div onclick="openSheet('heater-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]">
+              
+              <!-- ヒーター固定アイコン (色だけでオン/オフ表現) -->
+              <button onclick="toggleHeaterFromTile(event)"
+                      id="tile-heater-icon-wrap" 
+                      class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+                      aria-label="ヒーターのオン/オフ切り替え">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4 6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h1v1a1 1 0 0 0 2 0v-1h10v1a1 1 0 0 0 2 0v-1h1c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2H4zm0 2h16v9H4V8z"/>
+                  <rect x="6" y="10" width="2" height="5" rx="1"/>
+                  <rect x="9.5" y="10" width="2" height="5" rx="1"/>
+                  <rect x="13" y="10" width="2" height="5" rx="1"/>
+                  <rect x="16.5" y="10" width="2" height="5" rx="1"/>
+                </svg>
+              </button>
+
+              <!-- テキスト -->
+              <div class="flex-1">
+                <div class="text-[15px] font-semibold text-white leading-tight">ヒーター</div>
+                <div id="tile-heater-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">オフ</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- セクション: 掃除 -->
+        <section class="space-y-3">
+          <h2 class="text-base font-bold text-white px-1">掃除</h2>
+          
+          <div class="flex flex-col gap-3.5">
+            <!-- クリーナータイル (アイコンタップで開始/停止トグル、それ以外の部分で詳細シートへ) -->
+            <div onclick="openSheet('cleaner-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]">
+              
+              <!-- 上部情報 (ロボット掃除機アイコン ＆ タイトル・ステータス) -->
+              <div class="flex items-center space-x-3.5">
+                <!-- クリーナー固定アイコン (タップで開始/停止トグル) -->
+                <button onclick="toggleCleanerPowerFromTile(event)"
+                        id="tile-cleaner-icon-wrap" 
+                        class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+                        aria-label="クリーナーの開始/停止切り替え">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.2A8.2 8.2 0 1 1 20.2 12 8.21 8.21 0 0 1 12 20.2z"/>
+                    <path d="M4.8 9.2a8 8 0 0 1 14.4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="12" cy="6.2" r="1.4"/>
+                    <circle cx="12" cy="13.5" r="2.6"/>
+                    <circle cx="12" cy="13.5" r="1.1" fill="#1c1e23"/>
+                  </svg>
+                </button>
+                <div class="flex-1">
+                  <div class="text-[15px] font-semibold text-white leading-tight">クリーナー</div>
+                  <div id="tile-cleaner-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">充電中</div>
+                </div>
+              </div>
+
+              <!-- 下部操作ボタングループ (起動、一時停止、停止) -->
+              <div class="grid grid-cols-3 gap-2 pt-0.5" onclick="event.stopPropagation()">
+                <!-- 起動ボタン -->
+                <button onclick="setCleanerModeFromTile('start', event)" 
+                        id="tile-cleaner-btn-start"
+                        class="h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95"
+                        aria-label="起動">
+                  <span class="material-symbols-rounded text-[22px]">play_arrow</span>
+                </button>
+
+                <!-- 一時停止ボタン -->
+                <button onclick="setCleanerModeFromTile('pause', event)" 
+                        id="tile-cleaner-btn-pause"
+                        class="h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95"
+                        aria-label="一時停止">
+                  <span class="material-symbols-rounded text-[22px]">pause</span>
+                </button>
+
+                <!-- 停止ボタン (充電台へ帰還) -->
+                <button onclick="setCleanerModeFromTile('stop', event)" 
+                        id="tile-cleaner-btn-stop"
+                        class="h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95"
+                        aria-label="停止">
+                  <span class="material-symbols-rounded text-[22px]">home</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- ======================================================================= -->
+      <!-- タブ2：オートメーション                                                 -->
+      <!-- ======================================================================= -->
+      <div id="view-automations" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <h2 class="text-base font-bold text-white px-1">オートメーション</h2>
+        <div class="bg-[#1c1e23] border border-white/[0.04] rounded-3xl p-10 flex flex-col items-center justify-center text-center space-y-3">
+          <div class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-sky-400">
+            <span class="material-symbols-rounded text-3xl">bolt</span>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-base font-semibold text-white">オートメーション機能</h3>
+            <p class="text-xs text-neutral-400 max-w-sm">時間やセンサーのトリガーに応じた自動操作ルールの設定・管理に対応予定です。</p>
+          </div>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">準備中</span>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- タブ3：シーン                                                           -->
+      <!-- ======================================================================= -->
+      <div id="view-scenes" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <h2 class="text-base font-bold text-white px-1">シーン</h2>
+        <div class="bg-[#1c1e23] border border-white/[0.04] rounded-3xl p-10 flex flex-col items-center justify-center text-center space-y-3">
+          <div class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-purple-400">
+            <span class="material-symbols-rounded text-3xl">palette</span>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-base font-semibold text-white">シーン一括操作</h3>
+            <p class="text-xs text-neutral-400 max-w-sm">「帰宅時」「就寝時」など複数デバイスをワンタップでまとめて操作するプリセットを作成できます。</p>
+          </div>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">準備中</span>
+        </div>
+      </div>
+
+      <!-- ======================================================================= -->
+      <!-- タブ4：データ                                                           -->
+      <!-- ======================================================================= -->
+      <div id="view-data" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+        <h2 class="text-base font-bold text-white px-1">データ</h2>
+        <div class="bg-[#1c1e23] border border-white/[0.04] rounded-3xl p-10 flex flex-col items-center justify-center text-center space-y-3">
+          <div class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-emerald-400">
+            <span class="material-symbols-rounded text-3xl">insights</span>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-base font-semibold text-white">電力・稼働ログ分析</h3>
+            <p class="text-xs text-neutral-400 max-w-sm">各スマート家電の消費電力推移や温湿度ログ、稼働履歴のグラフ表示に対応予定です。</p>
+          </div>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">準備中</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- モバイル用ボトムナビゲーションバー (Google Home / Material 3 スタイル)    -->
+  <!-- ======================================================================= -->
+  <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#16181d]/95 backdrop-blur-md px-3 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-white/[0.04] select-none">
+    <div class="grid grid-cols-4 items-center max-w-md mx-auto">
+      
+      <!-- ダッシュボード -->
+      <button onclick="switchTab('dashboard')" id="bottom-nav-dashboard"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-[#2196f3]">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-[#253546] text-[#2196f3]">
+          <span class="material-symbols-rounded symbol-fill text-[22px]">grid_view</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-semibold mt-1 tracking-tight text-[#2196f3]">ダッシュボード</span>
+      </button>
+
+      <!-- オートメーション -->
+      <button onclick="switchTab('automations')" id="bottom-nav-automations"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
+          <span class="material-symbols-rounded text-[22px]">bolt</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">オートメーション</span>
+      </button>
+
+      <!-- シーン -->
+      <button onclick="switchTab('scenes')" id="bottom-nav-scenes"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
+          <span class="material-symbols-rounded text-[22px]">palette</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">シーン</span>
+      </button>
+
+      <!-- データ -->
+      <button onclick="switchTab('data')" id="bottom-nav-data"
+              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
+        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
+          <span class="material-symbols-rounded text-[22px]">insights</span>
+        </div>
+        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">データ</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- ======================================================================= -->
+  <!-- 画面2：エアコン詳細操作画面 (Bottom Sheet Modal)                         -->
+  <!-- ======================================================================= -->
+  <div id="ac-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-visible shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('ac-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight">エアコン</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央: 蹄型 (Horseshoe) 温度ゲージ & 純白ノブ -->
+      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative py-2">
+        <div class="relative w-72 h-72 sm:w-80 sm:h-80 max-w-[min(20rem,42vh)] max-h-[min(20rem,42vh)] flex items-center justify-center" id="ac-gauge-container">
+          
+          <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) -->
+          <svg id="ac-gauge-svg" class="w-full h-full cursor-pointer touch-none" viewBox="0 0 280 280">
+            <!-- 蹄型 背景トラック -->
+            <path id="ac-track-bg"
+                  d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
+                  fill="none"
+                  stroke="#252830"
+                  stroke-width="24"
+                  stroke-linecap="round" />
+            
+            <!-- アクティブなカラーアーク -->
+            <path id="ac-active-path"
+                  d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
+                  fill="none"
+                  stroke="#2196f3"
+                  stroke-width="24"
+                  stroke-linecap="round"
+                  stroke-dasharray="495"
+                  stroke-dashoffset="165" />
+            
+            <!-- ドラッグ可能なノブ -->
+            <g id="ac-knob-group" class="cursor-grab active:cursor-grabbing">
+              <circle id="ac-knob-hit" cx="214.25" cy="65.75" r="22" fill="transparent" />
+              <circle id="ac-knob"
+                      cx="214.25"
+                      cy="65.75"
+                      r="9.5"
+                      fill="#e2e8f0"
+                      class="drop-shadow-md" />
+            </g>
+          </svg>
+
+          <!-- 円の中央テキスト情報 (冷房 / 26℃) -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none pb-4">
+            <span id="detail-ac-mode-text" class="text-sm font-medium text-neutral-300 mb-1 tracking-wide">冷房</span>
+            <div id="detail-ac-temp-wrap" class="flex items-start justify-center">
+              <span id="detail-ac-temp" class="text-5xl sm:text-6xl font-bold tracking-tight text-white leading-none font-num">26</span>
+              <span id="detail-ac-temp-unit" class="text-2xl font-bold text-neutral-300 ml-1 mt-0.5 font-num">℃</span>
+            </div>
+          </div>
+
+          <!-- 温度調節ボタン (ー / ＋) -->
+          <div class="absolute bottom-1 inset-x-0 flex items-center justify-center space-x-7 z-10">
+            <button onclick="changeAcTemp(-1)" 
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    aria-label="温度を下げる">
+              <span class="material-symbols-rounded text-2xl font-bold">remove</span>
+            </button>
+
+            <button onclick="changeAcTemp(1)" 
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    aria-label="温度を上げる">
+              <span class="material-symbols-rounded text-2xl font-bold">add</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最下部: ドロップアップ切り替えボタン (モード & ファンモード) -->
+      <div class="relative grid grid-cols-2 gap-3 pt-2">
+        
+        <!-- モード ドロップアップ ポップオーバー -->
+        <div id="mode-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-60 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">モード</div>
+          <div class="space-y-0.5">
+            <button onclick="selectAcMode('cool')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-[#2196f3]">
+                <span class="material-symbols-rounded text-xl">ac_unit</span>
+                <span class="text-white">冷房</span>
+              </div>
+              <span id="check-mode-cool" class="text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <button onclick="selectAcMode('dry')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-[#00bcd4]">
+                <span class="material-symbols-rounded symbol-fill text-xl">water_drop</span>
+                <span class="text-white">除湿</span>
+              </div>
+              <span id="check-mode-dry" class="hidden text-[#00bcd4] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <div class="h-px bg-white/10 my-1"></div>
+            <button onclick="selectAcMode('off')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-400">
+                <span class="material-symbols-rounded text-xl">power_settings_new</span>
+                <span class="text-neutral-300">オフ</span>
+              </div>
+              <span id="check-mode-off" class="hidden text-neutral-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- モード トリガーボタン -->
+        <button id="btn-trigger-mode" onclick="toggleDropup('mode-dropup-menu', event)" 
+                class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-colors shadow-sm border border-white/[0.04]">
+          <div id="detail-mode-icon" class="text-[#2196f3] shrink-0 flex items-center justify-center">
+            <span class="material-symbols-rounded text-2xl">ac_unit</span>
+          </div>
+          <div class="overflow-hidden leading-tight flex-1">
+            <div class="text-xs text-neutral-400 font-normal">モード</div>
+            <div id="detail-mode-label" class="text-[14px] font-semibold text-white truncate mt-0.5">冷房</div>
+          </div>
+          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+        </button>
+
+        <!-- ファンモード ドロップアップ ポップオーバー -->
+        <div id="fan-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 right-0 w-60 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">ファンモード</div>
+          <div class="space-y-0.5">
+            <!-- 自動 -->
+            <button onclick="selectFanMode('auto')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-200">
+                <div class="w-5 h-5 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 11a1 1 0 1 0 1 1 1 1 0 0 0-1-1zm0-9a4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 4 0c0 1.5-1.5 2.5-2 3.5v.5h1.5c1.5 0 2.5-1.5 3.5-2a4 4 0 0 0-5-6zm-6 9a2 2 0 0 1 0-4 4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 2 0zm14.5 4h-1.1l-.4 1.2h-1.3l1.8-5h1.4l1.8 5h-1.3zm-.4-1.2l-.4-1.4-.4 1.4zM12 15a4 4 0 0 0 4-4 1 1 0 0 0-2 0 2 2 0 0 1-4 0c0-1.5 1.5-2.5 2-3.5v-.5h-1.5c-1.5 0-2.5 1.5-3.5 2a4 4 0 0 0 5 6z"/>
+                  </svg>
+                </div>
+                <span>自動</span>
+              </div>
+              <span id="check-fan-auto" class="text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <!-- 弱 -->
+            <button onclick="selectFanMode('low')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-200">
+                <div class="w-5 h-5 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="2.5"/>
+                    <path d="M12 4a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0 1.5 1.5 0 0 1 3 0c0 1-1 1.8-1.5 2.5h1.5c1 0 2-1 2.5-2a3.5 3.5 0 0 0-4-4zm-8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 0 3c-1 0-1.8-1-2.5-1.5v1.5c0 1 1 2 2 2.5a3.5 3.5 0 0 0-3-7.5zm8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0-2 0 1.5 1.5 0 0 1-3 0c0-1 1-1.8 1.5-2.5h-1.5c-1 0-2 1-2.5 2a3.5 3.5 0 0 0 4 4z"/>
+                    <rect x="19" y="16" width="3" height="4" rx="1" fill="#38bdf8"/>
+                  </svg>
+                </div>
+                <span>弱</span>
+              </div>
+              <span id="check-fan-low" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <!-- 中 -->
+            <button onclick="selectFanMode('medium')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-200">
+                <div class="w-5 h-5 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="2.5"/>
+                    <path d="M12 4a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0 1.5 1.5 0 0 1 3 0c0 1-1 1.8-1.5 2.5h1.5c1 0 2-1 2.5-2a3.5 3.5 0 0 0-4-4zm-8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 0 3c-1 0-1.8-1-2.5-1.5v1.5c0 1 1 2 2 2.5a3.5 3.5 0 0 0-3-7.5zm8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0-2 0 1.5 1.5 0 0 1-3 0c0-1 1-1.8 1.5-2.5h-1.5c-1 0-2 1-2.5 2a3.5 3.5 0 0 0 4 4z"/>
+                    <rect x="17.5" y="14" width="2.5" height="6" rx="1" fill="#38bdf8"/>
+                    <rect x="21" y="11" width="2.5" height="9" rx="1" fill="#38bdf8"/>
+                  </svg>
+                </div>
+                <span>中</span>
+              </div>
+              <span id="check-fan-medium" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <!-- 強 -->
+            <button onclick="selectFanMode('high')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-200">
+                <div class="w-5 h-5 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="2.5"/>
+                    <path d="M12 4a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0 1.5 1.5 0 0 1 3 0c0 1-1 1.8-1.5 2.5h1.5c1 0 2-1 2.5-2a3.5 3.5 0 0 0-4-4zm-8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 0 3c-1 0-1.8-1-2.5-1.5v1.5c0 1 1 2 2 2.5a3.5 3.5 0 0 0-3-7.5zm8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0-2 0 1.5 1.5 0 0 1-3 0c0-1 1-1.8 1.5-2.5h-1.5c-1 0-2 1-2.5 2a3.5 3.5 0 0 0 4 4z"/>
+                    <rect x="14" y="16" width="2.5" height="4" rx="1" fill="#38bdf8"/>
+                    <rect x="17.5" y="13" width="2.5" height="7" rx="1" fill="#38bdf8"/>
+                    <rect x="21" y="9" width="2.5" height="11" rx="1" fill="#38bdf8"/>
+                  </svg>
+                </div>
+                <span>強</span>
+              </div>
+              <span id="check-fan-high" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ファンモード トリガーボタン -->
+        <button id="btn-trigger-fan" onclick="toggleDropup('fan-dropup-menu', event)" 
+                class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-colors shadow-sm border border-white/[0.04]">
+          <div id="detail-fan-icon" class="text-neutral-200 shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 11a1 1 0 1 0 1 1 1 1 0 0 0-1-1zm0-9a4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 4 0c0 1.5-1.5 2.5-2 3.5v.5h1.5c1.5 0 2.5-1.5 3.5-2a4 4 0 0 0-5-6zm-6 9a2 2 0 0 1 0-4 4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 2 0zm14.5 4h-1.1l-.4 1.2h-1.3l1.8-5h1.4l1.8 5h-1.3zm-.4-1.2l-.4-1.4-.4 1.4zM12 15a4 4 0 0 0 4-4 1 1 0 0 0-2 0 2 2 0 0 1-4 0c0-1.5 1.5-2.5 2-3.5v-.5h-1.5c-1.5 0-2.5 1.5-3.5 2a4 4 0 0 0 5 6z"/>
+            </svg>
+          </div>
+          <div class="overflow-hidden leading-tight flex-1">
+            <div class="text-xs text-neutral-400 font-normal">ファンモード</div>
+            <div id="detail-fan-label" class="text-[14px] font-semibold text-white truncate mt-0.5">自動</div>
+          </div>
+          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 画面3：ライト詳細操作画面 (Bottom Sheet Modal)                           -->
+  <!-- ======================================================================= -->
+  <div id="light-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-hidden shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('light-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight leading-tight">リビング</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央: オン/オフ表示 ＆ 縦型スイッチスライダー (オフ=○, オン=電源マーク) -->
+      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto py-2">
+        <div id="detail-light-title" class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4 sm:mb-7 transition-all duration-300">オフ</div>
+        
+        <div id="light-slider-container"
+             onclick="toggleLightDetail()" 
+             class="slider-track relative w-32 sm:w-36 h-[260px] sm:h-[300px] max-h-[38vh] bg-[#282b32] rounded-[36px] sm:rounded-[40px] overflow-hidden p-2 cursor-pointer shadow-inner">
+          
+          <div id="light-detail-block" 
+               style="transform: translateY(0);"
+               class="slider-thumb absolute inset-x-2 bottom-2 h-[136px] rounded-[30px] sm:rounded-[32px] bg-[#434752] flex items-center justify-center text-white shadow-md">
+            
+            <div id="light-detail-icon-wrap" class="transition-transform duration-300 flex items-center justify-center">
+              <div class="w-7 h-7 rounded-full border-2 border-neutral-300"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最下部コントロールエリア (1段目: 全灯 & 常夜灯、2段目: 明るさ［ー］［＋］) -->
+      <div class="relative space-y-2.5 pt-1">
+        
+        <!-- 1段目: 全灯 & 常夜灯 (単発トリガーボタン) -->
+        <div class="grid grid-cols-2 gap-3">
+          
+          <!-- 全灯 ボタン (押すだけ) -->
+          <button onclick="pressLightFull()" 
+                  id="btn-light-full"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-light-full-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+              <span class="material-symbols-rounded text-2xl">light_mode</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">全灯</div>
+            </div>
+          </button>
+
+          <!-- 常夜灯 ボタン (押すだけ) -->
+          <button onclick="pressLightNight()" 
+                  id="btn-light-night"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-light-night-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+              <span class="material-symbols-rounded text-2xl">bedtime</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">常夜灯</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- 2段目: 明るさ ［ー］ ［＋］ (数値なしスピンボックス) -->
+        <div class="w-full bg-[#2a2d36] rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm border border-white/[0.04]">
+          <div class="flex items-center space-x-3">
+            <span id="detail-light-brightness-icon" class="material-symbols-rounded text-2xl text-neutral-400 shrink-0 transition-colors">brightness_medium</span>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white">明るさ</div>
+            </div>
+          </div>
+
+          <!-- プラスマイナスボタン (数値なし) -->
+          <div class="flex items-center space-x-2 bg-[#1e2025] p-1 rounded-xl border border-white/5">
+            <button onclick="changeLightBrightness(-1)" 
+                    id="btn-light-brightness-minus"
+                    class="w-9 h-9 rounded-lg bg-[#2b2e37] hover:bg-[#373b46] active:bg-[#404552] flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                    aria-label="明るさを下げる">
+              <span class="material-symbols-rounded text-lg font-bold">remove</span>
+            </button>
+
+            <button onclick="changeLightBrightness(1)" 
+                    id="btn-light-brightness-plus"
+                    class="w-9 h-9 rounded-lg bg-[#2b2e37] hover:bg-[#373b46] active:bg-[#404552] flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                    aria-label="明るさを上げる">
+              <span class="material-symbols-rounded text-lg font-bold">add</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 画面4：ヒーター詳細操作画面 (Bottom Sheet Modal)                         -->
+  <!-- ======================================================================= -->
+  <div id="heater-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-visible shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('heater-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight">ヒーター</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央: 蹄型 (Horseshoe) 温度ゲージ (ノブなし) ＆ 温度調節ボタン -->
+      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative py-2">
+        <div class="relative w-72 h-72 sm:w-80 sm:h-80 max-w-[min(20rem,42vh)] max-h-[min(20rem,42vh)] flex items-center justify-center" id="heater-gauge-container">
+          
+          <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) ※ノブなし・タップ判定なし -->
+          <svg id="heater-gauge-svg" class="w-full h-full select-none pointer-events-none" viewBox="0 0 280 280">
+            <!-- 蹄型 背景トラック -->
+            <path id="heater-track-bg"
+                  d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
+                  fill="none"
+                  stroke="#252830"
+                  stroke-width="24"
+                  stroke-linecap="round" />
+            
+            <!-- アクティブなカラーアーク (ウォームオレンジ) -->
+            <path id="heater-active-path"
+                  d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
+                  fill="none"
+                  stroke="#ea7a1e"
+                  stroke-width="24"
+                  stroke-linecap="round"
+                  stroke-dasharray="495"
+                  stroke-dashoffset="247" />
+          </svg>
+
+          <!-- 円の中央テキスト情報 (暖房 / 22℃ / オフ) -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none pb-4">
+            <span id="detail-heater-mode-text" class="text-sm font-medium text-neutral-300 mb-1 tracking-wide">暖房</span>
+            <div id="detail-heater-temp-wrap" class="flex items-start justify-center">
+              <span id="detail-heater-temp" class="text-5xl sm:text-6xl font-bold tracking-tight text-white leading-none font-num">22</span>
+              <span id="detail-heater-temp-unit" class="text-2xl font-bold text-neutral-300 ml-1 mt-0.5 font-num">℃</span>
+            </div>
+          </div>
+
+          <!-- 温度調節ボタン (ー / ＋) -->
+          <div class="absolute bottom-1 inset-x-0 flex items-center justify-center space-x-7 z-10">
+            <button onclick="changeHeaterTemp(-1)" 
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    aria-label="温度を下げる">
+              <span class="material-symbols-rounded text-2xl font-bold">remove</span>
+            </button>
+
+            <button onclick="changeHeaterTemp(1)" 
+                    class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95"
+                    aria-label="温度を上げる">
+              <span class="material-symbols-rounded text-2xl font-bold">add</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最下部コントロールエリア (1段目: モード、2段目: エコ & パワー) -->
+      <div class="relative space-y-2.5 pt-1">
+        
+        <!-- ヒーター モード ドロップアップ ポップオーバー -->
+        <div id="heater-mode-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">モード</div>
+          <div class="space-y-0.5">
+            <button onclick="selectHeaterMode('heat')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-[#f57c00]">
+                <span class="material-symbols-rounded text-xl">mode_heat</span>
+                <span class="text-white">暖房</span>
+              </div>
+              <span id="check-heater-heat" class="text-[#f57c00] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <div class="h-px bg-white/10 my-1"></div>
+            <button onclick="selectHeaterMode('off')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-400">
+                <span class="material-symbols-rounded text-xl">power_settings_new</span>
+                <span class="text-neutral-300">オフ</span>
+              </div>
+              <span id="check-heater-off" class="hidden text-neutral-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1段目: モード トリガーボタン (フル幅) -->
+        <button id="btn-trigger-heater-mode" onclick="toggleDropup('heater-mode-dropup-menu', event)" 
+                class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-colors shadow-sm border border-white/[0.04]">
+          <div id="detail-heater-mode-icon" class="text-[#f57c00] shrink-0 flex items-center justify-center">
+            <span class="material-symbols-rounded text-2xl">mode_heat</span>
+          </div>
+          <div class="overflow-hidden leading-tight flex-1">
+            <div class="text-xs text-neutral-400 font-normal">モード</div>
+            <div id="detail-heater-mode-label" class="text-[14px] font-semibold text-white truncate mt-0.5">暖房</div>
+          </div>
+          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+        </button>
+
+        <!-- 2段目: エコ & パワー ボタン (横幅半分ずつ) -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- エコ ボタン (押すだけ) -->
+          <button onclick="pressHeaterEco()" 
+                  id="btn-heater-eco"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+            <div id="detail-heater-eco-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+              <span class="material-symbols-rounded text-2xl">eco</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">エコ</div>
+            </div>
+          </button>
+
+          <!-- パワー ボタン (押すだけ) -->
+          <button onclick="pressHeaterPower()" 
+                  id="btn-heater-power"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+            <div id="detail-heater-power-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+              <span class="material-symbols-rounded text-2xl">bolt</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">パワー</div>
+            </div>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 画面5：クリーナー詳細操作画面 (Bottom Sheet Modal)                       -->
+  <!-- ======================================================================= -->
+  <div id="cleaner-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-visible shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('cleaner-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight">クリーナー</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央: ロボット掃除機ステータスビジュアル (大円 ＆ バッテリー ＆ メトリクス) -->
+      <div class="flex-1 min-h-0 flex flex-col items-center justify-center my-auto relative space-y-4 sm:space-y-6 py-2">
+        
+        <!-- 円形ステータスカード (背景色は常に一定) -->
+        <div class="relative w-52 h-52 sm:w-64 sm:h-64 max-w-[min(16rem,34vh)] max-h-[min(16rem,34vh)] rounded-full bg-[#262932] border border-white/[0.06] flex flex-col items-center justify-center shadow-2xl overflow-hidden group">
+
+          <!-- ロボット掃除機アイコン (外枠なし、クリーン表示) -->
+          <div id="detail-cleaner-hero-icon" class="relative z-10 text-neutral-400 transition-colors duration-300">
+            <svg class="w-14 h-14 sm:w-16 sm:h-16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.2A8.2 8.2 0 1 1 20.2 12 8.21 8.21 0 0 1 12 20.2z"/>
+              <path d="M4.8 9.2a8 8 0 0 1 14.4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <circle cx="12" cy="6.2" r="1.4"/>
+              <circle cx="12" cy="13.5" r="2.6"/>
+              <circle cx="12" cy="13.5" r="1.1" fill="#1c1e23"/>
+            </svg>
+          </div>
+
+          <!-- 中央ステータステキスト ＆ バッテリー残量 -->
+          <div class="relative z-10 mt-2 sm:mt-3 text-center space-y-0.5 sm:space-y-1">
+            <div id="detail-cleaner-main-status" class="text-2xl sm:text-3xl font-bold text-white tracking-wide">充電中</div>
+            <div class="flex items-center justify-center space-x-1.5 text-sm font-semibold text-neutral-300 font-num pt-0.5">
+              <span id="detail-cleaner-battery-icon" class="material-symbols-rounded text-base text-sky-400">battery_charging_full</span>
+              <span id="detail-cleaner-battery-text">66%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3つの情報チップス (時間、面積、モップ) - コンパクト表示 -->
+        <div class="grid grid-cols-3 gap-2.5 w-full max-w-xs">
+          <!-- 清掃時間 -->
+          <div class="bg-[#22252c]/90 border border-white/[0.03] rounded-xl py-2 px-2 text-center shadow-sm">
+            <div class="text-[10px] text-neutral-400 font-normal">清掃時間</div>
+            <div id="detail-cleaner-stat-time" class="text-sm font-bold text-neutral-200 font-num mt-0.5">--<span class="text-[11px] font-normal text-neutral-400 ml-0.5">分</span></div>
+          </div>
+
+          <!-- 清掃面積 -->
+          <div class="bg-[#22252c]/90 border border-white/[0.03] rounded-xl py-2 px-2 text-center shadow-sm">
+            <div class="text-[10px] text-neutral-400 font-normal">清掃面積</div>
+            <div id="detail-cleaner-stat-area" class="text-sm font-bold text-neutral-200 font-num mt-0.5">--<span class="text-[11px] font-normal text-neutral-400 ml-0.5">㎡</span></div>
+          </div>
+
+          <!-- モップ状態 -->
+          <div class="bg-[#22252c]/90 border border-white/[0.03] rounded-xl py-2 px-2 text-center shadow-sm">
+            <div class="text-[10px] text-neutral-400 font-normal">モップ</div>
+            <div id="detail-cleaner-stat-mop" class="text-sm font-bold text-neutral-300 mt-0.5">未装着</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 最下部コントロールエリア (他シートと完全統一されたサイズ・スタイル) -->
+      <div class="relative space-y-2.5 pt-1">
+        
+        <!-- 1段目: 操作ボタングループ (起動、一時停止、停止・帰還 - 吸引力ボタンと高さを完全一致) -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- 起動ボタン -->
+          <button onclick="setCleanerModeFromTile('start', event)" 
+                  id="detail-cleaner-btn-start"
+                  class="h-[58px] rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95 shadow-sm border border-white/[0.04]"
+                  aria-label="起動">
+            <span class="material-symbols-rounded text-[24px]">play_arrow</span>
+          </button>
+
+          <!-- 一時停止ボタン -->
+          <button onclick="setCleanerModeFromTile('pause', event)" 
+                  id="detail-cleaner-btn-pause"
+                  class="h-[58px] rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95 shadow-sm border border-white/[0.04]"
+                  aria-label="一時停止">
+            <span class="material-symbols-rounded text-[24px]">pause</span>
+          </button>
+
+          <!-- 停止ボタン (充電台へ帰還) -->
+          <button onclick="setCleanerModeFromTile('stop', event)" 
+                  id="detail-cleaner-btn-stop"
+                  class="h-[58px] rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95 shadow-sm border border-white/[0.04]"
+                  aria-label="停止">
+            <span class="material-symbols-rounded text-[24px]">home</span>
+          </button>
+        </div>
+
+        <!-- 吸引力 ドロップアップ ポップオーバー (3段階: 標準 / BoostIQ / 最大) -->
+        <div id="cleaner-speed-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">吸引力</div>
+          <div class="space-y-0.5">
+            <button onclick="selectCleanerSpeed('Standard')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-[#2196f3]">
+                <span class="material-symbols-rounded text-xl">air</span>
+                <span class="text-white">標準</span>
+              </div>
+              <span id="check-cleaner-speed-standard" class="text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <button onclick="selectCleanerSpeed('Boost_IQ')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-300">
+                <span class="material-symbols-rounded text-xl">speed</span>
+                <span class="text-white">BoostIQ</span>
+              </div>
+              <span id="check-cleaner-speed-boostiq" class="hidden text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <button onclick="selectCleanerSpeed('Max')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-neutral-300">
+                <span class="material-symbols-rounded text-xl">rocket_launch</span>
+                <span class="text-white">最大</span>
+              </div>
+              <span id="check-cleaner-speed-max" class="hidden text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2段目: 吸引力 & Find Me ボタン (他シートと同一の標準サイズ) -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- 吸引力 ドロップアップ トリガーボタン -->
+          <button id="btn-trigger-cleaner-speed" onclick="toggleDropup('cleaner-speed-dropup-menu', event)" 
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-cleaner-speed-icon" class="text-[#2196f3] shrink-0 flex items-center justify-center">
+              <span class="material-symbols-rounded text-2xl">air</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-xs text-neutral-400 font-normal">吸引力</div>
+              <div id="detail-cleaner-speed-label" class="text-[14px] font-semibold text-white truncate mt-0.5">標準</div>
+            </div>
+            <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          </button>
+
+          <!-- Find Me ボタン (押すだけ、通常色アイコン) -->
+          <button onclick="pressCleanerFindMe()" 
+                  id="btn-cleaner-find-me"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div class="text-neutral-400 shrink-0 flex items-center justify-center">
+              <span class="material-symbols-rounded text-2xl">notifications_active</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">探す</div>
+            </div>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript: アニメーション、ドラッグ操作、状態管理、スムーズな戻るアニメーション -->
+  <script>
+    // 状態管理
+    const state = {
+      acTemp: 26,           // 22℃ 〜 28℃ (整数値)
+      animRatio: (26 - 22) / (28 - 22), // 現在の描画比率 (0.0 〜 1.0)
+      acMode: 'cool',       // 'cool' | 'dry' | 'off'
+      acFan: 'auto',        // 'auto' | 'low' | 'medium' | 'high'
+
+      heaterTemp: 22,                       // 22℃ 〜 28℃ (整数値)
+      heaterAnimRatio: (22 - 22) / (28 - 22),
+      heaterMode: 'off',                    // 'heat' | 'off'
+      heaterEco: false,                     // true | false
+      heaterPower: 2,                       // 1 〜 3 (1: 弱, 2: 中, 3: 強)
+      
+      lightOn: false,
+      lightFull: false,                     // 全灯 (true | false)
+      lightNight: false,                    // 常夜灯 (true | false)
+      lightBrightness: 3,                   // 明るさレベル (1〜5)
+
+      cleanerStatus: 'charging',            // 'running' | 'standby' | 'charging' | 'sleeping' | 'recharge' | 'completed'
+      cleanerPlay: false
+    };
+
+    // ファンモード用の統一アイコン
+    const fanIcons = {
+      auto: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 11a1 1 0 1 0 1 1 1 1 0 0 0-1-1zm0-9a4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 4 0c0 1.5-1.5 2.5-2 3.5v.5h1.5c1.5 0 2.5-1.5 3.5-2a4 4 0 0 0-5-6zm-6 9a2 2 0 0 1 0-4 4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 2 0zm14.5 4h-1.1l-.4 1.2h-1.3l1.8-5h1.4l1.8 5h-1.3zm-.4-1.2l-.4-1.4-.4 1.4zM12 15a4 4 0 0 0 4-4 1 1 0 0 0-2 0 2 2 0 0 1-4 0c0-1.5 1.5-2.5 2-3.5v-.5h-1.5c-1.5 0-2.5 1.5-3.5 2a4 4 0 0 0 5 6z"/></svg>`,
+      low: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2.5"/><path d="M12 4a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0 1.5 1.5 0 0 1 3 0c0 1-1 1.8-1.5 2.5h1.5c1 0 2-1 2.5-2a3.5 3.5 0 0 0-4-4zm-8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 0 3c-1 0-1.8-1-2.5-1.5v1.5c0 1 1 2 2 2.5a3.5 3.5 0 0 0-3-7.5zm8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0-2 0 1.5 1.5 0 0 1-3 0c0-1 1-1.8 1.5-2.5h-1.5c-1 0-2 1-2.5 2a3.5 3.5 0 0 0 4 4z"/><rect x="19" y="16" width="3" height="4" rx="1" fill="#38bdf8"/></svg>`,
+      medium: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2.5"/><path d="M12 4a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0 1.5 1.5 0 0 1 3 0c0 1-1 1.8-1.5 2.5h1.5c1 0 2-1 2.5-2a3.5 3.5 0 0 0-4-4zm-8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 0 3c-1 0-1.8-1-2.5-1.5v1.5c0 1 1 2 2 2.5a3.5 3.5 0 0 0-3-7.5zm8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0-2 0 1.5 1.5 0 0 1-3 0c0-1 1-1.8 1.5-2.5h-1.5c-1 0-2 1-2.5 2a3.5 3.5 0 0 0 4 4z"/><rect x="17.5" y="14" width="2.5" height="6" rx="1" fill="#38bdf8"/><rect x="21" y="11" width="2.5" height="9" rx="1" fill="#38bdf8"/></svg>`,
+      high: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2.5"/><path d="M12 4a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0 1.5 1.5 0 0 1 3 0c0 1-1 1.8-1.5 2.5h1.5c1 0 2-1 2.5-2a3.5 3.5 0 0 0-4-4zm-8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 0 3c-1 0-1.8-1-2.5-1.5v1.5c0 1 1 2 2 2.5a3.5 3.5 0 0 0-3-7.5zm8 8a3.5 3.5 0 0 0 3.5-3.5 1 1 0 0 0-2 0 1.5 1.5 0 0 1-3 0c0-1 1-1.8 1.5-2.5h-1.5c-1 0-2 1-2.5 2a3.5 3.5 0 0 0 4 4z"/><rect x="14" y="16" width="2.5" height="4" rx="1" fill="#38bdf8"/><rect x="17.5" y="13" width="2.5" height="7" rx="1" fill="#38bdf8"/><rect x="21" y="9" width="2.5" height="11" rx="1" fill="#38bdf8"/></svg>`
+    };
+
+    const modeIcons = {
+      cool: `<span class="material-symbols-rounded text-2xl text-sky-400">ac_unit</span>`,
+      dry: `<span class="material-symbols-rounded symbol-fill text-2xl text-cyan-400">water_drop</span>`,
+      off: `<span class="material-symbols-rounded text-2xl text-neutral-400">power_settings_new</span>`
+    };
+
+    let isModalHistoryActive = false;
+
+    /**
+     * タブの切り替え (ダッシュボード / オートメーション / シーン / データ)
+     * サイドバー(デスクトップ)とボトムナビ(モバイル)の両方を同期更新
+     */
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'automations', 'scenes', 'data'];
+
+      // ビューの表示/非表示切り替え
+      tabs.forEach(t => {
+        const viewEl = document.getElementById(`view-${t}`);
+        if (viewEl) {
+          if (t === tabId) {
+            viewEl.classList.remove('hidden');
+            if (t === 'dashboard') {
+              viewEl.classList.add('grid');
+            } else {
+              viewEl.classList.add('block');
+            }
+          } else {
+            viewEl.classList.add('hidden');
+            viewEl.classList.remove('block', 'grid');
+          }
+        }
+
+        // デスクトップ用サイドバーボタンのスタイル切り替え (アイコン ＋ ラベル)
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (navBtn) {
+          const iconSpan = navBtn.querySelector('.material-symbols-rounded');
+          const labelSpan = navBtn.querySelector('span:not(.material-symbols-rounded)');
+          if (t === tabId) {
+            navBtn.className = "nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-[#253546] text-[#2196f3] active:scale-98";
+            if (iconSpan) iconSpan.classList.add('symbol-fill');
+            if (labelSpan) {
+              labelSpan.className = "text-sm font-semibold text-[#2196f3]";
+            }
+          } else {
+            navBtn.className = "nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98";
+            if (iconSpan) iconSpan.classList.remove('symbol-fill');
+            if (labelSpan) {
+              labelSpan.className = "text-sm font-medium text-neutral-400";
+            }
+          }
+        }
+
+        // モバイル用ボトムナビボタンのスタイル切り替え (Google Homeスタイル)
+        const bottomBtn = document.getElementById(`bottom-nav-${t}`);
+        if (bottomBtn) {
+          const iconWrap = bottomBtn.querySelector('.bottom-nav-icon-wrap');
+          const iconSpan = bottomBtn.querySelector('.material-symbols-rounded');
+          const labelSpan = bottomBtn.querySelector('.bottom-nav-label');
+
+          if (t === tabId) {
+            bottomBtn.className = "bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-[#2196f3]";
+            if (iconWrap) {
+              iconWrap.className = "bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-[#253546] text-[#2196f3]";
+            }
+            if (iconSpan) iconSpan.classList.add('symbol-fill');
+            if (labelSpan) {
+              labelSpan.className = "bottom-nav-label text-[11px] font-semibold mt-1 tracking-tight text-[#2196f3]";
+            }
+          } else {
+            bottomBtn.className = "bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200";
+            if (iconWrap) {
+              iconWrap.className = "bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400";
+            }
+            if (iconSpan) iconSpan.classList.remove('symbol-fill');
+            if (labelSpan) {
+              labelSpan.className = "bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400";
+            }
+          }
+        }
+      });
+
+      // モバイル時に上部へスムーズスクロール
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /**
+     * ボトムシート開閉
+     */
+    function openSheet(sheetId) {
+      const sheet = document.getElementById(sheetId);
+      if (!sheet) return;
+      closeAllDropups();
+      
+      sheet.classList.remove('hidden-sheet');
+      sheet.classList.add('visible-sheet');
+      document.body.style.overflow = 'hidden';
+
+      // URLハッシュを変更せず、stateのみプッシュ（OSの左右スライドアニメーションを防止）
+      if (!isModalHistoryActive) {
+        history.pushState({ modalOpen: true, sheetId: sheetId }, '');
+        isModalHistoryActive = true;
+      }
+    }
+
+    /**
+     * ✕ボタンや背景タップで閉じる（下へスライドダウンする自然なアニメーション）
+     */
+    function closeSheet(sheetId) {
+      const sheet = document.getElementById(sheetId);
+      if (sheet) {
+        closeAllDropups();
+        sheet.classList.remove('visible-sheet');
+        sheet.classList.add('hidden-sheet');
+        document.body.style.overflow = '';
+      }
+
+      if (isModalHistoryActive) {
+        isModalHistoryActive = false;
+        history.back();
+      }
+    }
+
+    /**
+     * ブラウザの戻る操作時（✕ボタンと同じく下へスッとスライドダウンして閉じる）
+     */
+    window.addEventListener('popstate', (e) => {
+      closeAllDropups();
+      document.querySelectorAll('.sheet-backdrop.visible-sheet').forEach(sheet => {
+        sheet.classList.remove('visible-sheet');
+        sheet.classList.add('hidden-sheet');
+      });
+      document.body.style.overflow = '';
+      isModalHistoryActive = false;
+    });
+
+    // 背景クリックでシートを閉じる
+    document.querySelectorAll('.sheet-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          closeSheet(backdrop.id);
+        }
+      });
+    });
+
+    /**
+     * ドロップアップの開閉管理
+     */
+    function toggleDropup(menuId, event) {
+      if (event) event.stopPropagation();
+      const targetMenu = document.getElementById(menuId);
+      const isOpen = targetMenu.classList.contains('open');
+      
+      closeAllDropups();
+      if (!isOpen) {
+        targetMenu.classList.remove('closed');
+        targetMenu.classList.add('open');
+      }
+    }
+
+    function closeAllDropups() {
+      document.querySelectorAll('.dropup-menu').forEach(menu => {
+        menu.classList.remove('open');
+        menu.classList.add('closed');
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropup-menu') && 
+          !e.target.closest('#btn-trigger-mode') && 
+          !e.target.closest('#btn-trigger-fan') &&
+          !e.target.closest('#btn-trigger-heater-mode') &&
+          !e.target.closest('#btn-trigger-cleaner-speed')) {
+        closeAllDropups();
+      }
+    });
+
+    /**
+     * 蹄型エアコン温度ゲージの描画
+     */
+    function renderAcGauge(ratio = state.animRatio) {
+      const minTemp = 22;
+      const maxTemp = 28;
+      const totalArcLength = 494.8;
+      
+      const clampedRatio = Math.max(0, Math.min(1, ratio));
+
+      const tempDisplay = document.getElementById('detail-ac-temp');
+      const tempUnit = document.getElementById('detail-ac-temp-unit');
+      const modeText = document.getElementById('detail-ac-mode-text');
+      
+      if (state.acMode === 'off') {
+        if (tempDisplay) {
+          tempDisplay.textContent = 'オフ';
+          tempDisplay.className = "text-5xl font-bold tracking-tight text-white leading-none translate-y-1.5";
+        }
+        if (tempUnit) tempUnit.textContent = '';
+        if (modeText) modeText.textContent = '';
+      } else {
+        const displayedTemp = Math.round(minTemp + clampedRatio * (maxTemp - minTemp));
+        if (tempDisplay) {
+          tempDisplay.textContent = displayedTemp;
+          tempDisplay.className = "text-6xl font-bold tracking-tight text-white leading-none font-num translate-y-0";
+        }
+        if (tempUnit) tempUnit.textContent = '℃';
+        const modeLabels = { cool: '冷房', dry: '除湿' };
+        if (modeText) modeText.textContent = modeLabels[state.acMode] || '冷房';
+      }
+
+      const activePath = document.getElementById('ac-active-path');
+      const knobGroup = document.getElementById('ac-knob-group');
+      if (activePath) {
+        if (state.acMode === 'off') {
+          activePath.style.display = 'none';
+          activePath.setAttribute('stroke-dasharray', `0 ${totalArcLength}`);
+        } else {
+          activePath.style.display = '';
+          const visibleLength = totalArcLength * clampedRatio;
+          activePath.setAttribute('stroke-dasharray', `${visibleLength} ${totalArcLength}`);
+          activePath.setAttribute('stroke-dashoffset', '0');
+          
+          if (state.acMode === 'cool') activePath.setAttribute('stroke', '#2196f3');
+          else if (state.acMode === 'dry') activePath.setAttribute('stroke', '#00bcd4');
+        }
+      }
+
+      if (knobGroup) {
+        knobGroup.style.display = state.acMode === 'off' ? 'none' : '';
+      }
+
+      const startAngle = 135;
+      const currentAngleDeg = startAngle + clampedRatio * 270;
+      const currentAngleRad = currentAngleDeg * (Math.PI / 180);
+
+      const knobX = 140 + 105 * Math.cos(currentAngleRad);
+      const knobY = 140 + 105 * Math.sin(currentAngleRad);
+
+      const knob = document.getElementById('ac-knob');
+      const knobHit = document.getElementById('ac-knob-hit');
+      if (knob) {
+        knob.setAttribute('cx', knobX.toFixed(2));
+        knob.setAttribute('cy', knobY.toFixed(2));
+      }
+      if (knobHit) {
+        knobHit.setAttribute('cx', knobX.toFixed(2));
+        knobHit.setAttribute('cy', knobY.toFixed(2));
+      }
+    }
+
+    /**
+     * 円周に100%沿った滑らかなアニメーション (エアコン)
+     */
+    let gaugeAnimFrame = null;
+    function animateGaugeToRatio(targetRatio, duration = 280) {
+      if (gaugeAnimFrame) cancelAnimationFrame(gaugeAnimFrame);
+      const startRatio = state.animRatio;
+      const diff = targetRatio - startRatio;
+      if (Math.abs(diff) < 0.001) {
+        state.animRatio = targetRatio;
+        renderAcGauge(targetRatio);
+        return;
+      }
+
+      const startTime = performance.now();
+
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        state.animRatio = startRatio + diff * ease;
+        renderAcGauge(state.animRatio);
+
+        if (progress < 1) {
+          gaugeAnimFrame = requestAnimationFrame(step);
+        } else {
+          state.animRatio = targetRatio;
+          renderAcGauge(state.animRatio);
+        }
+      }
+      gaugeAnimFrame = requestAnimationFrame(step);
+    }
+
+    // === SwitchBot バックエンド API 通信 ===
+    const apiBasePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
+    let acSyncTimeout = null;
+
+    function syncAcToBackend() {
+      if (acSyncTimeout) clearTimeout(acSyncTimeout);
+      acSyncTimeout = setTimeout(() => {
+        fetch(`${apiBasePath}/api/ac`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: state.acMode,
+            temp: state.acTemp,
+            fan_mode: state.acFan
+          })
+        })
+        .then(res => res.json())
+        .then(data => console.log('[AC Synced with SwitchBot]', data))
+        .catch(err => console.error('[AC Sync Failed]', err));
+      }, 350);
+    }
+
+    /**
+     * エアコン温度変更 (＋ / ー ボタン)
+     */
+    function changeAcTemp(delta) {
+      if (state.acMode === 'off') {
+        state.acMode = 'cool';
+      }
+
+      const newTemp = Math.min(28, Math.max(22, state.acTemp + delta));
+      state.acTemp = newTemp;
+      updateAcUi();
+      const targetRatio = (newTemp - 22) / (28 - 22);
+      animateGaugeToRatio(targetRatio, 260);
+      syncAcToBackend();
+    }
+
+    /**
+     * ノブ & ゲージのドラッグ・タッチ操作 (エアコン)
+     */
+    const gaugeSvg = document.getElementById('ac-gauge-svg');
+    let isDraggingKnob = false;
+    let currentDragRatio = (26 - 22) / (28 - 22);
+
+    function handlePointerMove(e) {
+      if (!isDraggingKnob) return;
+      
+      const rect = gaugeSvg.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      
+      const x = ((clientX - rect.left) / rect.width) * 280;
+      const y = ((clientY - rect.top) / rect.height) * 280;
+
+      const dx = x - 140;
+      const dy = y - 140;
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      if (angle < 0) angle += 360;
+
+      let mappedAngle;
+      if (angle >= 135) {
+        mappedAngle = angle;
+      } else if (angle <= 45) {
+        mappedAngle = angle + 360;
+      } else {
+        mappedAngle = angle < 90 ? 405 : 135;
+      }
+
+      currentDragRatio = Math.max(0, Math.min(1, (mappedAngle - 135) / 270));
+
+      if (state.acMode === 'off') {
+        state.acMode = 'cool';
+      }
+
+      state.acTemp = Math.round(22 + currentDragRatio * (28 - 22));
+      updateAcTileStatusOnly();
+      state.animRatio = currentDragRatio;
+      renderAcGauge(currentDragRatio);
+    }
+
+    function startDrag(e) {
+      if (gaugeAnimFrame) cancelAnimationFrame(gaugeAnimFrame);
+      isDraggingKnob = true;
+      handlePointerMove(e);
+    }
+
+    function stopDrag() {
+      if (isDraggingKnob) {
+        isDraggingKnob = false;
+        const targetTemp = Math.round(22 + currentDragRatio * (28 - 22));
+        state.acTemp = Math.min(28, Math.max(22, targetTemp));
+        updateAcUi();
+        const snapRatio = (state.acTemp - 22) / (28 - 22);
+        animateGaugeToRatio(snapRatio, 200);
+        syncAcToBackend();
+      }
+    }
+
+    gaugeSvg.addEventListener('pointerdown', (e) => {
+      startDrag(e);
+      gaugeSvg.setPointerCapture(e.pointerId);
+    });
+    gaugeSvg.addEventListener('pointermove', handlePointerMove);
+    gaugeSvg.addEventListener('pointerup', (e) => {
+      stopDrag();
+      try { gaugeSvg.releasePointerCapture(e.pointerId); } catch(err){}
+    });
+    gaugeSvg.addEventListener('pointercancel', stopDrag);
+
+    /**
+     * エアコンのモード選択
+     */
+    function selectAcMode(mode) {
+      state.acMode = mode;
+      closeAllDropups();
+      updateAcUi();
+      syncAcToBackend();
+    }
+
+    function setAcModeFromTile(mode, event) {
+      if (event) event.stopPropagation();
+      state.acMode = mode;
+      updateAcUi();
+      syncAcToBackend();
+    }
+
+    /**
+     * タイルアイコンタップでエアコンの冷房 / オフをトグル
+     */
+    function toggleAcPowerFromTileIcon(event) {
+      if (event) event.stopPropagation();
+      state.acMode = state.acMode === 'off' ? 'cool' : 'off';
+      updateAcUi();
+      syncAcToBackend();
+    }
+
+    /**
+     * ファンモード選択
+     */
+    function selectFanMode(fanMode) {
+      state.acFan = fanMode;
+      closeAllDropups();
+      
+      const fanLabels = { auto: '自動', low: '弱', medium: '中', high: '強' };
+      document.getElementById('detail-fan-label').textContent = fanLabels[fanMode] || '自動';
+
+      const fanIconContainer = document.getElementById('detail-fan-icon');
+      if (fanIconContainer && fanIcons[fanMode]) {
+        fanIconContainer.innerHTML = fanIcons[fanMode];
+      }
+
+      ['auto', 'low', 'medium', 'high'].forEach(f => {
+        const checkEl = document.getElementById(`check-fan-${f}`);
+        if (checkEl) {
+          if (f === fanMode) checkEl.classList.remove('hidden');
+          else checkEl.classList.add('hidden');
+        }
+      });
+      syncAcToBackend();
+    }
+
+    /**
+     * タイルステータステキストのみ更新 (エアコン)
+     */
+    function updateAcTileStatusOnly() {
+      const tileStatus = document.getElementById('tile-ac-status');
+      if (!tileStatus) return;
+      if (state.acMode === 'off') {
+        tileStatus.innerHTML = `<span>オフ</span>`;
+      } else {
+        const modeLabel = state.acMode === 'cool' ? '冷房' : '除湿';
+        tileStatus.innerHTML = `<span>${modeLabel}</span><span>・</span><span>${state.acTemp}℃</span>`;
+      }
+    }
+
+    /**
+     * エアコン UI 全体の同期更新
+     */
+    function updateAcUi() {
+      const mode = state.acMode;
+
+      const btnOff = document.getElementById('tile-ac-btn-off');
+      const btnDry = document.getElementById('tile-ac-btn-dry');
+      const btnCool = document.getElementById('tile-ac-btn-cool');
+      const tileIconWrap = document.getElementById('tile-ac-icon-wrap');
+
+      const defaultBtnClass = "h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all";
+      const activeCoolClass = "h-11 rounded-2xl bg-[#253546] hover:bg-[#2e4156] text-[#2196f3] flex items-center justify-center transition-all";
+      const activeDryClass  = "h-11 rounded-2xl bg-[#213840] hover:bg-[#284550] text-[#00bcd4] flex items-center justify-center transition-all";
+      const activeOffClass  = "h-11 rounded-2xl bg-[#333741] hover:bg-[#3c414d] text-white flex items-center justify-center transition-all";
+
+      btnOff.className = mode === 'off' ? activeOffClass : defaultBtnClass;
+      btnDry.className = mode === 'dry' ? activeDryClass : defaultBtnClass;
+      btnCool.className = mode === 'cool' ? activeCoolClass : defaultBtnClass;
+
+      updateAcTileStatusOnly();
+
+      if (mode === 'off') {
+        tileIconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+      } else if (mode === 'dry') {
+        tileIconWrap.className = "w-11 h-11 rounded-full bg-[#213840] text-[#00bcd4] flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+      } else {
+        tileIconWrap.className = "w-11 h-11 rounded-full bg-[#253546] text-[#2196f3] flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+      }
+
+      const modeLabel = document.getElementById('detail-mode-label');
+      const modeIcon = document.getElementById('detail-mode-icon');
+      const modeNames = { cool: '冷房', dry: '除湿', off: 'オフ' };
+      if (modeLabel) modeLabel.textContent = modeNames[mode] || '冷房';
+
+      if (modeIcon && modeIcons[mode]) {
+        modeIcon.innerHTML = modeIcons[mode];
+      }
+
+      ['cool', 'dry', 'off'].forEach(m => {
+        const checkEl = document.getElementById(`check-mode-${m}`);
+        if (checkEl) {
+          if (m === mode) checkEl.classList.remove('hidden');
+          else checkEl.classList.add('hidden');
+        }
+      });
+
+      renderAcGauge();
+    }
+
+    /* ======================================================================= */
+    /* ヒーター（暖房）関連ロジック                                             */
+    /* ======================================================================= */
+
+    /**
+     * 蹄型ヒーター温度ゲージの描画 (ノブなし・22℃〜28℃)
+     */
+    function renderHeaterGauge(ratio = state.heaterAnimRatio) {
+      const minTemp = 22;
+      const maxTemp = 28;
+      const totalArcLength = 494.8;
+      
+      const clampedRatio = Math.max(0, Math.min(1, ratio));
+
+      const tempDisplay = document.getElementById('detail-heater-temp');
+      const tempUnit = document.getElementById('detail-heater-temp-unit');
+      const modeText = document.getElementById('detail-heater-mode-text');
+      
+      if (state.heaterMode === 'off') {
+        if (tempDisplay) {
+          tempDisplay.textContent = 'オフ';
+          tempDisplay.className = "text-5xl font-bold tracking-tight text-white leading-none translate-y-1.5";
+        }
+        if (tempUnit) tempUnit.textContent = '';
+        if (modeText) modeText.textContent = '';
+      } else {
+        const displayedTemp = Math.round(minTemp + clampedRatio * (maxTemp - minTemp));
+        if (tempDisplay) {
+          tempDisplay.textContent = displayedTemp;
+          tempDisplay.className = "text-6xl font-bold tracking-tight text-white leading-none font-num translate-y-0";
+        }
+        if (tempUnit) tempUnit.textContent = '℃';
+        if (modeText) modeText.textContent = '暖房';
+      }
+
+      const activePath = document.getElementById('heater-active-path');
+      if (activePath) {
+        if (state.heaterMode === 'off') {
+          activePath.style.display = 'none';
+          activePath.setAttribute('stroke-dasharray', `0 ${totalArcLength}`);
+        } else {
+          activePath.style.display = '';
+          const visibleLength = totalArcLength * clampedRatio;
+          activePath.setAttribute('stroke-dasharray', `${visibleLength} ${totalArcLength}`);
+          activePath.setAttribute('stroke-dashoffset', '0');
+          activePath.setAttribute('stroke', '#ea7a1e');
+        }
+      }
+    }
+
+    /**
+     * ヒーターゲージのアニメーション伸縮
+     */
+    let heaterGaugeAnimFrame = null;
+    function animateHeaterGaugeToRatio(targetRatio, duration = 260) {
+      if (heaterGaugeAnimFrame) cancelAnimationFrame(heaterGaugeAnimFrame);
+      const startRatio = state.heaterAnimRatio;
+      const diff = targetRatio - startRatio;
+      if (Math.abs(diff) < 0.001) {
+        state.heaterAnimRatio = targetRatio;
+        renderHeaterGauge(targetRatio);
+        return;
+      }
+
+      const startTime = performance.now();
+
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        state.heaterAnimRatio = startRatio + diff * ease;
+        renderHeaterGauge(state.heaterAnimRatio);
+
+        if (progress < 1) {
+          heaterGaugeAnimFrame = requestAnimationFrame(step);
+        } else {
+          state.heaterAnimRatio = targetRatio;
+          renderHeaterGauge(state.heaterAnimRatio);
+        }
+      }
+      heaterGaugeAnimFrame = requestAnimationFrame(step);
+    }
+
+    /**
+     * ヒーター SwitchBot バックエンド API 通信
+     */
+    function sendHeaterCommand(action, extraParams = {}) {
+      fetch(`${apiBasePath}/api/heater`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, ...extraParams })
+      })
+      .then(res => res.json())
+      .then(data => console.log('[Heater Synced with SwitchBot]', data))
+      .catch(err => console.error('[Heater Sync Failed]', err));
+    }
+
+    /**
+     * ヒーター温度変更 (＋ / ー ボタン)
+     */
+    function changeHeaterTemp(delta) {
+      if (state.heaterMode === 'off') {
+        state.heaterMode = 'heat';
+        sendHeaterCommand('turnOn');
+      }
+
+      const newTemp = Math.min(28, Math.max(22, state.heaterTemp + delta));
+      state.heaterTemp = newTemp;
+      updateHeaterUi();
+      const targetRatio = (newTemp - 22) / (28 - 22);
+      animateHeaterGaugeToRatio(targetRatio, 240);
+      sendHeaterCommand(delta > 0 ? 'plus' : 'minus');
+    }
+
+    /**
+     * ヒーターのモード選択
+     */
+    function selectHeaterMode(mode) {
+      const prevMode = state.heaterMode;
+      state.heaterMode = mode;
+      closeAllDropups();
+      updateHeaterUi();
+      if (prevMode !== mode) {
+        sendHeaterCommand(mode === 'heat' ? 'turnOn' : 'turnOff');
+      }
+    }
+
+    /**
+     * ヒーターエコボタン押下 (SwitchBotの「エコ」コマンドを送信)
+     */
+    function pressHeaterEco() {
+      if (state.heaterMode === 'off') return;
+      sendHeaterCommand('eco');
+    }
+
+    /**
+     * ヒーターパワーボタン押下 (SwitchBotの「パワー」コマンドを送信)
+     */
+    function pressHeaterPower() {
+      if (state.heaterMode === 'off') return;
+      sendHeaterCommand('power');
+    }
+
+    /**
+     * ヒータータイルアイコンからのオン/オフトグル
+     */
+    function toggleHeaterFromTile(event) {
+      if (event) event.stopPropagation();
+      state.heaterMode = state.heaterMode === 'off' ? 'heat' : 'off';
+      updateHeaterUi();
+      sendHeaterCommand(state.heaterMode === 'heat' ? 'turnOn' : 'turnOff');
+    }
+
+    /**
+     * ヒーター UI 全体の同期更新
+     */
+    function updateHeaterUi() {
+      const mode = state.heaterMode;
+      const isOff = mode === 'off';
+
+      // タイル更新
+      const tileStatus = document.getElementById('tile-heater-status');
+      const tileIconWrap = document.getElementById('tile-heater-icon-wrap');
+      if (tileStatus) {
+        if (isOff) {
+          tileStatus.innerHTML = `<span>オフ</span>`;
+        } else {
+          tileStatus.innerHTML = `<span>暖房</span><span>・</span><span>${state.heaterTemp}℃</span>`;
+        }
+      }
+      if (tileIconWrap) {
+        if (isOff) {
+          tileIconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+        } else {
+          tileIconWrap.className = "w-11 h-11 rounded-full bg-[#3a2c24] text-[#ea7a1e] flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+        }
+      }
+
+      // 詳細画面: モードアイコン & ラベル & チェック
+      const heaterModeIcons = {
+        heat: `<span class="material-symbols-rounded text-2xl text-orange-400">mode_heat</span>`,
+        off: `<span class="material-symbols-rounded text-2xl text-neutral-400">power_settings_new</span>`
+      };
+      const heaterModeIcon = document.getElementById('detail-heater-mode-icon');
+      if (heaterModeIcon) {
+        heaterModeIcon.innerHTML = isOff ? heaterModeIcons.off : heaterModeIcons.heat;
+      }
+
+      const modeLabel = document.getElementById('detail-heater-mode-label');
+      if (modeLabel) modeLabel.textContent = isOff ? 'オフ' : '暖房';
+      
+      const checkHeat = document.getElementById('check-heater-heat');
+      const checkOff = document.getElementById('check-heater-off');
+      if (checkHeat) checkHeat.className = isOff ? 'hidden text-orange-400 flex items-center' : 'text-orange-400 flex items-center';
+      if (checkOff) checkOff.className = isOff ? 'text-neutral-400 flex items-center' : 'hidden text-neutral-400 flex items-center';
+
+      // 詳細画面: エコ & パワーボタン（オフ時は無効化）
+      const btnEco = document.getElementById('btn-heater-eco');
+      const btnPower = document.getElementById('btn-heater-power');
+      if (btnEco) btnEco.disabled = isOff;
+      if (btnPower) btnPower.disabled = isOff;
+
+      renderHeaterGauge();
+    }
+
+    /**
+     * ライト SwitchBot バックエンド API 通信
+     */
+    function sendLightCommand(action) {
+      fetch(`${apiBasePath}/api/light`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action })
+      })
+      .then(res => res.json())
+      .then(data => console.log('[Light Synced with SwitchBot]', data))
+      .catch(err => console.error('[Light Sync Failed]', err));
+    }
+
+    /**
+     * ライトタイルからのオン/オフトグル
+     */
+    function toggleLightFromTile(event) {
+      if (event) event.stopPropagation();
+      toggleLightDetail();
+    }
+
+    /**
+     * 全灯ボタン (単発プッシュ: オンにして全灯コマンド送信)
+     */
+    function pressLightFull() {
+      state.lightOn = true;
+      updateLightUi();
+      sendLightCommand('full');
+    }
+
+    /**
+     * 常夜灯ボタン (単発プッシュ: オンにして常夜灯コマンド送信)
+     */
+    function pressLightNight() {
+      state.lightOn = true;
+      updateLightUi();
+      sendLightCommand('night');
+    }
+
+    /**
+     * 明るさ変更 (プラス / マイナス)
+     */
+    function changeLightBrightness(delta) {
+      if (!state.lightOn) return;
+      state.lightBrightness = Math.min(5, Math.max(1, state.lightBrightness + delta));
+      updateLightUi();
+      sendLightCommand(delta > 0 ? 'brightnessUp' : 'brightnessDown');
+    }
+
+    /**
+     * ライト詳細画面の点灯・消灯トグル
+     */
+    function toggleLightDetail() {
+      state.lightOn = !state.lightOn;
+      updateLightUi();
+      sendLightCommand(state.lightOn ? 'turnOn' : 'turnOff');
+    }
+
+    /**
+     * ライト UI 全体の同期更新
+     */
+    function updateLightUi() {
+      const isOn = state.lightOn;
+      const containerEl = document.getElementById('light-slider-container');
+      const blockEl = document.getElementById('light-detail-block');
+      const iconWrap = document.getElementById('light-detail-icon-wrap');
+      const titleEl = document.getElementById('detail-light-title');
+
+      const tileStatus = document.getElementById('tile-light-status');
+      const tileIconWrap = document.getElementById('tile-light-icon-wrap');
+
+      if (isOn) {
+        if (titleEl) titleEl.textContent = 'オン';
+        if (containerEl) containerEl.style.backgroundColor = '#443717';
+        if (blockEl) {
+          blockEl.style.transform = 'translateY(-148px)';
+          blockEl.style.backgroundColor = '#fbc02d';
+          blockEl.style.boxShadow = '0 10px 25px -5px rgba(251, 192, 45, 0.4)';
+        }
+        
+        if (iconWrap) iconWrap.innerHTML = `<span class="material-symbols-rounded text-3xl text-white">power_settings_new</span>`;
+
+        if (tileStatus) tileStatus.textContent = 'オン';
+        if (tileIconWrap) {
+          tileIconWrap.className = "w-11 h-11 rounded-full bg-[#383226] text-amber-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+        }
+      } else {
+        if (titleEl) titleEl.textContent = 'オフ';
+        if (containerEl) containerEl.style.backgroundColor = '#282b32';
+        if (blockEl) {
+          blockEl.style.transform = 'translateY(0)';
+          blockEl.style.backgroundColor = '#434752';
+          blockEl.style.boxShadow = 'none';
+        }
+        
+        if (iconWrap) iconWrap.innerHTML = `<div class="w-7 h-7 rounded-full border-2 border-neutral-300"></div>`;
+
+        if (tileStatus) tileStatus.textContent = 'オフ';
+        if (tileIconWrap) {
+          tileIconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+        }
+      }
+
+      // 詳細画面: 全灯・常夜灯アイコン
+      const fullIcon = document.getElementById('detail-light-full-icon');
+      if (fullIcon) {
+        fullIcon.className = isOn
+          ? "text-amber-400 shrink-0 flex items-center justify-center transition-colors"
+          : "text-neutral-400 shrink-0 flex items-center justify-center transition-colors";
+      }
+
+      const nightIcon = document.getElementById('detail-light-night-icon');
+      if (nightIcon) {
+        nightIcon.className = isOn
+          ? "text-amber-300 shrink-0 flex items-center justify-center transition-colors"
+          : "text-neutral-400 shrink-0 flex items-center justify-center transition-colors";
+      }
+
+      // 詳細画面: 明るさカード (オフ時はボタン無効化)
+      const brightnessIcon = document.getElementById('detail-light-brightness-icon');
+      const btnBrightnessMinus = document.getElementById('btn-light-brightness-minus');
+      const btnBrightnessPlus = document.getElementById('btn-light-brightness-plus');
+
+      if (brightnessIcon) {
+        brightnessIcon.className = isOn
+          ? "material-symbols-rounded text-2xl text-amber-400 shrink-0 transition-colors"
+          : "material-symbols-rounded text-2xl text-neutral-400 shrink-0 transition-colors";
+      }
+      if (btnBrightnessMinus) btnBrightnessMinus.disabled = !isOn;
+      if (btnBrightnessPlus) btnBrightnessPlus.disabled = !isOn;
+    }
+
+    // クリーナー操作 (タイルから起動/一時停止/停止)
+    async function setCleanerModeFromTile(action, event) {
+      if (event) event.stopPropagation();
+
+      // 楽観的UI更新
+      if (action === 'start') {
+        state.cleanerStatus = 'running';
+        state.cleanerPlay = true;
+      } else if (action === 'pause') {
+        state.cleanerStatus = 'standby';
+        state.cleanerPlay = false;
+      } else if (action === 'stop') {
+        state.cleanerStatus = 'recharge';
+        state.cleanerPlay = false;
+      }
+      updateCleanerUi();
+
+      try {
+        const res = await fetch(`${apiBasePath}/api/cleaner`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: action })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.state) {
+            Object.assign(state, data.state);
+            updateCleanerUi();
+          }
+        }
+      } catch (e) {
+        console.error('[Cleaner Control Error]', e);
+      } finally {
+        // 実機が状態変更した後の真のステータスを取得
+        setTimeout(syncCleanerStatus, 1500);
+      }
+    }
+
+    /**
+     * クリーナータイル アイコンクリックで開始/停止をトグル
+     */
+    function toggleCleanerPowerFromTile(event) {
+      if (event) event.stopPropagation();
+      const status = (state.cleanerStatus || '').toLowerCase();
+      const isRunning = status === 'running' && state.cleanerPlay === true;
+      if (isRunning) {
+        setCleanerModeFromTile('stop', event);
+      } else {
+        setCleanerModeFromTile('start', event);
+      }
+    }
+
+    // クリーナーUI更新
+    function updateCleanerUi() {
+      const tileStatus = document.getElementById('tile-cleaner-status');
+      const tileIconWrap = document.getElementById('tile-cleaner-icon-wrap');
+      const btnStart = document.getElementById('tile-cleaner-btn-start');
+      const btnPause = document.getElementById('tile-cleaner-btn-pause');
+      const btnStop = document.getElementById('tile-cleaner-btn-stop');
+
+      const status = (state.cleanerStatus || 'charging').toLowerCase();
+      // 清掃中判定: statusが'running' かつ 帰還中(recharge)や充電中(charging)ではないこと
+      const isRunning = status === 'running' && state.cleanerPlay === true;
+      const isPaused = status === 'standby';
+      const isCharging = status === 'charging';
+      const isRecharging = status === 'recharge';
+      const isCompleted = status === 'completed';
+
+      // ステータス文言
+      let statusText = '待機中';
+      if (isCharging) {
+        statusText = '充電中';
+      } else if (isRecharging) {
+        statusText = '帰還中';
+      } else if (isRunning) {
+        statusText = '清掃中';
+      } else if (isPaused) {
+        statusText = '一時停止中';
+      } else if (isCompleted) {
+        statusText = '充電完了';
+      }
+
+      // タイルステータステキスト
+      if (tileStatus) {
+        tileStatus.textContent = statusText;
+        tileStatus.className = isRunning
+          ? "text-xs text-sky-400 font-normal mt-0.5 transition-colors"
+          : "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
+      }
+
+      // タイル丸アイコン
+      if (tileIconWrap) {
+        tileIconWrap.className = isRunning
+          ? "w-11 h-11 rounded-full bg-[#253546] text-[#2196f3] flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm shrink-0"
+          : "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+      }
+
+      // タイル操作ボタン
+      const neutralBtnClass = "h-11 rounded-2xl bg-[#292c34] hover:bg-[#323640] flex items-center justify-center text-neutral-400 hover:text-white transition-all active:scale-95";
+      const activeStartClass = "h-11 rounded-2xl bg-[#253546] hover:bg-[#2e4156] text-[#2196f3] flex items-center justify-center transition-all active:scale-95";
+      const activePauseClass = "h-11 rounded-2xl bg-[#333741] hover:bg-[#3c414d] text-white flex items-center justify-center transition-all active:scale-95";
+      const activeStopClass  = "h-11 rounded-2xl bg-[#253546] hover:bg-[#2e4156] text-[#2196f3] flex items-center justify-center transition-all active:scale-95";
+
+      if (btnStart) btnStart.className = isRunning ? activeStartClass : neutralBtnClass;
+      if (btnPause) btnPause.className = isPaused ? activePauseClass : neutralBtnClass;
+      if (btnStop) btnStop.className = isRecharging ? activeStopClass : neutralBtnClass;
+
+      // 詳細画面 (cleaner-sheet) UI更新
+      const detailMainStatus = document.getElementById('detail-cleaner-main-status');
+      const detailHeroIcon = document.getElementById('detail-cleaner-hero-icon');
+      const detailBatteryIcon = document.getElementById('detail-cleaner-battery-icon');
+
+      if (detailMainStatus) detailMainStatus.textContent = statusText;
+
+      if (detailHeroIcon) {
+        if (isRunning) {
+          // 清掃中: 水色 + うねうね回転
+          detailHeroIcon.className = "relative z-10 text-[#38bdf8] transition-colors duration-300 animate-cleaner-moving";
+        } else if (isRecharging) {
+          // 帰還中: 通常色(グレー) + うねうね回転 (掃除はしていないので水色にしない)
+          detailHeroIcon.className = "relative z-10 text-neutral-400 transition-colors duration-300 animate-cleaner-moving";
+        } else {
+          // 停止中・充電中・一時停止中: 通常色 + 静止
+          detailHeroIcon.className = "relative z-10 text-neutral-400 transition-colors duration-300";
+        }
+      }
+
+      if (detailBatteryIcon) {
+        detailBatteryIcon.textContent = isCharging ? 'battery_charging_full' : 'battery_full';
+        detailBatteryIcon.className = isCharging
+          ? "material-symbols-rounded text-base text-sky-400"
+          : "material-symbols-rounded text-base text-neutral-300";
+      }
+
+      // 詳細画面のメトリクス表示 (清掃中/一時停止中のみ数値表示、充電中/待機中は--)
+      const timeEl = document.getElementById('detail-cleaner-stat-time');
+      const areaEl = document.getElementById('detail-cleaner-stat-area');
+      const mopEl = document.getElementById('detail-cleaner-stat-mop');
+
+      if (timeEl) {
+        if (isRunning || isPaused) {
+          const t = state.cleanerTimeMin !== undefined ? state.cleanerTimeMin : 0;
+          timeEl.innerHTML = `${t}<span class="text-[11px] font-normal text-neutral-400 ml-0.5">分</span>`;
+        } else {
+          timeEl.innerHTML = `--<span class="text-[11px] font-normal text-neutral-400 ml-0.5">分</span>`;
+        }
+      }
+
+      if (areaEl) {
+        if (isRunning || isPaused) {
+          const a = state.cleanerArea !== undefined ? state.cleanerArea : 0;
+          areaEl.innerHTML = `${a}<span class="text-[11px] font-normal text-neutral-400 ml-0.5">㎡</span>`;
+        } else {
+          areaEl.innerHTML = `--<span class="text-[11px] font-normal text-neutral-400 ml-0.5">㎡</span>`;
+        }
+      }
+    }
+
+    /**
+     * 吸引力選択 (ドロップアップ) ＆ 実機へ送信
+     */
+    async function selectCleanerSpeed(speed) {
+      closeAllDropups();
+      state.cleanerSpeed = speed;
+
+      const speedMap = {
+        Standard: '標準',
+        Boost_IQ: 'BoostIQ',
+        Max: '最大'
+      };
+      const speedLabel = document.getElementById('detail-cleaner-speed-label');
+      if (speedLabel) speedLabel.textContent = speedMap[speed] || speed;
+
+      ['standard', 'boostiq', 'max'].forEach(s => {
+        const checkEl = document.getElementById(`check-cleaner-speed-${s}`);
+        if (checkEl) {
+          const match = (s === 'standard' && speed === 'Standard') ||
+                        (s === 'boostiq' && speed === 'Boost_IQ') ||
+                        (s === 'max' && speed === 'Max');
+          if (match) checkEl.classList.remove('hidden');
+          else checkEl.classList.add('hidden');
+        }
+      });
+
+      try {
+        await fetch(`${apiBasePath}/api/cleaner`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'speed', speed: speed })
+        });
+      } catch (e) {
+        console.error('[Cleaner Speed Error]', e);
+      } finally {
+        setTimeout(syncCleanerStatus, 1500);
+      }
+    }
+
+    /**
+     * Find Me ボタン (探す) ＆ 実機へ送信
+     */
+    async function pressCleanerFindMe() {
+      const btn = document.getElementById('btn-cleaner-find-me');
+      if (btn) {
+        btn.classList.add('scale-95');
+        setTimeout(() => btn.classList.remove('scale-95'), 150);
+      }
+
+      try {
+        await fetch(`${apiBasePath}/api/cleaner`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'find_me' })
+        });
+      } catch (e) {
+        console.error('[Cleaner Find Me Error]', e);
+      }
+    }
+
+    // クリーナー実機ステータス同期
+    async function syncCleanerStatus() {
+      try {
+        const res = await fetch(`${apiBasePath}/api/cleaner/status`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            state.cleanerStatus = (data.status || 'charging').toLowerCase();
+            state.cleanerPlay = data.play || false;
+            state.cleanerTimeMin = data.clean_time_min || 0;
+            state.cleanerArea = data.clean_area || 0;
+
+            // バッテリー残量
+            const batteryEl = document.getElementById('detail-cleaner-battery-text');
+            if (batteryEl && data.battery !== undefined) {
+              batteryEl.textContent = `${data.battery}%`;
+            }
+
+            // モップ
+            const mopEl = document.getElementById('detail-cleaner-stat-mop');
+            if (mopEl && data.mop_attached !== undefined) {
+              mopEl.textContent = data.mop_attached ? '装着中' : '未装着';
+              mopEl.className = data.mop_attached ? "text-sm font-bold text-sky-400 mt-0.5" : "text-sm font-bold text-neutral-300 mt-0.5";
+            }
+
+            // 吸引力
+            const speedEl = document.getElementById('detail-cleaner-speed-label');
+            if (speedEl && data.speed) {
+              const speedMap = { Standard: '標準', Boost_IQ: 'BoostIQ', Max: '最大', No_suction: '静音' };
+              speedEl.textContent = speedMap[data.speed] || data.speed;
+            }
+
+            updateCleanerUi();
+          }
+        }
+      } catch (e) {
+        // サイレントキャッチ
+      }
+    }
+
+    // 初期化 & サーバー状態同期
+    async function loadInitialState() {
+      try {
+        const res = await fetch(`${apiBasePath}/api/state`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.state) {
+            Object.assign(state, data.state);
+            state.animRatio = (state.acTemp - 22) / (28 - 22);
+            state.heaterAnimRatio = (state.heaterTemp - 22) / (28 - 22);
+            
+            // ファンモードUIも更新
+            if (state.acFan) {
+              const fanLabels = { auto: '自動', low: '弱', medium: '中', high: '強' };
+              const fanLblEl = document.getElementById('detail-fan-label');
+              if (fanLblEl) fanLblEl.textContent = fanLabels[state.acFan] || '自動';
+              const fanIconContainer = document.getElementById('detail-fan-icon');
+              if (fanIconContainer && fanIcons[state.acFan]) {
+                fanIconContainer.innerHTML = fanIcons[state.acFan];
+              }
+              ['auto', 'low', 'medium', 'high'].forEach(f => {
+                const checkEl = document.getElementById(`check-fan-${f}`);
+                if (checkEl) {
+                  if (f === state.acFan) checkEl.classList.remove('hidden');
+                  else checkEl.classList.add('hidden');
+                }
+              });
+            }
+
+            renderAcGauge();
+            updateAcUi();
+            renderHeaterGauge();
+            updateHeaterUi();
+            updateLightUi();
+            updateCleanerUi();
+          }
+        }
+      } catch (e) {
+        console.warn('[State Load Warning]', e);
+      }
+      // クリーナーの実機ステータスを取得
+      syncCleanerStatus();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAcGauge();
+      updateAcUi();
+      renderHeaterGauge();
+      updateHeaterUi();
+      updateLightUi();
+      updateCleanerUi();
+      loadInitialState();
+
+      // クリーナーの定期状態同期 (10秒ごと)
+      setInterval(syncCleanerStatus, 10000);
+    });
+  </script>
+</body>
+</html>
