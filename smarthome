@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""
+SmartHome CLI Controller
+Usage:
+  smarthome light [on|off|toggle|full|night]
+  smarthome ac [on|off|cool|dry] [temp] [fan_mode]
+  smarthome ac <temp>
+  smarthome heater [on|off|heat|eco|plus|minus] [temp]
+  smarthome cleaner [start|pause|home|stop|speed <mode>|find]
+  smarthome vacuum ... (alias for cleaner)
+  smarthome eufy ...   (alias for cleaner)
+  smarthome status
+  smarthome assistant "<natural language prompt>"
+"""
+
+import sys
+import os
+import json
+import urllib.request
+import urllib.error
+
+DIRECTORY = os.path.dirname(os.path.realpath(__file__))
+STATE_FILE = os.path.join(DIRECTORY, 'state.json')
+CONFIG_FILE = os.path.join(DIRECTORY, 'config.json')
+
+SERVER_URL = "http://127.0.0.1:8080"
+
+def send_api_request(endpoint, data):
+    """serve.pyのAPIにPOSTリクエストを送信して状態更新と家電操作を行う"""
+    try:
+        url = f"{SERVER_URL}{endpoint}"
+        body = json.dumps(data).encode('utf-8')
+        req = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=5) as res:
+            return json.loads(res.read().decode('utf-8'))
+    except Exception as e:
+        return direct_fallback(endpoint, data, e)
+
+def direct_fallback(endpoint, data, original_error):
+    sys.path.insert(0, DIRECTORY)
+    try:
+        import switchbot_client
+        import eufy_client
+        
+        state = {}
+        if os.path.exists(STATE_FILE):
+            try:
+                with open(STATE_FILE, 'r', encoding='utf-8') as f:
+                    state = json.load(f)
+            except Exception:
+                pass
+
+        if endpoint == '/api/light':
+            action = data.get('action', 'toggle')
+            if action in ('on', 'turnOn', 'full', 'night'):
+                state['lightOn'] = True
+            elif action in ('off', 'turnOff'):
+                state['lightOn'] = False
+            elif action == 'toggle':
+                state['lightOn'] = not state.get('lightOn', False)
+                action = 'turnOn' if state['lightOn'] else 'turnOff'
+            switchbot_client.control_light(action)
+            res = {"status": "success", "message": f"Light: {action}", "state": state}
+
+        elif endpoint == '/api/ac':
+            mode = data.get('mode', 'cool')
+            temp = int(data.get('temp', 26))
+            fan = data.get('fan_mode', 'auto')
+            state['acMode'] = mode
+            state['acTemp'] = temp
+            state['acFan'] = fan
+            switchbot_client.control_ac(mode, temp, fan)
+            res = {"status": "success", "message": f"AC: {mode} {temp}C {fan}", "state": state}
+
+        elif endpoint == '/api/heater':
+            action = data.get('action', 'heat')
+            if action in ('on', 'turnOn', 'heat'):
+                state['heaterMode'] = 'heat'
+            elif action in ('off', 'turnOff'):
+                state['heaterMode'] = 'off'
+            switchbot_client.control_heater(action)
+            res = {"status": "success", "message": f"Heater: {action}", "state": state}
+
+        elif endpoint == '/api/cleaner':
+            action = data.get('action', 'start')
+            client = eufy_client.EufyG30Client()
+            if action in ('start', 'play', 'resume'):
+                client.play()
+                state['cleanerStatus'] = 'running'
+            elif action in ('pause',):
+                client.pause()
+                state['cleanerStatus'] = 'standby'
+            elif action in ('stop', 'home', 'dock', 'return'):
+                client.return_to_dock()
+                state['cleanerStatus'] = 'recharge'
+            res = {"status": "success", "message": f"Cleaner: {action}", "state": state}
+        else:
+            res = {"status": "error", "message": str(original_error)}
+
+        with open(STATE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(state, f, indent=2, ensure_ascii=False)
+        return res
+    except Exception as fallback_err:
+        return {"status": "error", "message": f"API and fallback both failed: {original_error} / {fallback_err}"}
+
+def cmd_light(args):
+    action = args[0] if args else 'toggle'
+    if action in ('on', 'turnon', '1'): action = 'on'
+    elif action in ('off', 'turnoff', '0'): action = 'off'
+    elif action in ('full', '100'): action = 'full'
+    elif action in ('night', '常夜灯'): action = 'night'
+    elif action in ('toggle', 't'): action = 'toggle'
+    else:
+        print(f"Unknown light action: {action}")
+        print("Usage: smarthome light [on|off|toggle|full|night]")
+        return False
+
+    res = send_api_request('/api/light', {'action': action})
+    print(f"💡 ライト: {res.get('message', res.get('status'))}")
+    return True
+
+def cmd_ac(args):
+    mode = 'cool'
+    temp = 26
+    fan = 'auto'
+
+    if not args:
+        mode = 'cool'
+    else:
+        for arg in args:
+            arg_lower = arg.lower()
+            if arg_lower in ('off', 'stop', 'turnoff', '0'):
+                mode = 'off'
+            elif arg_lower in ('cool', '冷房'):
+                mode = 'cool'
+            elif arg_lower in ('dry', '除湿'):
+                mode = 'dry'
+            elif arg_lower.isdigit():
+                temp = int(arg_lower)
+            elif arg_lower in ('auto', 'low', 'medium', 'high'):
+                fan = arg_lower
+
+    res = send_api_request('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': fan})
+    if mode == 'off':
+        print(f"❄️ エアコン: オフにしました")
+    else:
+        print(f"❄️ エアコン: {mode.upper()} {temp}℃ (風量: {fan}) に設定しました")
+    return True
+
+def cmd_heater(args):
+    action = args[0] if args else 'heat'
+    temp = 22
+    if len(args) > 1 and args[1].isdigit():
+        temp = int(args[1])
+
+    if action in ('on', 'heat', '暖房', '1'): action = 'heat'
+    elif action in ('off', '0'): action = 'off'
+    elif action in ('eco', 'エコ'): action = 'eco'
+    elif action in ('plus', '+', 'up'): action = 'plus'
+    elif action in ('minus', '-', 'down'): action = 'minus'
+
+    payload = {'action': action}
+    if temp: payload['temp'] = temp
+
+    res = send_api_request('/api/heater', payload)
+    print(f"🔥 ヒーター: {res.get('message', res.get('status'))}")
+    return True
+
+def cmd_cleaner(args):
+    action = args[0] if args else 'start'
+    speed = None
+    if action in ('start', 'run', 'clean', 'play', '掃除'): action = 'start'
+    elif action in ('pause', 'stop_clean', '一時停止'): action = 'pause'
+    elif action in ('home', 'dock', 'return', '充電', '帰還'): action = 'home'
+    elif action in ('speed', 'モード'):
+        action = 'speed'
+        if len(args) > 1: speed = args[1]
+    elif action in ('find', 'beep'): action = 'find_me'
+
+    payload = {'action': action}
+    if speed: payload['speed'] = speed
+
+    res = send_api_request('/api/cleaner', payload)
+    print(f"🤖 ロボット掃除機: {res.get('message', res.get('status'))}")
+    return True
+
+def cmd_status():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, 'r', encoding='utf-8') as f:
+                state = json.load(f)
+            print("=== SmartHome Current State ===")
+            print(f"💡 ライト:       {'ON (' + ('全灯' if state.get('lightFull') else ('常夜灯' if state.get('lightNight') else '点灯')) + ')' if state.get('lightOn') else 'OFF'}")
+            print(f"❄️  エアコン:     {state.get('acMode', 'off').upper()} / {state.get('acTemp', 26)}℃ / 風量:{state.get('acFan', 'auto')}")
+            print(f"🔥 ヒーター:     {state.get('heaterMode', 'off').upper()} / {state.get('heaterTemp', 24)}℃ / ECO:{state.get('heaterEco', False)}")
+            print(f"🤖 掃除機:       {state.get('cleanerStatus', 'standby').upper()}")
+            return
+        except Exception:
+            pass
+    print("状態ファイルが読み込めませんでした。")
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return
+
+    subcmd = sys.argv[1].lower()
+    args = sys.argv[2:]
+
+    if subcmd in ('light', 'l', 'ライト', '照明'):
+        cmd_light(args)
+    elif subcmd in ('ac', 'aircon', 'クーラー', 'エアコン', '冷房'):
+        cmd_ac(args)
+    elif subcmd in ('heater', 'h', 'ヒーター', '暖房'):
+        cmd_heater(args)
+    elif subcmd in ('cleaner', 'vacuum', 'eufy', 'c', 'v', '掃除機', 'ロボット掃除機'):
+        cmd_cleaner(args)
+    elif subcmd in ('status', 'stat', 's', '状態'):
+        cmd_status()
+    elif subcmd in ('assistant', 'ai', 'ask'):
+        prompt = " ".join(args)
+        res = send_api_request('/api/assistant', {'prompt': prompt})
+        print(res.get('message', ''))
+    else:
+        print(f"Unknown command: {subcmd}")
+        print(__doc__)
+
+if __name__ == '__main__':
+    main()
