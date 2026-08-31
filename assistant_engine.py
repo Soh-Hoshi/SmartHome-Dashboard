@@ -8,6 +8,7 @@ Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Local LLM (Qwen 2.5 via O
 import re
 import os
 import json
+import datetime
 import unicodedata
 import urllib.request
 import urllib.error
@@ -48,9 +49,14 @@ def format_standard_message(device, action, params=None):
         return "クリーナーを設定しました。"
     
     elif device == 'scene':
-        if action == 'all_off': return "おやすみなさい。ライトと空調をすべてオフにしました。"
-        if action == 'welcome': return "おかえりなさい。ライトを点灯し、エアコンを冷房26℃で起動しました。"
+        if action == 'goodnight': return "おやすみなさい。ライトと空調をすべてオフにしました。"
+        if action == 'leaving': return "いってらっしゃい。ライトと空調をすべてオフにしました。"
+        if action == 'all_off': return "ライトと空調をすべてオフにしました。"
         if action == 'morning': return "おはようございます。ライトを点灯しました。"
+        if action == 'welcome':
+            light_note = "夜間のためライトを点灯し、" if params.get('light') else ""
+            hvac_note = f"エアコンを冷房{params.get('temp', 26)}℃で起動しました。" if params.get('hvac') == 'ac' else f"ヒーターを暖房{params.get('temp', 22)}℃で起動しました。"
+            return f"おかえりなさい。{light_note}{hvac_note}"
     
     return "操作を完了しました。"
 
@@ -62,6 +68,7 @@ def query_local_llm(prompt_text):
 - ac: {"device": "ac", "mode": "cool"|"dry"|"off", "temp": 22..28, "fan": "auto"}
 - heater: {"device": "heater", "action": "heat"|"off"|"eco", "temp": 22..28}
 - cleaner: {"device": "cleaner", "action": "start"|"pause"|"home"|"find"}
+- scene: {"device": "scene", "action": "morning"|"goodnight"|"leaving"|"welcome"|"all_off"}
 
 重要: 雑談や家電操作と無関係な言葉の場合は {"device": "none"} を出力してください。
 出力形式(JSONのみ):
@@ -88,6 +95,47 @@ def query_local_llm(prompt_text):
     except Exception as e:
         print(f"[Local LLM Fallback Notice] {e}")
         return None
+
+def execute_smart_welcome(send_api_fn=None):
+    """
+    時間帯（日没・夜間）と季節/温度による「ただいま」スマート帰宅シーン
+    - 時間: 16時〜翌7時はライト点灯
+    - 季節/温度: 5月〜10月はエアコン冷房26℃、11月〜4月はヒーター暖房22℃
+    """
+    now = datetime.datetime.now()
+    hour = now.hour
+    month = now.month
+
+    # 1. 時間帯判定 (夜間・夕方・早朝ならライトON)
+    turn_light_on = (hour >= 16 or hour < 7)
+    if turn_light_on and send_api_fn:
+        send_api_fn('/api/light', {'action': 'on'})
+
+    # 2. 季節・空調判定 (夏期は冷房、冬期は暖房)
+    is_summer_season = (5 <= month <= 10)
+    if is_summer_season:
+        hvac_type = 'ac'
+        temp = 26
+        if send_api_fn:
+            send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
+            send_api_fn('/api/heater', {'action': 'off'})
+    else:
+        hvac_type = 'heater'
+        temp = 22
+        if send_api_fn:
+            send_api_fn('/api/heater', {'action': 'heat', 'temp': temp})
+            send_api_fn('/api/ac', {'mode': 'off'})
+
+    msg = format_standard_message('scene', 'welcome', {
+        'light': turn_light_on,
+        'hvac': hvac_type,
+        'temp': temp
+    })
+    return {
+        "success": True,
+        "message": msg,
+        "action": f"welcome_{hvac_type}_{'light' if turn_light_on else 'nolight'}"
+    }
 
 def parse_and_execute(prompt: str, send_api_fn=None):
     """
@@ -154,7 +202,42 @@ def parse_and_execute(prompt: str, send_api_fn=None):
                 pass
         return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}
 
-    # 2. クリーナー / 掃除 (Cleaner)
+    # 2. シーン一括操作 (優先度高)
+    # 2-A. おはよう (リビングのライトをつける)
+    if any(k in text for k in ['おはよう', 'おはよ', '起きた', 'おきた', '朝のシーン', 'morning']):
+        if send_api_fn:
+            send_api_fn('/api/light', {'action': 'on'})
+        return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "scene_morning"}
+
+    # 2-B. おやすみ (ライトを消す + 空調もオフ)
+    if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', 'ベッド', 'goodnight']):
+        if send_api_fn:
+            send_api_fn('/api/light', {'action': 'off'})
+            send_api_fn('/api/ac', {'mode': 'off'})
+            send_api_fn('/api/heater', {'action': 'off'})
+        return {"success": True, "message": format_standard_message('scene', 'goodnight'), "action": "scene_goodnight"}
+
+    # 2-C. 行ってきます (リビングライトと空調全部消す)
+    if any(k in text for k in ['いってきます', '行ってきます', '外出', 'がいしゅつ', '出かける', 'でかける', '家出る', 'leave']):
+        if send_api_fn:
+            send_api_fn('/api/light', {'action': 'off'})
+            send_api_fn('/api/ac', {'mode': 'off'})
+            send_api_fn('/api/heater', {'action': 'off'})
+        return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
+
+    # 2-D. ただいま (時間によりライト点灯 + 温度/季節によりエアコン冷房またはヒーター暖房)
+    if any(k in text for k in ['ただいま', '帰宅', 'きたく', '家着いた', 'ついた', '着いた', '帰った', 'かえった', 'welcome']):
+        return execute_smart_welcome(send_api_fn)
+
+    # 2-E. 全部消して / 全消し
+    if any(k in text for k in ['全部消して', '全消し', 'ぜんぶけして', 'すべて消して', '消灯して', '全部オフ']):
+        if send_api_fn:
+            send_api_fn('/api/light', {'action': 'off'})
+            send_api_fn('/api/ac', {'mode': 'off'})
+            send_api_fn('/api/heater', {'action': 'off'})
+        return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "scene_all_off"}
+
+    # 3. クリーナー / 掃除 (Cleaner)
     if any(k in text for k in ['掃除', 'そうじ', 'クリーナー', 'くりーなー', '掃除機', 'そうじき', 'ルンバ', 'るんば', 'eufy', 'vacuum', 'cleaner']):
         if any(k in text for k in ['帰って', 'かえって', 'おうち', '戻って', 'もどって', '充電', 'じゅうでん', 'ホーム', 'ほーむ', 'ドック', 'どっく', 'dock', 'home', 'やめて', '終了', 'しゅうりょう', '終わり', 'おわり']):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'home'})
@@ -169,7 +252,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'start'})
             return {"success": True, "message": format_standard_message('cleaner', 'start'), "action": "cleaner_start"}
 
-    # 3. ライト / 照明 (Light)
+    # 4. ライト / 照明 (Light)
     if any(k in text for k in ['ライト', 'らいと', '電気', 'でんき', '照明', 'しょうめい', 'あかり', '明かり', 'light']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '消灯', 'しょうとう', '暗く', 'くらく', 'off', '切って', 'きって', '消す', 'けす', '落として', 'おとして']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'off'})
@@ -187,7 +270,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/light', {'action': 'toggle'})
             return {"success": True, "message": format_standard_message('light', 'toggle'), "action": "light_toggle"}
 
-    # 4. エアコン / クーラー / 冷房 / 除湿 (AC)
+    # 5. エアコン / クーラー / 冷房 / 除湿 (AC)
     if any(k in text for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ドライ', 'どらい', 'ac', 'aircon']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す', 'けす']):
             if send_api_fn: send_api_fn('/api/ac', {'mode': 'off'})
@@ -207,7 +290,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         if send_api_fn: send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': 'cool', 'temp': temp}), "action": f"ac_cool_{temp}"}
 
-    # 5. ヒーター / 暖房 (Heater)
+    # 6. ヒーター / 暖房 (Heater)
     if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater', 'heat']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop']):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'off'})
@@ -222,25 +305,6 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'heat', 'temp': temp})
             return {"success": True, "message": format_standard_message('heater', 'heat', {'temp': temp}), "action": f"heater_heat_{temp}"}
 
-    # 6. 一括操作 (シーン / 全消し)
-    if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', '外出', 'がいしゅつ', 'いってきます', '全部消して', '全消し', 'ぜんぶけして', '消灯して']):
-        if send_api_fn:
-            send_api_fn('/api/light', {'action': 'off'})
-            send_api_fn('/api/ac', {'mode': 'off'})
-            send_api_fn('/api/heater', {'action': 'off'})
-        return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "all_off"}
-
-    if any(k in text for k in ['ただいま', '帰宅', 'きたく', 'ついた', '着いた']):
-        if send_api_fn:
-            send_api_fn('/api/light', {'action': 'on'})
-            send_api_fn('/api/ac', {'mode': 'cool', 'temp': 26, 'fan_mode': 'auto'})
-        return {"success": True, "message": format_standard_message('scene', 'welcome'), "action": "welcome"}
-
-    if any(k in text for k in ['おはよう', '起きた', 'おきた']):
-        if send_api_fn:
-            send_api_fn('/api/light', {'action': 'on'})
-        return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "light_on"}
-
     # -------------------------------------------------------------
     # 第2段階：ローカルAI（Qwen 2.5 1.5B）による高度推論フォールバック
     # -------------------------------------------------------------
@@ -248,7 +312,27 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     if llm_res and isinstance(llm_res, dict):
         device = llm_res.get('device')
 
-        if device == 'light':
+        if device == 'scene':
+            act = llm_res.get('action', 'all_off')
+            if act == 'morning':
+                if send_api_fn: send_api_fn('/api/light', {'action': 'on'})
+                return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "scene_morning"}
+            elif act == 'goodnight':
+                if send_api_fn:
+                    send_api_fn('/api/light', {'action': 'off'})
+                    send_api_fn('/api/ac', {'mode': 'off'})
+                    send_api_fn('/api/heater', {'action': 'off'})
+                return {"success": True, "message": format_standard_message('scene', 'goodnight'), "action": "scene_goodnight"}
+            elif act == 'leaving':
+                if send_api_fn:
+                    send_api_fn('/api/light', {'action': 'off'})
+                    send_api_fn('/api/ac', {'mode': 'off'})
+                    send_api_fn('/api/heater', {'action': 'off'})
+                return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
+            elif act == 'welcome':
+                return execute_smart_welcome(send_api_fn)
+
+        elif device == 'light':
             act = llm_res.get('action', 'on')
             if act in ('on', 'off', 'full', 'night', 'toggle'):
                 if send_api_fn: send_api_fn('/api/light', {'action': act})
@@ -282,15 +366,12 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     }
 
 if __name__ == '__main__':
-    import sys
     test_queries = [
-        "やあ",
-        "ありがとう",
-        "テスト",
-        "Nova",
-        "Nova、電気消して",
-        "掃除開始",
-        "今日の天気は？"
+        "おはよう",
+        "おやすみ",
+        "行ってきます",
+        "ただいま",
+        "全部消して"
     ]
     for q in test_queries:
         res = parse_and_execute(q, lambda ep, data: None)

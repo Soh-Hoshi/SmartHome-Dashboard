@@ -423,16 +423,70 @@
       <!-- タブ3：シーン                                                           -->
       <!-- ======================================================================= -->
       <div id="view-scenes" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <h2 class="text-base font-bold text-white px-1">シーン</h2>
-        <div class="bg-[#1c1e23] border border-white/[0.04] rounded-3xl p-10 flex flex-col items-center justify-center text-center space-y-3">
-          <div class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-purple-400">
-            <span class="material-symbols-rounded text-3xl">palette</span>
+        <h2 class="text-base font-bold text-white px-1">シーン一括操作</h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- シーン1: おはよう -->
+          <div onclick="submitAssistantCommand('おはよう')"
+               class="bg-[#1c1e23] hover:bg-[#23262d] active:scale-[0.98] cursor-pointer rounded-3xl p-5 border border-white/[0.04] transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md group">
+            <div class="flex items-center justify-between">
+              <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                <span class="material-symbols-rounded text-2xl">wb_sunny</span>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300">朝</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white mb-1">おはよう</h3>
+              <p class="text-xs text-neutral-400 leading-relaxed">リビングのライトを点灯して快適な朝を迎えます。</p>
+            </div>
           </div>
-          <div class="space-y-1">
-            <h3 class="text-base font-semibold text-white">シーン一括操作</h3>
-            <p class="text-xs text-neutral-400 max-w-sm">「帰宅時」「就寝時」など複数デバイスをワンタップでまとめて操作するプリセットを作成できます。</p>
+
+          <!-- シーン2: おやすみ -->
+          <div onclick="submitAssistantCommand('おやすみ')"
+               class="bg-[#1c1e23] hover:bg-[#23262d] active:scale-[0.98] cursor-pointer rounded-3xl p-5 border border-white/[0.04] transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md group">
+            <div class="flex items-center justify-between">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+                <span class="material-symbols-rounded text-2xl">bedtime</span>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300">就寝</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white mb-1">おやすみ</h3>
+              <p class="text-xs text-neutral-400 leading-relaxed">ライトとすべての空調をオフにして消灯します。</p>
+            </div>
           </div>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">準備中</span>
+
+          <!-- シーン3: 行ってきます -->
+          <div onclick="submitAssistantCommand('行ってきます')"
+               class="bg-[#1c1e23] hover:bg-[#23262d] active:scale-[0.98] cursor-pointer rounded-3xl p-5 border border-white/[0.04] transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md group">
+            <div class="flex items-center justify-between">
+              <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
+                <span class="material-symbols-rounded text-2xl">logout</span>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300">外出</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white mb-1">行ってきます</h3>
+              <p class="text-xs text-neutral-400 leading-relaxed">照明と空調をすべて一括オフにして節電します。</p>
+            </div>
+          </div>
+
+          <!-- シーン4: ただいま (スマート帰宅) -->
+          <div onclick="submitAssistantCommand('ただいま')"
+               class="bg-[#1c1e23] hover:bg-[#23262d] active:scale-[0.98] cursor-pointer rounded-3xl p-5 border border-[#2196f3]/30 hover:border-[#2196f3]/60 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-md group relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <div class="w-12 h-12 rounded-2xl bg-[#2196f3]/15 border border-[#2196f3]/25 flex items-center justify-center text-[#2196f3] group-hover:scale-105 transition-transform">
+                <span class="material-symbols-rounded text-2xl">home</span>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#2196f3]/15 text-sky-300">AIスマート帰宅</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white mb-1">ただいま</h3>
+              <p class="text-xs text-neutral-400 leading-relaxed">夜間はライト点灯、気温・季節に応じて冷房または暖房を自動起動します。</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
