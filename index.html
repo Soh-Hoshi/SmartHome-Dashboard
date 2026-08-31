@@ -489,40 +489,68 @@
           <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- シーン1: おはよう -->
-            <div onclick="submitAssistantCommand('おはよう')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-              <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-                <span class="material-symbols-rounded text-2xl">wb_sunny</span>
+            <!-- シーン1: おはよう (タイルタップでフロー詳細 / 右ボタンで直接実行) -->
+            <div onclick="openSceneFlowSheet('morning')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                  <span class="material-symbols-rounded text-2xl">wb_sunny</span>
+                </div>
+                <div class="text-[15px] font-semibold text-white leading-tight truncate">おはよう</div>
               </div>
-              <div class="text-[15px] font-semibold text-white leading-tight">おはよう</div>
+              <button onclick="runSceneDirectly('おはよう', event)" 
+                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
+                      aria-label="おはようを実行">
+                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+              </button>
             </div>
 
             <!-- シーン2: おやすみ -->
-            <div onclick="submitAssistantCommand('おやすみ')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-              <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-                <span class="material-symbols-rounded text-2xl">bedtime</span>
+            <div onclick="openSceneFlowSheet('goodnight')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                  <span class="material-symbols-rounded text-2xl">bedtime</span>
+                </div>
+                <div class="text-[15px] font-semibold text-white leading-tight truncate">おやすみ</div>
               </div>
-              <div class="text-[15px] font-semibold text-white leading-tight">おやすみ</div>
+              <button onclick="runSceneDirectly('おやすみ', event)" 
+                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
+                      aria-label="おやすみを実行">
+                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+              </button>
             </div>
 
             <!-- シーン3: いってきます -->
-            <div onclick="submitAssistantCommand('いってきます')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-              <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-                <span class="material-symbols-rounded text-2xl">logout</span>
+            <div onclick="openSceneFlowSheet('leaving')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                  <span class="material-symbols-rounded text-2xl">logout</span>
+                </div>
+                <div class="text-[15px] font-semibold text-white leading-tight truncate">いってきます</div>
               </div>
-              <div class="text-[15px] font-semibold text-white leading-tight">いってきます</div>
+              <button onclick="runSceneDirectly('いってきます', event)" 
+                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
+                      aria-label="いってきますを実行">
+                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+              </button>
             </div>
 
             <!-- シーン4: ただいま -->
-            <div onclick="submitAssistantCommand('ただいま')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-              <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-                <span class="material-symbols-rounded text-2xl">home</span>
+            <div onclick="openSceneFlowSheet('welcome')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                  <span class="material-symbols-rounded text-2xl">home</span>
+                </div>
+                <div class="text-[15px] font-semibold text-white leading-tight truncate">ただいま</div>
               </div>
-              <div class="text-[15px] font-semibold text-white leading-tight">ただいま</div>
+              <button onclick="runSceneDirectly('ただいま', event)" 
+                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
+                      aria-label="ただいまを実行">
+                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+              </button>
             </div>
           </div>
         </section>
@@ -1452,6 +1480,45 @@
             <div id="sheet-tile-time" class="text-xs font-bold text-white font-num truncate">--:--:--</div>
           </div>
         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 画面9：シーンアクションフロー詳細画面 (Bottom Sheet Modal)                 -->
+  <!-- ======================================================================= -->
+  <div id="scene-flow-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(640px,calc(100dvh-48px))] sm:min-h-[480px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-y-auto shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-2 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('scene-flow-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <div class="flex items-center space-x-2">
+            <h2 id="sheet-scene-title" class="text-xl font-bold text-white tracking-tight">シーンフロー</h2>
+            <span class="text-[11px] text-neutral-400 font-medium px-2 py-0.5 rounded-full bg-white/[0.05]">フロー</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中央: アクションフロー (ステップ・タイムライン表示) -->
+      <div class="flex-1 overflow-y-auto my-2 py-1 pr-1 space-y-2.5 no-scrollbar" id="sheet-scene-steps-container">
+        <!-- JSで動的にステップ要素を生成 -->
+      </div>
+
+      <!-- 下部: シーン実行ボタン -->
+      <div class="pt-2 shrink-0">
+        <button id="sheet-scene-run-btn" 
+                onclick="runSceneFromSheet()"
+                class="w-full py-3.5 rounded-2xl bg-[#253546] hover:bg-[#2e4156] text-[#2196f3] font-bold text-sm flex items-center justify-center space-x-2 transition-all active:scale-[0.98] border border-[#2196f3]/20 shadow-lg">
+          <span class="material-symbols-rounded text-xl">play_arrow</span>
+          <span id="sheet-scene-run-btn-text">このシーンを実行</span>
+        </button>
       </div>
 
     </div>
@@ -2986,6 +3053,217 @@
         }
       } catch (err) {
         console.warn('[Tile Fetch Error]', err);
+      }
+    }
+
+    // シーンのアクションフロー定義
+    const SCENE_FLOWS = {
+      morning: {
+        title: 'おはよう',
+        command: 'おはよう',
+        steps: [
+          {
+            num: 1,
+            type: '照明制御',
+            title: 'リビングのライトを点灯',
+            desc: '照明を通常点灯にします',
+            icon: 'lightbulb',
+            iconColor: 'text-amber-400',
+            bgColor: 'bg-amber-500/10'
+          },
+          {
+            num: 2,
+            type: '気象センサー',
+            title: '木月の体感温度を取得',
+            desc: 'リアルタイムの外気温・湿度から体感温度を算出',
+            icon: 'thermostat',
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          },
+          {
+            num: 3,
+            type: 'スマート空調',
+            title: '体感温度に応じた快適空調を実行',
+            desc: '24℃以上: エアコン冷房(26℃) / 19℃以下: ヒーター / 快適時: オフ',
+            icon: 'ac_unit',
+            iconColor: 'text-emerald-400',
+            bgColor: 'bg-emerald-500/10'
+          }
+        ]
+      },
+      goodnight: {
+        title: 'おやすみ',
+        command: 'おやすみ',
+        steps: [
+          {
+            num: 1,
+            type: '照明制御',
+            title: 'リビングのライトを消灯',
+            desc: '部屋の照明を完全にオフにします',
+            icon: 'lightbulb',
+            iconColor: 'text-neutral-400',
+            bgColor: 'bg-neutral-500/10'
+          },
+          {
+            num: 2,
+            type: '気象センサー',
+            title: '木月の体感温度を取得',
+            desc: '夜間の体感温度と湿度をチェック',
+            icon: 'thermostat',
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          },
+          {
+            num: 3,
+            type: '就寝空調',
+            title: '就寝環境に合わせた空調を設定',
+            desc: '24℃以上: 就寝冷房(27℃) / 19℃以下: ヒーター / 快適時: オフ',
+            icon: 'bedtime',
+            iconColor: 'text-indigo-400',
+            bgColor: 'bg-indigo-500/10'
+          }
+        ]
+      },
+      leaving: {
+        title: 'いってきます',
+        command: 'いってきます',
+        steps: [
+          {
+            num: 1,
+            type: '照明制御',
+            title: 'リビングのライトを消灯',
+            desc: '消し忘れ防止のため照明をオフにします',
+            icon: 'lightbulb',
+            iconColor: 'text-neutral-400',
+            bgColor: 'bg-neutral-500/10'
+          },
+          {
+            num: 2,
+            type: '空調制御',
+            title: 'エアコンを停止',
+            desc: 'エアコンの電源をオフにします',
+            icon: 'ac_unit',
+            iconColor: 'text-neutral-400',
+            bgColor: 'bg-neutral-500/10'
+          },
+          {
+            num: 3,
+            type: '空調制御',
+            title: 'ヒーターを停止',
+            desc: '暖房の電源をオフにします',
+            icon: 'mode_heat',
+            iconColor: 'text-neutral-400',
+            bgColor: 'bg-neutral-500/10'
+          }
+        ]
+      },
+      welcome: {
+        title: 'ただいま',
+        command: 'ただいま',
+        steps: [
+          {
+            num: 1,
+            type: '日照センサー',
+            title: '木月の日没・日照状態を取得',
+            desc: '現在が日没後（夜間）かどうかを判定',
+            icon: 'wb_twilight',
+            iconColor: 'text-amber-400',
+            bgColor: 'bg-amber-500/10'
+          },
+          {
+            num: 2,
+            type: '照明制御',
+            title: '暗い場合のみライトを自動点灯',
+            desc: '日没後であれば照明をオン、昼間は点灯しません',
+            icon: 'lightbulb',
+            iconColor: 'text-yellow-400',
+            bgColor: 'bg-yellow-500/10'
+          },
+          {
+            num: 3,
+            type: '気象センサー',
+            title: '木月の体感温度を取得',
+            desc: '外気温・湿度から帰宅時の体感温度を判定',
+            icon: 'thermostat',
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          },
+          {
+            num: 4,
+            type: 'スマート空調',
+            title: '体感温度に応じた快適空調を実行',
+            desc: '24℃以上: エアコン冷房(26℃) / 19℃以下: ヒーター / 快適時: オフ',
+            icon: 'ac_unit',
+            iconColor: 'text-emerald-400',
+            bgColor: 'bg-emerald-500/10'
+          }
+        ]
+      }
+    };
+
+    let currentActiveFlowScene = null;
+
+    /**
+     * シーンのアクションフロー詳細シートを開く
+     */
+    function openSceneFlowSheet(sceneKey) {
+      const flow = SCENE_FLOWS[sceneKey];
+      if (!flow) return;
+
+      currentActiveFlowScene = flow;
+
+      const titleEl = document.getElementById('sheet-scene-title');
+      const container = document.getElementById('sheet-scene-steps-container');
+      const btnText = document.getElementById('sheet-scene-run-btn-text');
+
+      if (titleEl) titleEl.textContent = flow.title;
+      if (btnText) btnText.textContent = `「${flow.title}」を実行`;
+
+      if (container) {
+        container.innerHTML = flow.steps.map((step, idx) => {
+          const isLast = idx === flow.steps.length - 1;
+          return `
+            <div class="relative flex items-start space-x-3.5 group">
+              <!-- 左側: ステップ番号 ＆ タイムラインコネクタ -->
+              <div class="flex flex-col items-center shrink-0">
+                <div class="w-9 h-9 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold text-xs border border-white/[0.04] shadow-sm">
+                  <span class="material-symbols-rounded text-lg">${step.icon}</span>
+                </div>
+                ${!isLast ? '<div class="w-0.5 h-6 bg-white/[0.08] my-1 rounded-full"></div>' : ''}
+              </div>
+
+              <!-- 右側: アクションカード -->
+              <div class="flex-1 bg-[#2a2d36] rounded-2xl p-3 border border-white/[0.03] space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-neutral-400 tracking-wider">${step.type}</span>
+                  <span class="text-[10px] text-neutral-400 font-num">Step ${step.num}</span>
+                </div>
+                <div class="text-sm font-semibold text-white leading-snug">${step.title}</div>
+                <div class="text-xs text-neutral-400 leading-relaxed font-normal">${step.desc}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      openSheet('scene-flow-sheet');
+    }
+
+    /**
+     * シーンタイル右端の実行ボタンから直接実行
+     */
+    function runSceneDirectly(commandText, event) {
+      if (event) event.stopPropagation();
+      submitAssistantCommand(commandText);
+    }
+
+    /**
+     * フロー詳細モーダル内の実行ボタンから実行
+     */
+    function runSceneFromSheet() {
+      if (currentActiveFlowScene) {
+        closeSheet('scene-flow-sheet');
+        submitAssistantCommand(currentActiveFlowScene.command);
       }
     }
 
