@@ -1,7 +1,7 @@
 [
   {
     "id": "weekday_morning_light",
-    "name": "平日朝の点灯",
+    "name": "目覚め",
     "category": "デイリー",
     "enabled": true,
     "trigger": {
