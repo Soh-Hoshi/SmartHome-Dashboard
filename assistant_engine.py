@@ -49,7 +49,7 @@ def format_standard_message(device, action, params=None):
         return "クリーナーを設定しました。"
     
     elif device == 'scene':
-        if action == 'goodnight': return "おやすみなさい。ライトと空調をすべてオフにしました。"
+        if action == 'goodnight': return "おやすみなさい。ライトを消灯しました。"
         if action == 'leaving': return "いってらっしゃい。ライトと空調をすべてオフにしました。"
         if action == 'all_off': return "ライトと空調をすべてオフにしました。"
         if action == 'morning': return "おはようございます。ライトを点灯しました。"
@@ -209,12 +209,10 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             send_api_fn('/api/light', {'action': 'on'})
         return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "scene_morning"}
 
-    # 2-B. おやすみ (ライトを消す + 空調もオフ)
+    # 2-B. おやすみ (ライトを消灯)
     if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', 'ベッド', 'goodnight']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
-            send_api_fn('/api/ac', {'mode': 'off'})
-            send_api_fn('/api/heater', {'action': 'off'})
         return {"success": True, "message": format_standard_message('scene', 'goodnight'), "action": "scene_goodnight"}
 
     # 2-C. 行ってきます (リビングライトと空調全部消す)
@@ -320,8 +318,6 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             elif act == 'goodnight':
                 if send_api_fn:
                     send_api_fn('/api/light', {'action': 'off'})
-                    send_api_fn('/api/ac', {'mode': 'off'})
-                    send_api_fn('/api/heater', {'action': 'off'})
                 return {"success": True, "message": format_standard_message('scene', 'goodnight'), "action": "scene_goodnight"}
             elif act == 'leaving':
                 if send_api_fn:
