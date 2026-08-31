@@ -525,7 +525,7 @@
       <!-- コマンド入力フォーム -->
       <input type="text" 
              id="command-search-input" 
-             placeholder="Novaに話しかける... またはコマンドを入力" 
+             placeholder="Novaに話しかける..." 
              class="flex-1 bg-transparent text-[15px] sm:text-base text-white placeholder-neutral-400 focus:outline-none px-1.5 py-1.5 font-normal"
              autocomplete="off" />
 
@@ -2534,7 +2534,7 @@
       if (micBtn) micBtn.classList.remove('voice-listening');
       if (micIcon) micIcon.textContent = 'mic';
       if (cmdBar) cmdBar.classList.remove('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
-      if (inputEl) inputEl.placeholder = 'Novaに話しかける... またはコマンドを入力';
+      if (inputEl) inputEl.placeholder = 'Novaに話しかける...';
     }
 
     window.addEventListener('DOMContentLoaded', () => {

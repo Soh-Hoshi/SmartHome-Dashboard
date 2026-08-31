@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartHome Natural Language Assistant Engine
+SmartHome Natural Language Assistant Engine (Nova)
 Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Local LLM (Qwen 2.5 via Ollama) fallback
 100% Private, Local, Free & Standardized Responses.
 """
@@ -56,13 +56,14 @@ def format_standard_message(device, action, params=None):
 
 def query_local_llm(prompt_text):
     """ローカルOllama (Qwen 2.5 1.5B) で複雑な自然言語コマンドをパース"""
-    system_prompt = """あなたはスマートホームAIです。ユーザーの要望を解釈して以下のJSON形式のみを出力してください。
+    system_prompt = """あなたはスマートホームAI「Nova」です。ユーザーの要望が家電操作に該当する場合のみ以下のJSON形式を出力してください。
 操作可能デバイス:
-- light: {"device": "light", "action": "on"|"off"|"full"|"night"|"toggle"}
-- ac: {"device": "ac", "mode": "cool"|"dry"|"off", "temp": 22..28, "fan": "auto"|"low"|"medium"|"high"}
+- light: {"device": "light", "action": "on"|"off"|"full"|"night"}
+- ac: {"device": "ac", "mode": "cool"|"dry"|"off", "temp": 22..28, "fan": "auto"}
 - heater: {"device": "heater", "action": "heat"|"off"|"eco", "temp": 22..28}
 - cleaner: {"device": "cleaner", "action": "start"|"pause"|"home"|"find"}
 
+重要: 雑談や家電操作と無関係な言葉の場合は {"device": "none"} を出力してください。
 出力形式(JSONのみ):
 {"device": "...", "action": "...", "temp": 24, "mode": "cool"}"""
 
@@ -71,7 +72,7 @@ def query_local_llm(prompt_text):
         'prompt': f"{system_prompt}\nユーザー: {prompt_text}\n出力:",
         'stream': False,
         'format': 'json',
-        'options': {'temperature': 0.1, 'num_predict': 50}
+        'options': {'temperature': 0.1, 'num_predict': 40}
     }
     try:
         req = urllib.request.Request(
@@ -79,7 +80,7 @@ def query_local_llm(prompt_text):
             data=json.dumps(req_data).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        with urllib.request.urlopen(req, timeout=5) as res:
+        with urllib.request.urlopen(req, timeout=4) as res:
             resp_data = json.loads(res.read().decode('utf-8'))
             raw_text = resp_data.get('response', '{}')
             parsed = json.loads(raw_text)
@@ -91,6 +92,7 @@ def query_local_llm(prompt_text):
 def parse_and_execute(prompt: str, send_api_fn=None):
     """
     自然言語プロンプトを解釈し、対応する家電アクションを実行して画一化された応答テキストを返す。
+    誤操作防止ガード付き。
     """
     if not prompt or not prompt.strip():
         return {
@@ -102,16 +104,33 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     # 全角英数→半角正規化、小文字化、前後の空白除去
     text = unicodedata.normalize('NFKC', prompt).strip().lower()
 
-    # 「Nova」「ノバ」「のば」単体で呼ばれた場合
+    # -------------------------------------------------------------
+    # 0. 呼びかけ・挨拶・軽い雑談ガード（家電を一切誤作動させない）
+    # -------------------------------------------------------------
+    # 呼びかけ単体
     if text in ('nova', 'ノバ', 'のば', 'nova!', 'nova?'):
         return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
 
-    # 先頭の「Nova、」「ノバ 」などの呼びかけを除去
-    text = re.sub(r'^(nova|ノバ|のば)[、,\s]*', '', text).strip()
+    # 挨拶・軽い雑談
+    if text in ('やあ', 'やあやあ', 'こんにちは', 'こんばんは', 'どうも', 'ヘイ', 'へい', 'おーい', 'おい', 'hi', 'hello', 'hey'):
+        return {"success": True, "message": "こんにちは！何か操作しますか？", "action": "greeting"}
 
-    # =============================================================
+    if text in ('ありがとう', 'ありがと', 'サンキュー', 'さんきゅー', 'thanks', 'thank you', 'お疲れ', 'おつかれ', '助かった'):
+        return {"success": True, "message": "どういたしまして！", "action": "thanks"}
+
+    if text in ('テスト', 'test', 'てすと', 'チェック', 'あ', 'ああ', 'うん'):
+        return {"success": True, "message": "はい、待機しています。", "action": "test"}
+
+    # 先頭の「Nova、」「ノバ 」などの呼びかけを除去
+    clean_text = re.sub(r'^(nova|ノバ|のば)[、,\s]*', '', text).strip()
+    if not clean_text:
+        return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
+
+    text = clean_text
+
+    # -------------------------------------------------------------
     # 第1段階：ミリ秒レベルの超高速ルールベース（日常の98%を即答）
-    # =============================================================
+    # -------------------------------------------------------------
 
     # 1. 状態確認 (Status)
     if any(k in text for k in ['状態', 'ステータス', 'どうなってる', '今の設定', '確認', 'status', 'じょうたい']):
@@ -135,7 +154,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
                 pass
         return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}
 
-    # 2. クリーナー / 掃除 (Cleaner) - 「掃除開始」「そうじ」「掃除機」等を完全網羅
+    # 2. クリーナー / 掃除 (Cleaner)
     if any(k in text for k in ['掃除', 'そうじ', 'クリーナー', 'くりーなー', '掃除機', 'そうじき', 'ルンバ', 'るんば', 'eufy', 'vacuum', 'cleaner']):
         if any(k in text for k in ['帰って', 'かえって', 'おうち', '戻って', 'もどって', '充電', 'じゅうでん', 'ホーム', 'ほーむ', 'ドック', 'どっく', 'dock', 'home', 'やめて', '終了', 'しゅうりょう', '終わり', 'おわり']):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'home'})
@@ -147,7 +166,6 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'find'})
             return {"success": True, "message": format_standard_message('cleaner', 'find'), "action": "cleaner_find"}
         else:
-            # 「掃除開始」「掃除して」「掃除」「クリーナー起動」など全て開始
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'start'})
             return {"success": True, "message": format_standard_message('cleaner', 'start'), "action": "cleaner_start"}
 
@@ -223,17 +241,18 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             send_api_fn('/api/light', {'action': 'on'})
         return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "light_on"}
 
-    # =============================================================
+    # -------------------------------------------------------------
     # 第2段階：ローカルAI（Qwen 2.5 1.5B）による高度推論フォールバック
-    # =============================================================
+    # -------------------------------------------------------------
     llm_res = query_local_llm(prompt)
     if llm_res and isinstance(llm_res, dict):
         device = llm_res.get('device')
 
         if device == 'light':
-            act = llm_res.get('action', 'toggle')
-            if send_api_fn: send_api_fn('/api/light', {'action': act})
-            return {"success": True, "message": format_standard_message('light', act), "action": f"light_{act}"}
+            act = llm_res.get('action', 'on')
+            if act in ('on', 'off', 'full', 'night', 'toggle'):
+                if send_api_fn: send_api_fn('/api/light', {'action': act})
+                return {"success": True, "message": format_standard_message('light', act), "action": f"light_{act}"}
 
         elif device == 'ac':
             mode = llm_res.get('mode', 'cool')
@@ -253,26 +272,25 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': act})
             return {"success": True, "message": format_standard_message('cleaner', act), "action": f"cleaner_{act}"}
 
-    # =============================================================
-    # 第3段階：解釈不能の場合
-    # =============================================================
+    # -------------------------------------------------------------
+    # 第3段階：解釈不能の場合（家電を動かさず安全に応答）
+    # -------------------------------------------------------------
     return {
         "success": False,
-        "message": f"「{prompt}」に対応する操作が見つかりませんでした。「電気消して」「エアコン25度」「掃除開始」などをお試しください。",
+        "message": f"「{prompt}」に対応する操作が見つかりませんでした。",
         "action": None
     }
 
 if __name__ == '__main__':
     import sys
     test_queries = [
+        "やあ",
+        "ありがとう",
+        "テスト",
+        "Nova",
+        "Nova、電気消して",
         "掃除開始",
-        "そうじして",
-        "掃除機かけて",
-        "部屋の掃除おねがい",
-        "電気けして",
-        "エアコン２４度",
-        "おやすみ",
-        "クリーナー充電戻して"
+        "今日の天気は？"
     ]
     for q in test_queries:
         res = parse_and_execute(q, lambda ep, data: None)
