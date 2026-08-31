@@ -81,6 +81,7 @@ import json
 import switchbot_client
 import eufy_client
 import assistant_engine
+import weather_service
 
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
 
@@ -175,6 +176,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path == '/api/state':
             state = load_state()
             return self.send_json_response({"status": "success", "state": state})
+
+        if clean_path == '/api/weather':
+            data = weather_service.get_weather_data()
+            return self.send_json_response({"status": "success", "weather": data})
 
         if clean_path == '/api/cleaner/status':
             try:
