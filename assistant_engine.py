@@ -108,7 +108,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     # 0. 呼びかけ・挨拶・軽い雑談ガード（家電を一切誤作動させない）
     # -------------------------------------------------------------
     # 呼びかけ単体
-    if text in ('nova', 'ノバ', 'のば', 'nova!', 'nova?'):
+    if text in ('nova', 'ノヴァ', 'ノバ', 'のゔぁ', 'のば', 'nova!', 'nova?', 'ノヴァ！', 'ノヴァ？', 'ノバ！', 'ノバ？'):
         return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
 
     # 挨拶・軽い雑談
@@ -121,8 +121,8 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     if text in ('テスト', 'test', 'てすと', 'チェック', 'あ', 'ああ', 'うん'):
         return {"success": True, "message": "はい、待機しています。", "action": "test"}
 
-    # 先頭の「Nova、」「ノバ 」などの呼びかけを除去
-    clean_text = re.sub(r'^(nova|ノバ|のば)[、,\s]*', '', text).strip()
+    # 先頭の「Nova、」「ノヴァ、」「ノバ 」などの呼びかけを除去
+    clean_text = re.sub(r'^(nova|ノヴァ|ノバ|のゔぁ|のば)[、,\s]*', '', text).strip()
     if not clean_text:
         return {"success": True, "message": "はい、Novaです。何か操作しますか？", "action": "wake"}
 

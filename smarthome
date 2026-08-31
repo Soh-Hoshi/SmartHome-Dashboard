@@ -217,8 +217,10 @@ def main():
         cmd_cleaner(args)
     elif subcmd in ('status', 'stat', 's', '状態'):
         cmd_status()
-    elif subcmd in ('assistant', 'ai', 'ask'):
+    elif subcmd in ('assistant', 'ai', 'ask', 'nova', 'ノヴァ', 'ノバ'):
         prompt = " ".join(args)
+        if not prompt and subcmd in ('nova', 'ノヴァ', 'ノバ'):
+            prompt = subcmd
         res = send_api_request('/api/assistant', {'prompt': prompt})
         print(res.get('message', ''))
     else:
