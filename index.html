@@ -211,13 +211,6 @@
           <span class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0">palette</span>
           <span class="sidebar-label text-sm font-medium text-neutral-400 whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3">シーン</span>
         </button>
-
-        <!-- データ -->
-        <button onclick="switchTab('data')" id="nav-data"
-                class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
-          <span class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0">insights</span>
-          <span class="sidebar-label text-sm font-medium text-neutral-400 whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3">データ</span>
-        </button>
       </nav>
     </aside>
 
@@ -400,6 +393,30 @@
           </div>
         </section>
 
+        <!-- セクション: センサー -->
+        <section class="space-y-3">
+          <h2 class="text-base font-bold text-white px-1">センサー</h2>
+          
+          <div class="flex flex-col gap-3.5">
+            <!-- 気象タイル (タップで詳細シートへ) -->
+            <div onclick="openSheet('weather-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              
+              <!-- 気象アイコン -->
+              <div id="tile-weather-icon-wrap" 
+                   class="w-11 h-11 rounded-full bg-[#272a31] text-sky-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
+                <span id="tile-weather-icon" class="material-symbols-rounded text-2xl">partly_cloudy_day</span>
+              </div>
+
+              <!-- テキスト -->
+              <div class="flex-1 min-w-0">
+                <div class="text-[15px] font-semibold text-white leading-tight">気象</div>
+                <div id="tile-weather-status" class="text-xs text-neutral-400 font-normal mt-0.5 truncate transition-colors">-- / --.-℃</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
       <!-- ======================================================================= -->
@@ -466,59 +483,6 @@
         </div>
       </div>
 
-      <!-- ======================================================================= -->
-      <!-- タブ4：データ (川崎市中原区木月 リアルタイム気象・日照)                     -->
-      <!-- ======================================================================= -->
-      <div id="view-data" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <h2 class="text-base font-bold text-white px-1">川崎市中原区木月 環境・気象データ</h2>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <!-- 外気温 -->
-          <div class="bg-[#1c1e23] rounded-3xl p-4 flex items-center space-x-3.5 border border-white/[0.03] shadow-md">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">thermostat</span>
-            </div>
-            <div>
-              <div class="text-xs text-neutral-400 font-normal">外気温</div>
-              <div id="data-weather-temp" class="text-lg font-bold text-white leading-tight">--.- ℃</div>
-            </div>
-          </div>
-
-          <!-- 天気 & 湿度 -->
-          <div class="bg-[#1c1e23] rounded-3xl p-4 flex items-center space-x-3.5 border border-white/[0.03] shadow-md">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-sky-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">cloud</span>
-            </div>
-            <div>
-              <div class="text-xs text-neutral-400 font-normal">天気 / 湿度</div>
-              <div id="data-weather-condition" class="text-lg font-bold text-white leading-tight">-- (--%)</div>
-            </div>
-          </div>
-
-          <!-- 日の入り (日没) -->
-          <div class="bg-[#1c1e23] rounded-3xl p-4 flex items-center space-x-3.5 border border-white/[0.03] shadow-md">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-orange-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">wb_twilight</span>
-            </div>
-            <div>
-              <div class="text-xs text-neutral-400 font-normal">日の入り (日没)</div>
-              <div id="data-weather-sunset" class="text-lg font-bold text-white leading-tight">--:--</div>
-            </div>
-          </div>
-
-          <!-- 日の出 -->
-          <div class="bg-[#1c1e23] rounded-3xl p-4 flex items-center space-x-3.5 border border-white/[0.03] shadow-md">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-yellow-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">wb_sunny</span>
-            </div>
-            <div>
-              <div class="text-xs text-neutral-400 font-normal">日の出</div>
-              <div id="data-weather-sunrise" class="text-lg font-bold text-white leading-tight">--:--</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -567,7 +531,7 @@
   <!-- モバイル用ボトムナビゲーションバー (Google Home / Material 3 スタイル)    -->
   <!-- ======================================================================= -->
   <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#1c1e23]/95 backdrop-blur-md px-3 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-white/[0.04] select-none">
-    <div class="grid grid-cols-4 items-center max-w-md mx-auto">
+    <div class="grid grid-cols-3 items-center max-w-md mx-auto">
       
       <!-- ダッシュボード -->
       <button onclick="switchTab('dashboard')" id="bottom-nav-dashboard"
@@ -594,15 +558,6 @@
           <span class="material-symbols-rounded text-[22px]">palette</span>
         </div>
         <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">シーン</span>
-      </button>
-
-      <!-- データ -->
-      <button onclick="switchTab('data')" id="bottom-nav-data"
-              class="bottom-nav-btn flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-95 text-neutral-400 hover:text-neutral-200">
-        <div class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-transparent text-neutral-400">
-          <span class="material-symbols-rounded text-[22px]">insights</span>
-        </div>
-        <span class="bottom-nav-label text-[11px] font-medium mt-1 tracking-tight text-neutral-400">データ</span>
       </button>
 
     </div>
@@ -1222,6 +1177,94 @@
     </div>
   </div>
 
+  <!-- ======================================================================= -->
+  <!-- 画面6：気象詳細画面 (Bottom Sheet Modal)                                  -->
+  <!-- ======================================================================= -->
+  <div id="weather-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-y-auto shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('weather-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight">気象情報</h2>
+        </div>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300">中原区木月</span>
+      </div>
+
+      <!-- 中央メインヒーロー: 現在の天気・気温 -->
+      <div class="my-auto py-3 flex flex-col items-center justify-center text-center select-none shrink-0">
+        <div id="sheet-weather-icon-wrap" class="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-sky-400 mb-2 shadow-inner">
+          <span id="sheet-weather-icon" class="material-symbols-rounded text-4xl sm:text-5xl">partly_cloudy_day</span>
+        </div>
+        <div id="sheet-weather-condition" class="text-base sm:text-lg font-bold text-neutral-200 mb-0.5">一部曇り</div>
+        <div class="flex items-start justify-center">
+          <span id="sheet-weather-temp" class="text-5xl sm:text-6xl font-bold tracking-tight text-white leading-none font-num">23.6</span>
+          <span class="text-2xl font-bold text-neutral-400 ml-1 mt-0.5 font-num">℃</span>
+        </div>
+        <div id="sheet-weather-range" class="text-xs text-neutral-400 font-medium mt-2">
+          最高 30.4℃ / 最低 22.9℃ ・ 体感 27.3℃
+        </div>
+      </div>
+
+      <!-- 1日の時間帯別予報 (横スクロール) -->
+      <div class="shrink-0 space-y-1.5 py-1">
+        <div class="text-xs font-bold text-neutral-400 px-1">今日の時間別予報</div>
+        <div id="sheet-weather-hourly" class="flex space-x-2 overflow-x-auto pb-1.5 scrollbar-thin">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <!-- 下部: 環境ステータスグリッド (2x2) -->
+      <div class="grid grid-cols-2 gap-2 pt-1 shrink-0">
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-sky-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">humidity_mid</span>
+          </div>
+          <div>
+            <div class="text-[10px] text-neutral-400 font-normal">湿度</div>
+            <div id="sheet-weather-humidity" class="text-xs sm:text-sm font-bold text-white font-num">85%</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-emerald-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">air</span>
+          </div>
+          <div>
+            <div class="text-[10px] text-neutral-400 font-normal">風速</div>
+            <div id="sheet-weather-wind" class="text-xs sm:text-sm font-bold text-white font-num">4.1 m/s</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-amber-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">wb_twilight</span>
+          </div>
+          <div>
+            <div class="text-[10px] text-neutral-400 font-normal">日の入り (日没)</div>
+            <div id="sheet-weather-sunset" class="text-xs sm:text-sm font-bold text-white font-num">18:09</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-yellow-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">wb_sunny</span>
+          </div>
+          <div>
+            <div class="text-[10px] text-neutral-400 font-normal">日の出</div>
+            <div id="sheet-weather-sunrise" class="text-xs sm:text-sm font-bold text-white font-num">05:13</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- JavaScript: アニメーション、ドラッグ操作、状態管理、スムーズな戻るアニメーション -->
   <script>
     // 状態管理
@@ -1267,7 +1310,7 @@
      * サイドバー(デスクトップ)とボトムナビ(モバイル)の両方を同期更新
      */
     function switchTab(tabId) {
-      const tabs = ['dashboard', 'automations', 'scenes', 'data'];
+      const tabs = ['dashboard', 'automations', 'scenes'];
 
       // ビューの表示/非表示切り替え
       tabs.forEach(t => {
@@ -2612,15 +2655,46 @@
         const data = await res.json();
         if (data.status === 'success' && data.weather) {
           const w = data.weather;
-          const tempEl = document.getElementById('data-weather-temp');
-          const condEl = document.getElementById('data-weather-condition');
-          const sunsetEl = document.getElementById('data-weather-sunset');
-          const sunriseEl = document.getElementById('data-weather-sunrise');
+          
+          // 1. ダッシュボードの気象タイル更新
+          const tileStatus = document.getElementById('tile-weather-status');
+          const tileIcon = document.getElementById('tile-weather-icon');
+          if (tileStatus) tileStatus.textContent = `${w.weather}・${w.temp}℃`;
+          if (tileIcon && w.weather_icon) tileIcon.textContent = w.weather_icon;
 
-          if (tempEl) tempEl.textContent = `${w.temp} ℃`;
-          if (condEl) condEl.textContent = `${w.weather} (${w.humidity}%)`;
-          if (sunsetEl) sunsetEl.textContent = w.sunset;
-          if (sunriseEl) sunriseEl.textContent = w.sunrise;
+          // 2. 気象詳細モーダル更新
+          const sheetIcon = document.getElementById('sheet-weather-icon');
+          const sheetCond = document.getElementById('sheet-weather-condition');
+          const sheetTemp = document.getElementById('sheet-weather-temp');
+          const sheetRange = document.getElementById('sheet-weather-range');
+          const sheetHum = document.getElementById('sheet-weather-humidity');
+          const sheetWind = document.getElementById('sheet-weather-wind');
+          const sheetSunset = document.getElementById('sheet-weather-sunset');
+          const sheetSunrise = document.getElementById('sheet-weather-sunrise');
+
+          if (sheetIcon && w.weather_icon) sheetIcon.textContent = w.weather_icon;
+          if (sheetCond) sheetCond.textContent = w.weather;
+          if (sheetTemp) sheetTemp.textContent = w.temp;
+          if (sheetRange) {
+            sheetRange.textContent = `最高 ${w.temp_max}℃ / 最低 ${w.temp_min}℃ ・ 体感 ${w.feels_like}℃`;
+          }
+          if (sheetHum) sheetHum.textContent = `${w.humidity}%`;
+          if (sheetWind) sheetWind.textContent = `${w.wind_speed} m/s`;
+          if (sheetSunset) sheetSunset.textContent = w.sunset;
+          if (sheetSunrise) sheetSunrise.textContent = w.sunrise;
+
+          // 3. 時間帯別予報の動的生成
+          const hourlyContainer = document.getElementById('sheet-weather-hourly');
+          if (hourlyContainer && Array.isArray(w.hourly) && w.hourly.length > 0) {
+            hourlyContainer.innerHTML = w.hourly.map(h => `
+              <div class="flex flex-col items-center justify-between p-2.5 rounded-2xl bg-[#2a2d36] min-w-[70px] shrink-0 border border-white/[0.03]">
+                <span class="text-[11px] font-medium text-neutral-400 font-num">${h.time}</span>
+                <span class="material-symbols-rounded text-2xl text-sky-400 my-1">${h.icon}</span>
+                <span class="text-xs font-bold text-white font-num">${h.temp}℃</span>
+                <span class="text-[10px] font-normal text-sky-300 font-num mt-0.5">${h.pop}%</span>
+              </div>
+            `).join('');
+          }
         }
       } catch (err) {
         console.warn('[Weather Fetch Error]', err);
