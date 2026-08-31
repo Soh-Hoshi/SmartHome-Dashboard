@@ -407,6 +407,23 @@
           <h2 class="text-base font-bold text-white px-1">センサー</h2>
           
           <div class="flex flex-col gap-3.5">
+            <!-- 鍵（Tile）置き忘れセンサータイル (タップで詳細シートへ) -->
+            <div onclick="openSheet('tile-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              
+              <!-- 鍵アイコン (室内検知時: アンバー警告 / ポスト時: グリーン/グレー) -->
+              <div id="tile-key-icon-wrap" 
+                   class="w-11 h-11 rounded-full bg-[#3d2d1d] text-amber-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
+                <span id="tile-key-icon" class="material-symbols-rounded text-2xl">vpn_key_alert</span>
+              </div>
+
+              <!-- テキスト -->
+              <div class="flex-1 min-w-0">
+                <div class="text-[15px] font-semibold text-white leading-tight">鍵（ポスト）</div>
+                <div id="tile-key-status" class="text-xs text-amber-400 font-normal mt-0.5 truncate transition-colors">室内で検知（注意）</div>
+              </div>
+            </div>
+
             <!-- 在宅状況タイル (タップで詳細シートへ) -->
             <div onclick="openSheet('presence-sheet')" 
                  class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
@@ -1360,6 +1377,82 @@
           <div class="overflow-hidden">
             <div class="text-[10px] text-neutral-400 font-normal">最終検知</div>
             <div id="sheet-presence-time" class="text-xs font-bold text-white font-num truncate">--:--:--</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 画面8：鍵（Tile）置き忘れ詳細画面 (Bottom Sheet Modal)                     -->
+  <!-- ======================================================================= -->
+  <div id="tile-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(640px,calc(100dvh-48px))] sm:min-h-[480px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-y-auto shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('tile-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight">鍵の保管状況</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央メインヒーロー: 室内検知/ポスト保管ステータス -->
+      <div class="my-auto py-6 flex flex-col items-center justify-center text-center select-none shrink-0">
+        <div id="sheet-tile-icon-wrap" class="w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 shadow-inner">
+          <span id="sheet-tile-icon" class="material-symbols-rounded text-5xl">vpn_key_alert</span>
+        </div>
+        <div id="sheet-tile-status" class="text-2xl sm:text-3xl font-bold text-white mb-1">室内で検知</div>
+        <div id="sheet-tile-desc" class="text-xs text-amber-300/90 font-medium max-w-xs leading-relaxed">
+          ⚠️ 鍵が室内に持ち込まれています。外出時の締め出しを防ぐため、ポストに戻してください。
+        </div>
+      </div>
+
+      <!-- 下部: トラッカー詳細グリッド (2x2) -->
+      <div class="grid grid-cols-2 gap-2 pt-1 shrink-0">
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-amber-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">sell</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">タグ種別</div>
+            <div id="sheet-tile-device" class="text-xs font-bold text-white truncate">Tile (Bluetooth)</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-sky-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">network_ping</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">電波強度 (RSSI)</div>
+            <div id="sheet-tile-rssi" class="text-xs font-bold text-white font-num truncate">-63 dBm (室内)</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-purple-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">fingerprint</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">MAC アドレス</div>
+            <div id="sheet-tile-mac" class="text-[10px] font-bold text-white font-num truncate">30:F7:75:1F:0E:20</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-emerald-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">history</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">最終検知</div>
+            <div id="sheet-tile-time" class="text-xs font-bold text-white font-num truncate">--:--:--</div>
           </div>
         </div>
       </div>
@@ -2853,6 +2946,72 @@
       }
     }
 
+    async function fetchTileData() {
+      try {
+        const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
+        const res = await fetch(basePath + '/api/tile');
+        const data = await res.json();
+        if (data.status === 'success' && data.tile) {
+          const t = data.tile;
+          const inHome = t.in_home;
+
+          // 1. ダッシュボードの鍵タイル更新
+          const tileStatus = document.getElementById('tile-key-status');
+          const tileIconWrap = document.getElementById('tile-key-icon-wrap');
+          const tileIcon = document.getElementById('tile-key-icon');
+
+          if (tileStatus) {
+            tileStatus.textContent = inHome ? '室内で検知（注意）' : 'ポスト保管中';
+            tileStatus.className = inHome 
+              ? "text-xs text-amber-400 font-normal mt-0.5 truncate transition-colors font-medium"
+              : "text-xs text-emerald-400 font-normal mt-0.5 truncate transition-colors";
+          }
+          if (tileIconWrap) {
+            tileIconWrap.className = inHome
+              ? "w-11 h-11 rounded-full bg-[#3d2d1d] text-amber-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0"
+              : "w-11 h-11 rounded-full bg-[#1b332b] text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0";
+          }
+          if (tileIcon) {
+            tileIcon.textContent = inHome ? 'vpn_key_alert' : 'key';
+          }
+
+          // 2. 鍵詳細モーダル更新
+          const sheetStatus = document.getElementById('sheet-tile-status');
+          const sheetDesc = document.getElementById('sheet-tile-desc');
+          const sheetIconWrap = document.getElementById('sheet-tile-icon-wrap');
+          const sheetIcon = document.getElementById('sheet-tile-icon');
+          const sheetDevice = document.getElementById('sheet-tile-device');
+          const sheetRssi = document.getElementById('sheet-tile-rssi');
+          const sheetMac = document.getElementById('sheet-tile-mac');
+          const sheetTime = document.getElementById('sheet-tile-time');
+
+          if (sheetStatus) sheetStatus.textContent = inHome ? '室内で検知' : 'ポスト保管中';
+          if (sheetDesc) {
+            sheetDesc.textContent = inHome 
+              ? '⚠️ 鍵が室内に持ち込まれています。外出時の締め出しを防ぐため、ポストに戻してください。'
+              : '鍵はポスト（室外）に保管されています。安心してください。';
+            sheetDesc.className = inHome 
+              ? "text-xs text-amber-300/90 font-medium max-w-xs leading-relaxed"
+              : "text-xs text-emerald-400/90 font-medium max-w-xs leading-relaxed";
+          }
+          if (sheetIconWrap) {
+            sheetIconWrap.className = inHome
+              ? "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 shadow-inner"
+              : "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-inner";
+          }
+          if (sheetIcon) {
+            sheetIcon.textContent = inHome ? 'vpn_key_alert' : 'key';
+          }
+          if (sheetDevice) sheetDevice.textContent = t.device_name || 'Tile (Bluetooth)';
+          if (sheetRssi) sheetRssi.textContent = `${t.rssi || '--'} dBm (${inHome ? '室内' : '室外'})`;
+          if (sheetMac) sheetMac.textContent = t.mac || '30:F7:75:1F:0E:20';
+          if (sheetTime) sheetTime.textContent = t.last_seen_str || '--:--:--';
+        }
+      } catch (err) {
+        console.warn('[Tile Fetch Error]', err);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       renderAcGauge();
       updateAcUi();
@@ -2863,11 +3022,14 @@
       loadInitialState();
       fetchWeatherData();
       fetchPresenceData();
+      fetchTileData();
 
       // クリーナーの定期状態同期 (10秒ごと)
       setInterval(syncCleanerStatus, 10000);
       // 在宅センサーの定期同期 (10秒ごと)
       setInterval(fetchPresenceData, 10000);
+      // 鍵（Tile）センサーの定期同期 (10秒ごと)
+      setInterval(fetchTileData, 10000);
       // 天気・気象データの定期同期 (10分ごと)
       setInterval(fetchWeatherData, 600000);
 

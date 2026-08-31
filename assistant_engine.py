@@ -17,6 +17,7 @@ import urllib.error
 
 import weather_service
 import presence_service
+import tile_service
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
@@ -291,6 +292,15 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         status_str = "「在宅中」" if p["is_home"] else "「外出中」"
         msg = f"現在の状況は{status_str}です。（最終検知: {p['last_seen_str']}）"
         return {"success": True, "message": msg, "action": "presence_status"}
+
+    # 4. 鍵（Tile）置き忘れ・所在確認 (Key Tracker)
+    if any(k in text for k in ['鍵', 'カギ', 'かぎ', 'キー', 'tile', 'ポスト', 'ぽすと']):
+        t = tile_service.get_tile_status()
+        if t["in_home"]:
+            msg = f"⚠️ 鍵が室内に検知されています！締め出し防止のためポストへ戻してください。（最終検知: {t['last_seen_str']}、電波強度: {t['rssi']}dBm）"
+        else:
+            msg = f"鍵は室内に検知されていません。ポストに保管されています。（最終確認: {t['last_seen_str']}）"
+        return {"success": True, "message": msg, "action": "tile_key_status"}
 
     # 4. スマートシーン一括操作 (優先度高)
     # 4-A. おはよう (ライト点灯 + 体感温度によるスマート空調)

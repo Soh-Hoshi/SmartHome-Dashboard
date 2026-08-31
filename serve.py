@@ -83,6 +83,7 @@ import eufy_client
 import assistant_engine
 import weather_service
 import presence_service
+import tile_service
 
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
 
@@ -185,6 +186,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path == '/api/presence':
             data = presence_service.get_presence_status()
             return self.send_json_response({"status": "success", "presence": data})
+
+        if clean_path == '/api/tile':
+            data = tile_service.get_tile_status()
+            return self.send_json_response({"status": "success", "tile": data})
 
         if clean_path == '/api/cleaner/status':
             try:
@@ -468,6 +473,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     presence_service.start_presence_service()
+    tile_service.start_tile_service()
     watcher_thread = threading.Thread(target=file_watcher, daemon=True)
     watcher_thread.start()
 
