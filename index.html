@@ -3056,38 +3056,47 @@
       }
     }
 
-    // シーンのアクションフロー定義
+    // シーンのアクションフロー定義 (デバイス名と操作に基づいた画一的な定義)
     const SCENE_FLOWS = {
       morning: {
         title: 'おはよう',
         command: 'おはよう',
         steps: [
           {
-            num: 1,
-            type: '照明制御',
-            title: 'リビングのライトを点灯',
-            desc: '照明を通常点灯にします',
+            target: 'リビング',
+            action: 'オン',
+            actionColor: 'text-amber-400',
+            condition: null,
             icon: 'lightbulb',
             iconColor: 'text-amber-400',
             bgColor: 'bg-amber-500/10'
           },
           {
-            num: 2,
-            type: '気象センサー',
-            title: '木月の体感温度を取得',
-            desc: 'リアルタイムの外気温・湿度から体感温度を算出',
-            icon: 'thermostat',
+            target: '気象',
+            action: '取得',
+            actionColor: 'text-sky-400',
+            condition: null,
+            icon: 'partly_cloudy_day',
             iconColor: 'text-sky-400',
             bgColor: 'bg-sky-500/10'
           },
           {
-            num: 3,
-            type: 'スマート空調',
-            title: '体感温度に応じた快適空調を実行',
-            desc: '24℃以上: エアコン冷房(26℃) / 19℃以下: ヒーター / 快適時: オフ',
+            target: 'エアコン',
+            action: 'オン',
+            actionColor: 'text-sky-400',
+            condition: '体感24℃以上',
             icon: 'ac_unit',
-            iconColor: 'text-emerald-400',
-            bgColor: 'bg-emerald-500/10'
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          },
+          {
+            target: 'ヒーター',
+            action: 'オン',
+            actionColor: 'text-orange-400',
+            condition: '体感19℃以下',
+            icon: 'mode_heat',
+            iconColor: 'text-orange-400',
+            bgColor: 'bg-orange-500/10'
           }
         ]
       },
@@ -3096,31 +3105,40 @@
         command: 'おやすみ',
         steps: [
           {
-            num: 1,
-            type: '照明制御',
-            title: 'リビングのライトを消灯',
-            desc: '部屋の照明を完全にオフにします',
+            target: 'リビング',
+            action: 'オフ',
+            actionColor: 'text-neutral-400',
+            condition: null,
             icon: 'lightbulb',
             iconColor: 'text-neutral-400',
             bgColor: 'bg-neutral-500/10'
           },
           {
-            num: 2,
-            type: '気象センサー',
-            title: '木月の体感温度を取得',
-            desc: '夜間の体感温度と湿度をチェック',
-            icon: 'thermostat',
+            target: '気象',
+            action: '取得',
+            actionColor: 'text-sky-400',
+            condition: null,
+            icon: 'partly_cloudy_day',
             iconColor: 'text-sky-400',
             bgColor: 'bg-sky-500/10'
           },
           {
-            num: 3,
-            type: '就寝空調',
-            title: '就寝環境に合わせた空調を設定',
-            desc: '24℃以上: 就寝冷房(27℃) / 19℃以下: ヒーター / 快適時: オフ',
-            icon: 'bedtime',
-            iconColor: 'text-indigo-400',
-            bgColor: 'bg-indigo-500/10'
+            target: 'エアコン',
+            action: 'オン (27℃)',
+            actionColor: 'text-sky-400',
+            condition: '体感24℃以上',
+            icon: 'ac_unit',
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          },
+          {
+            target: 'ヒーター',
+            action: 'オン',
+            actionColor: 'text-orange-400',
+            condition: '体感19℃以下',
+            icon: 'mode_heat',
+            iconColor: 'text-orange-400',
+            bgColor: 'bg-orange-500/10'
           }
         ]
       },
@@ -3129,28 +3147,28 @@
         command: 'いってきます',
         steps: [
           {
-            num: 1,
-            type: '照明制御',
-            title: 'リビングのライトを消灯',
-            desc: '消し忘れ防止のため照明をオフにします',
+            target: 'リビング',
+            action: 'オフ',
+            actionColor: 'text-neutral-400',
+            condition: null,
             icon: 'lightbulb',
             iconColor: 'text-neutral-400',
             bgColor: 'bg-neutral-500/10'
           },
           {
-            num: 2,
-            type: '空調制御',
-            title: 'エアコンを停止',
-            desc: 'エアコンの電源をオフにします',
+            target: 'エアコン',
+            action: 'オフ',
+            actionColor: 'text-neutral-400',
+            condition: null,
             icon: 'ac_unit',
             iconColor: 'text-neutral-400',
             bgColor: 'bg-neutral-500/10'
           },
           {
-            num: 3,
-            type: '空調制御',
-            title: 'ヒーターを停止',
-            desc: '暖房の電源をオフにします',
+            target: 'ヒーター',
+            action: 'オフ',
+            actionColor: 'text-neutral-400',
+            condition: null,
             icon: 'mode_heat',
             iconColor: 'text-neutral-400',
             bgColor: 'bg-neutral-500/10'
@@ -3162,40 +3180,40 @@
         command: 'ただいま',
         steps: [
           {
-            num: 1,
-            type: '日照センサー',
-            title: '木月の日没・日照状態を取得',
-            desc: '現在が日没後（夜間）かどうかを判定',
-            icon: 'wb_twilight',
-            iconColor: 'text-amber-400',
-            bgColor: 'bg-amber-500/10'
-          },
-          {
-            num: 2,
-            type: '照明制御',
-            title: '暗い場合のみライトを自動点灯',
-            desc: '日没後であれば照明をオン、昼間は点灯しません',
-            icon: 'lightbulb',
-            iconColor: 'text-yellow-400',
-            bgColor: 'bg-yellow-500/10'
-          },
-          {
-            num: 3,
-            type: '気象センサー',
-            title: '木月の体感温度を取得',
-            desc: '外気温・湿度から帰宅時の体感温度を判定',
-            icon: 'thermostat',
+            target: '気象',
+            action: '取得',
+            actionColor: 'text-sky-400',
+            condition: null,
+            icon: 'partly_cloudy_day',
             iconColor: 'text-sky-400',
             bgColor: 'bg-sky-500/10'
           },
           {
-            num: 4,
-            type: 'スマート空調',
-            title: '体感温度に応じた快適空調を実行',
-            desc: '24℃以上: エアコン冷房(26℃) / 19℃以下: ヒーター / 快適時: オフ',
+            target: 'リビング',
+            action: 'オン',
+            actionColor: 'text-amber-400',
+            condition: '日没後のみ',
+            icon: 'lightbulb',
+            iconColor: 'text-amber-400',
+            bgColor: 'bg-amber-500/10'
+          },
+          {
+            target: 'エアコン',
+            action: 'オン',
+            actionColor: 'text-sky-400',
+            condition: '体感24℃以上',
             icon: 'ac_unit',
-            iconColor: 'text-emerald-400',
-            bgColor: 'bg-emerald-500/10'
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          },
+          {
+            target: 'ヒーター',
+            action: 'オン',
+            actionColor: 'text-orange-400',
+            condition: '体感19℃以下',
+            icon: 'mode_heat',
+            iconColor: 'text-orange-400',
+            bgColor: 'bg-orange-500/10'
           }
         ]
       }
@@ -3204,7 +3222,7 @@
     let currentActiveFlowScene = null;
 
     /**
-     * シーンのアクションフロー詳細シートを開く
+     * シーンのアクションフロー詳細シートを開く (デバイス名×操作の画一的表示)
      */
     function openSceneFlowSheet(sceneKey) {
       const flow = SCENE_FLOWS[sceneKey];
@@ -3223,23 +3241,21 @@
         container.innerHTML = flow.steps.map((step, idx) => {
           const isLast = idx === flow.steps.length - 1;
           return `
-            <div class="relative flex items-start space-x-3.5 group">
-              <!-- 左側: ステップ番号 ＆ タイムラインコネクタ -->
-              <div class="flex flex-col items-center shrink-0">
-                <div class="w-9 h-9 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold text-xs border border-white/[0.04] shadow-sm">
-                  <span class="material-symbols-rounded text-lg">${step.icon}</span>
+            <div class="relative flex items-center space-x-3.5 group">
+              <!-- 左側: アイコン ＆ コネクタ線 -->
+              <div class="flex flex-col items-center shrink-0 self-stretch justify-center">
+                <div class="w-10 h-10 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold text-xs border border-white/[0.04] shadow-sm shrink-0">
+                  <span class="material-symbols-rounded text-xl">${step.icon}</span>
                 </div>
-                ${!isLast ? '<div class="w-0.5 h-6 bg-white/[0.08] my-1 rounded-full"></div>' : ''}
+                ${!isLast ? '<div class="w-0.5 flex-1 bg-white/[0.08] my-1 rounded-full min-h-[14px]"></div>' : ''}
               </div>
 
-              <!-- 右側: アクションカード -->
-              <div class="flex-1 bg-[#2a2d36] rounded-2xl p-3 border border-white/[0.03] space-y-1">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-neutral-400 tracking-wider">${step.type}</span>
-                  <span class="text-[10px] text-neutral-400 font-num">Step ${step.num}</span>
+              <!-- 右側: アクションカード (「デバイス名」を 操作 + 条件) -->
+              <div class="flex-1 bg-[#2a2d36] rounded-2xl px-4 py-3.5 border border-white/[0.03] flex items-center justify-between shadow-sm min-w-0">
+                <div class="text-[15px] font-semibold text-white truncate">
+                  「${step.target}」を <span class="${step.actionColor} font-bold">${step.action}</span>
                 </div>
-                <div class="text-sm font-semibold text-white leading-snug">${step.title}</div>
-                <div class="text-xs text-neutral-400 leading-relaxed font-normal">${step.desc}</div>
+                ${step.condition ? `<span class="text-xs text-neutral-400 font-medium px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
               </div>
             </div>
           `;
