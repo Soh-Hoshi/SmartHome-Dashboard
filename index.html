@@ -480,50 +480,53 @@
       </div>
 
       <!-- ======================================================================= -->
-      <!-- タブ3：シーン                                                           -->
+      <!-- タブ3：シーン (ダッシュボードと完全同一のカテゴリ制レイアウト)           -->
       <!-- ======================================================================= -->
-      <div id="view-scenes" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <h2 class="text-base font-bold text-white px-1">シーン</h2>
+      <div id="view-scenes" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 columns-1 md:columns-2 lg:columns-3 gap-6">
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <!-- セクション: デイリー -->
+        <section class="break-inside-avoid mb-6 space-y-3">
+          <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
-          <!-- シーン1: おはよう -->
-          <div onclick="submitAssistantCommand('おはよう')"
-               class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-              <span class="material-symbols-rounded text-2xl">wb_sunny</span>
+          <div class="flex flex-col gap-3.5">
+            <!-- シーン1: おはよう -->
+            <div onclick="submitAssistantCommand('おはよう')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <span class="material-symbols-rounded text-2xl">wb_sunny</span>
+              </div>
+              <div class="text-[15px] font-semibold text-white leading-tight">おはよう</div>
             </div>
-            <div class="text-[15px] font-semibold text-white">おはよう</div>
-          </div>
 
-          <!-- シーン2: おやすみ -->
-          <div onclick="submitAssistantCommand('おやすみ')"
-               class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-              <span class="material-symbols-rounded text-2xl">bedtime</span>
+            <!-- シーン2: おやすみ -->
+            <div onclick="submitAssistantCommand('おやすみ')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <span class="material-symbols-rounded text-2xl">bedtime</span>
+              </div>
+              <div class="text-[15px] font-semibold text-white leading-tight">おやすみ</div>
             </div>
-            <div class="text-[15px] font-semibold text-white">おやすみ</div>
-          </div>
 
-          <!-- シーン3: いってきます -->
-          <div onclick="submitAssistantCommand('いってきます')"
-               class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-              <span class="material-symbols-rounded text-2xl">logout</span>
+            <!-- シーン3: いってきます -->
+            <div onclick="submitAssistantCommand('いってきます')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <span class="material-symbols-rounded text-2xl">logout</span>
+              </div>
+              <div class="text-[15px] font-semibold text-white leading-tight">いってきます</div>
             </div>
-            <div class="text-[15px] font-semibold text-white">いってきます</div>
-          </div>
 
-          <!-- シーン4: ただいま -->
-          <div onclick="submitAssistantCommand('ただいま')"
-               class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
-            <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-              <span class="material-symbols-rounded text-2xl">home</span>
+            <!-- シーン4: ただいま -->
+            <div onclick="submitAssistantCommand('ただいま')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <span class="material-symbols-rounded text-2xl">home</span>
+              </div>
+              <div class="text-[15px] font-semibold text-white leading-tight">ただいま</div>
             </div>
-            <div class="text-[15px] font-semibold text-white">ただいま</div>
           </div>
+        </section>
 
-        </div>
       </div>
 
     </div>
