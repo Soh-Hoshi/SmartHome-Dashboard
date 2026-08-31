@@ -17,40 +17,40 @@ STATE_FILE = os.path.join(DIRECTORY, 'state.json')
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 
 def format_standard_message(device, action, params=None):
-    """すべての返答メッセージを画一化・統一するフォーマッター"""
+    """すべての返答メッセージを画一化・統一するフォーマッター (絵文字なし)"""
     params = params or {}
     if device == 'light':
-        if action in ('on', 'turnOn'): return "💡 ライトを点灯しました。"
-        if action in ('off', 'turnOff'): return "💡 ライトを消灯しました。"
-        if action == 'full': return "💡 ライトを全灯（100%）にしました。"
-        if action == 'night': return "💡 ライトを常夜灯にしました。"
-        if action == 'toggle': return "💡 ライトのオン/オフを切り替えました。"
-        return "💡 ライトを設定しました。"
+        if action in ('on', 'turnOn'): return "ライトを点灯しました。"
+        if action in ('off', 'turnOff'): return "ライトを消灯しました。"
+        if action == 'full': return "ライトを全灯（100%）にしました。"
+        if action == 'night': return "ライトを常夜灯にしました。"
+        if action == 'toggle': return "ライトのオン/オフを切り替えました。"
+        return "ライトを設定しました。"
     
     elif device == 'ac':
         mode = params.get('mode', 'cool')
         temp = params.get('temp', 26)
-        if mode == 'off': return "❄️ エアコンをオフにしました。"
+        if mode == 'off': return "エアコンをオフにしました。"
         mode_label = '除湿' if mode == 'dry' else '冷房'
-        return f"❄️ エアコンを{mode_label}{temp}℃に設定しました。"
+        return f"エアコンを{mode_label}{temp}℃に設定しました。"
     
     elif device == 'heater':
-        if action in ('off', 'turnOff'): return "🔥 ヒーターをオフにしました。"
-        if action == 'eco': return "🔥 ヒーターのエコモードを設定しました。"
+        if action in ('off', 'turnOff'): return "ヒーターをオフにしました。"
+        if action == 'eco': return "ヒーターのエコモードを設定しました。"
         temp = params.get('temp', 22)
-        return f"🔥 ヒーターを暖房{temp}℃に設定しました。"
+        return f"ヒーターを暖房{temp}℃に設定しました。"
     
     elif device == 'cleaner':
-        if action in ('start', 'run', 'clean', 'play'): return "🤖 クリーナーのお掃除を開始しました。"
-        if action in ('pause', 'stop'): return "🤖 クリーナーを一時停止しました。"
-        if action in ('home', 'dock', 'return'): return "🤖 クリーナーを充電ドックへ戻します。"
-        if action in ('find', 'find_me', 'beep'): return "🤖 クリーナーの位置探索アラームを鳴らします。"
-        return "🤖 クリーナーを設定しました。"
+        if action in ('start', 'run', 'clean', 'play'): return "クリーナーのお掃除を開始しました。"
+        if action in ('pause', 'stop'): return "クリーナーを一時停止しました。"
+        if action in ('home', 'dock', 'return'): return "クリーナーを充電ドックへ戻します。"
+        if action in ('find', 'find_me', 'beep'): return "クリーナーの位置探索アラームを鳴らします。"
+        return "クリーナーを設定しました。"
     
     elif device == 'scene':
-        if action == 'all_off': return "🌙 おやすみなさい。ライトと空調をすべてオフにしました。"
-        if action == 'welcome': return "✨ おかえりなさい！ライトを点灯し、エアコンを冷房26℃で起動しました。"
-        if action == 'morning': return "☀️ おはようございます！ライトを点灯しました。"
+        if action == 'all_off': return "おやすみなさい。ライトと空調をすべてオフにしました。"
+        if action == 'welcome': return "おかえりなさい。ライトを点灯し、エアコンを冷房26℃で起動しました。"
+        if action == 'morning': return "おはようございます。ライトを点灯しました。"
     
     return "操作を完了しました。"
 

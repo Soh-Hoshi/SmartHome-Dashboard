@@ -116,7 +116,7 @@ def cmd_light(args):
         return False
 
     res = send_api_request('/api/light', {'action': action})
-    print(f"💡 ライト: {res.get('message', res.get('status'))}")
+    print(f"ライト: {res.get('message', res.get('status'))}")
     return True
 
 def cmd_ac(args):
@@ -142,9 +142,9 @@ def cmd_ac(args):
 
     res = send_api_request('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': fan})
     if mode == 'off':
-        print(f"❄️ エアコン: オフにしました")
+        print("エアコン: オフにしました")
     else:
-        print(f"❄️ エアコン: {mode.upper()} {temp}℃ (風量: {fan}) に設定しました")
+        print(f"エアコン: {mode.upper()} {temp}℃ (風量: {fan}) に設定しました")
     return True
 
 def cmd_heater(args):
@@ -163,7 +163,7 @@ def cmd_heater(args):
     if temp: payload['temp'] = temp
 
     res = send_api_request('/api/heater', payload)
-    print(f"🔥 ヒーター: {res.get('message', res.get('status'))}")
+    print(f"ヒーター: {res.get('message', res.get('status'))}")
     return True
 
 def cmd_cleaner(args):
@@ -181,7 +181,7 @@ def cmd_cleaner(args):
     if speed: payload['speed'] = speed
 
     res = send_api_request('/api/cleaner', payload)
-    print(f"🤖 クリーナー: {res.get('message', res.get('status'))}")
+    print(f"クリーナー: {res.get('message', res.get('status'))}")
     return True
 
 def cmd_status():
@@ -190,10 +190,10 @@ def cmd_status():
             with open(STATE_FILE, 'r', encoding='utf-8') as f:
                 state = json.load(f)
             print("=== SmartHome Current State ===")
-            print(f"💡 ライト:       {'ON (' + ('全灯' if state.get('lightFull') else ('常夜灯' if state.get('lightNight') else '点灯')) + ')' if state.get('lightOn') else 'OFF'}")
-            print(f"❄️  エアコン:     {state.get('acMode', 'off').upper()} / {state.get('acTemp', 26)}℃ / 風量:{state.get('acFan', 'auto')}")
-            print(f"🔥 ヒーター:     {state.get('heaterMode', 'off').upper()} / {state.get('heaterTemp', 24)}℃ / ECO:{state.get('heaterEco', False)}")
-            print(f"🤖 クリーナー:   {state.get('cleanerStatus', 'standby').upper()}")
+            print(f"ライト:       {'ON (' + ('全灯' if state.get('lightFull') else ('常夜灯' if state.get('lightNight') else '点灯')) + ')' if state.get('lightOn') else 'OFF'}")
+            print(f"エアコン:     {state.get('acMode', 'off').upper()} / {state.get('acTemp', 26)}℃ / 風量:{state.get('acFan', 'auto')}")
+            print(f"ヒーター:     {state.get('heaterMode', 'off').upper()} / {state.get('heaterTemp', 24)}℃ / ECO:{state.get('heaterEco', False)}")
+            print(f"クリーナー:   {state.get('cleanerStatus', 'standby').upper()}")
             return
         except Exception:
             pass
