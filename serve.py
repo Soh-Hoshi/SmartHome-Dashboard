@@ -80,10 +80,10 @@ LIVE_RELOAD_SCRIPT = b"""
 import json
 import switchbot_client
 import eufy_client
-import assistant_engine
-import weather_service
 import presence_service
 import tile_service
+import automation_service
+import assistant_engine
 
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
 
@@ -190,6 +190,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path == '/api/tile':
             data = tile_service.get_tile_status()
             return self.send_json_response({"status": "success", "tile": data})
+
+        if clean_path == '/api/automations':
+            data = automation_service.load_automations()
+            return self.send_json_response({"status": "success", "automations": data})
 
         if clean_path == '/api/cleaner/status':
             try:
@@ -443,6 +447,18 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             result['state'] = load_state()
             return self.send_json_response(result)
 
+        if clean_path == '/api/automations/toggle':
+            auto_id = req_data.get('id')
+            res = automation_service.toggle_automation(auto_id)
+            if res:
+                return self.send_json_response({"status": "success", "automation": res})
+            return self.send_json_response({"status": "error", "message": "Automation not found"}, status=HTTPStatus.NOT_FOUND)
+
+        if clean_path == '/api/automations/execute':
+            auto_id = req_data.get('id')
+            ok = automation_service.execute_automation(auto_id)
+            return self.send_json_response({"status": "success" if ok else "error"})
+
         if clean_path == '/api/state':
             current_state = load_state()
             current_state.update(req_data)
@@ -474,6 +490,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     presence_service.start_presence_service()
     tile_service.start_tile_service()
+    automation_service.start_automation_service()
     watcher_thread = threading.Thread(target=file_watcher, daemon=True)
     watcher_thread.start()
 
