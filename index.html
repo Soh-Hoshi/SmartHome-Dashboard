@@ -168,44 +168,37 @@
   <!-- 全体レイアウトコンテナ (画面全幅でサイドバーを左端にピタッと配置) -->
   <div class="flex-1 w-full flex min-h-screen">
     
-    <!-- デスクトップ用サイドバー (画面左端に常時表示・アイコン＋ラベル) -->
+    <!-- デスクトップ用サイドバー (通常時はアイコンのみ・ホバーで展開) -->
     <aside id="sidebar"
-           class="hidden md:flex flex-col w-52 xl:w-56 shrink-0 min-h-screen py-6 px-3 sticky top-0 h-screen select-none border-r border-white/[0.04] bg-[#14161a]/60">
+           class="group/sidebar hidden md:flex flex-col w-[68px] hover:w-56 shrink-0 min-h-screen py-5 px-2.5 sticky top-0 h-screen select-none border-r border-white/[0.04] bg-[#14161a]/80 backdrop-blur-md transition-all duration-300 ease-in-out z-40 overflow-hidden shadow-2xl">
       
-      <!-- サイドバートップ: ホーム タイトル ＆ 境界線 -->
-      <div class="flex items-center space-x-2.5 px-3.5 pb-4 shrink-0">
-        <span class="material-symbols-rounded text-2xl text-neutral-300">home</span>
-        <span class="text-base font-bold text-white tracking-tight">ホーム</span>
-      </div>
-      <div class="h-px bg-white/[0.06] mx-2 mb-3 shrink-0"></div>
-
-      <nav class="space-y-1.5 w-full">
+      <nav class="space-y-2 w-full">
         <!-- ダッシュボード -->
         <button onclick="switchTab('dashboard')" id="nav-dashboard"
-                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-[#253546] text-[#2196f3] active:scale-98">
-          <span class="material-symbols-rounded symbol-fill text-[22px]">grid_view</span>
-          <span class="text-sm font-semibold text-[#2196f3]">ダッシュボード</span>
+                class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-[#253546] text-[#2196f3] active:scale-98">
+          <span class="material-symbols-rounded symbol-fill text-[22px] w-6 flex items-center justify-center shrink-0">grid_view</span>
+          <span class="sidebar-label text-sm font-semibold text-[#2196f3] whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3">ダッシュボード</span>
         </button>
 
         <!-- オートメーション -->
         <button onclick="switchTab('automations')" id="nav-automations"
-                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
-          <span class="material-symbols-rounded text-[22px]">bolt</span>
-          <span class="text-sm font-medium text-neutral-400">オートメーション</span>
+                class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
+          <span class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0">bolt</span>
+          <span class="sidebar-label text-sm font-medium text-neutral-400 whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3">オートメーション</span>
         </button>
 
         <!-- シーン -->
         <button onclick="switchTab('scenes')" id="nav-scenes"
-                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
-          <span class="material-symbols-rounded text-[22px]">palette</span>
-          <span class="text-sm font-medium text-neutral-400">シーン</span>
+                class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
+          <span class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0">palette</span>
+          <span class="sidebar-label text-sm font-medium text-neutral-400 whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3">シーン</span>
         </button>
 
         <!-- データ -->
         <button onclick="switchTab('data')" id="nav-data"
-                class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
-          <span class="material-symbols-rounded text-[22px]">insights</span>
-          <span class="text-sm font-medium text-neutral-400">データ</span>
+                class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98">
+          <span class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0">insights</span>
+          <span class="sidebar-label text-sm font-medium text-neutral-400 whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3">データ</span>
         </button>
       </nav>
     </aside>
@@ -1168,22 +1161,22 @@
           }
         }
 
-        // デスクトップ用サイドバーボタンのスタイル切り替え (アイコン ＋ ラベル)
+        // デスクトップ用サイドバーボタンのスタイル切り替え (アイコン ＋ ホバー展開ラベル)
         const navBtn = document.getElementById(`nav-${t}`);
         if (navBtn) {
           const iconSpan = navBtn.querySelector('.material-symbols-rounded');
-          const labelSpan = navBtn.querySelector('span:not(.material-symbols-rounded)');
+          const labelSpan = navBtn.querySelector('.sidebar-label');
           if (t === tabId) {
-            navBtn.className = "nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-[#253546] text-[#2196f3] active:scale-98";
+            navBtn.className = "nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-[#253546] text-[#2196f3] active:scale-98";
             if (iconSpan) iconSpan.classList.add('symbol-fill');
             if (labelSpan) {
-              labelSpan.className = "text-sm font-semibold text-[#2196f3]";
+              labelSpan.className = "sidebar-label text-sm font-semibold text-[#2196f3] whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3";
             }
           } else {
-            navBtn.className = "nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98";
+            navBtn.className = "nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white active:scale-98";
             if (iconSpan) iconSpan.classList.remove('symbol-fill');
             if (labelSpan) {
-              labelSpan.className = "text-sm font-medium text-neutral-400";
+              labelSpan.className = "sidebar-label text-sm font-medium text-neutral-400 whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3";
             }
           }
         }
