@@ -207,13 +207,13 @@
     <div class="flex-1 min-w-0 pb-24 md:pb-8 flex flex-col">
       
       <!-- ======================================================================= -->
-      <!-- 全デバイス共通 トップヘッダー (コマンド検索バー ＆ マイクボタン)          -->
+      <!-- 全デバイス共通 トップヘッダー (サイドバー＆タイルと同色に統一)              -->
       <!-- ======================================================================= -->
-      <header class="sticky top-0 z-30 w-full bg-[#16181d]/90 backdrop-blur-md border-b border-white/[0.05] px-4 sm:px-6 lg:px-8 py-4 sm:py-4.5 mb-3 shadow-md">
+      <header class="sticky top-0 z-30 w-full bg-[#14161a]/80 backdrop-blur-md border-b border-white/[0.04] px-4 sm:px-6 lg:px-8 py-4 sm:py-4.5 mb-3">
         <div class="w-full max-w-6xl mx-auto flex items-center space-x-3.5">
           
-          <!-- コマンド検索バー (端が半円のピル型・ゆったりとした縦幅) -->
-          <div class="relative flex-1 flex items-center bg-[#21242c] hover:bg-[#272b35] focus-within:bg-[#272b35] focus-within:ring-2 focus-within:ring-[#2196f3]/40 rounded-full border border-white/[0.06] transition-all px-4 sm:px-5 py-2.5 sm:py-3 h-12 sm:h-13 shadow-inner">
+          <!-- コマンド検索バー (端が半円のピル型・タイル同色) -->
+          <div class="relative flex-1 flex items-center bg-[#1c1e23] hover:bg-[#23262d] focus-within:bg-[#23262d] focus-within:ring-1 focus-within:ring-[#2196f3]/40 rounded-full border border-white/[0.04] transition-all px-4 sm:px-5 py-2.5 sm:py-3 h-12 sm:h-13 shadow-sm">
             <span class="material-symbols-rounded text-neutral-400 text-2xl shrink-0 mr-3 select-none">search</span>
             <input type="text" 
                    id="command-search-input" 
@@ -222,9 +222,9 @@
                    autocomplete="off" />
           </div>
 
-          <!-- 音声コマンド マイクボタン (円形・存在感のあるサイズ) -->
+          <!-- 音声コマンド マイクボタン (円形・タイル同色) -->
           <button id="btn-voice-command"
-                  class="w-12 h-12 rounded-full bg-[#21242c] hover:bg-[#2a2e38] active:scale-95 text-neutral-300 hover:text-white border border-white/[0.06] flex items-center justify-center transition-all shrink-0 shadow-md"
+                  class="w-12 h-12 rounded-full bg-[#1c1e23] hover:bg-[#23262d] active:scale-95 text-neutral-300 hover:text-white border border-white/[0.04] flex items-center justify-center transition-all shrink-0 shadow-sm"
                   aria-label="音声コマンド入力">
             <span class="material-symbols-rounded text-2xl">mic</span>
           </button>
