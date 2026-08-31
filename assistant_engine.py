@@ -3,8 +3,8 @@
 SmartHome Natural Language Assistant Engine (Nova)
 Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Local LLM (Qwen 2.5 via Ollama) fallback
 100% Private, Local, Free & Standardized Responses.
-Integrated with Kawasaki Nakahara Kizuki Weather & Solar Data.
-Heater control is strictly relative (on/off, eco, plus/minus count) without direct temperature setting.
+Integrated with Kawasaki Nakahara Kizuki Weather, Solar & Presence Data.
+Smart Scenes (Morning, Goodnight, Welcome) driven by real-time Apparent (Feels-like) Temperature.
 """
 
 import re
@@ -60,10 +60,32 @@ def format_standard_message(device, action, params=None):
         return "クリーナーを設定しました。"
     
     elif device == 'scene':
-        if action == 'goodnight': return "おやすみなさい。ライトを消灯しました。"
         if action == 'leaving': return "いってらっしゃい。ライトと空調をすべてオフにしました。"
         if action == 'all_off': return "ライトと空調をすべてオフにしました。"
-        if action == 'morning': return "おはようございます。ライトを点灯しました。"
+        
+        # おはよう
+        if action == 'morning':
+            hvac = params.get('hvac')
+            feels_like = params.get('feels_like')
+            if hvac == 'ac':
+                return f"おはようございます。ライトを点灯し、体感温度が{feels_like}℃のためエアコンを冷房{params.get('temp', 26)}℃で起動しました。"
+            elif hvac == 'heater':
+                return f"おはようございます。ライトを点灯し、体感温度が{feels_like}℃で肌寒いためヒーターをオンにしました。"
+            else:
+                return f"おはようございます。ライトを点灯しました。（体感温度 {feels_like}℃）"
+
+        # おやすみ
+        if action == 'goodnight':
+            hvac = params.get('hvac')
+            feels_like = params.get('feels_like')
+            if hvac == 'ac':
+                return f"おやすみなさい。ライトを消灯し、体感温度が{feels_like}℃のためエアコンを冷房{params.get('temp', 27)}℃で起動しました。"
+            elif hvac == 'heater':
+                return f"おやすみなさい。ライトを消灯し、体感温度が{feels_like}℃で冷え込んでいるためヒーターをオンにしました。"
+            else:
+                return f"おやすみなさい。ライトを消灯しました。（体感温度 {feels_like}℃）"
+
+        # ただいま
         if action == 'welcome':
             light_note = "日没後のためライトを点灯し、" if params.get('light') else ""
             hvac = params.get('hvac')
@@ -114,31 +136,30 @@ def query_local_llm(prompt_text):
         print(f"[Local LLM Fallback Notice] {e}")
         return None
 
-def execute_smart_welcome(send_api_fn=None):
+def determine_smart_hvac(send_api_fn=None, sleep_mode=False):
     """
-    川崎市中原区木月のリアルタイム日没・日照 ＆ 体感温度データに基づくスマート帰宅シーン
+    木月のリアルタイム体感温度（feels_like）に基づく空調（エアコン/ヒーター）自動判定・制御
+    sleep_mode=True の場合は就寝冷房27℃、通常時は冷房26℃
     """
     wdata = weather_service.get_weather_data()
     feels_like = wdata.get('feels_like', wdata.get('temp', 24.0))
-    is_night = not wdata.get('is_day', True)
+    target_ac_temp = 27 if sleep_mode else 26
 
-    # 1. 日没判定 (暗ければライトON、昼間なら操作なし)
-    if is_night and send_api_fn:
-        send_api_fn('/api/light', {'action': 'on'})
-
-    # 2. 体感温度判定 (24.0℃以上はエアコン冷房26℃、19.0℃以下はヒーターON)
+    # 体感温度 24.0℃以上 ──▶ エアコン冷房
     if feels_like >= 24.0:
         hvac_type = 'ac'
-        temp = 26
+        temp = target_ac_temp
         if send_api_fn:
             send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
             send_api_fn('/api/heater', {'action': 'off'})
+    # 体感温度 19.0℃以下 ──▶ ヒーターON
     elif feels_like <= 19.0:
         hvac_type = 'heater'
         temp = None
         if send_api_fn:
             send_api_fn('/api/heater', {'action': 'on'})
             send_api_fn('/api/ac', {'mode': 'off'})
+    # 快適（20.0〜23.9℃） ──▶ 空調OFF（節電）
     else:
         hvac_type = 'none'
         temp = None
@@ -146,16 +167,43 @@ def execute_smart_welcome(send_api_fn=None):
             send_api_fn('/api/ac', {'mode': 'off'})
             send_api_fn('/api/heater', {'action': 'off'})
 
-    msg = format_standard_message('scene', 'welcome', {
-        'light': is_night,
-        'hvac': hvac_type,
-        'temp': temp,
-        'feels_like': feels_like
-    })
+    return {
+        "hvac": hvac_type,
+        "temp": temp,
+        "feels_like": feels_like
+    }
+
+def execute_smart_morning(send_api_fn=None):
+    """おはようシーン：ライト点灯 ＋ 体感温度に基づくスマート空調"""
+    if send_api_fn:
+        send_api_fn('/api/light', {'action': 'on'})
+    hvac_res = determine_smart_hvac(send_api_fn, sleep_mode=False)
+    msg = format_standard_message('scene', 'morning', hvac_res)
+    return {"success": True, "message": msg, "action": "scene_morning"}
+
+def execute_smart_goodnight(send_api_fn=None):
+    """おやすみシーン：ライト消灯 ＋ 体感温度に基づくスマート就寝空調"""
+    if send_api_fn:
+        send_api_fn('/api/light', {'action': 'off'})
+    hvac_res = determine_smart_hvac(send_api_fn, sleep_mode=True)
+    msg = format_standard_message('scene', 'goodnight', hvac_res)
+    return {"success": True, "message": msg, "action": "scene_goodnight"}
+
+def execute_smart_welcome(send_api_fn=None):
+    """ただいまシーン：日没後ライト点灯 ＋ 体感温度に基づくスマート空調"""
+    wdata = weather_service.get_weather_data()
+    is_night = not wdata.get('is_day', True)
+
+    if is_night and send_api_fn:
+        send_api_fn('/api/light', {'action': 'on'})
+
+    hvac_res = determine_smart_hvac(send_api_fn, sleep_mode=False)
+    hvac_res['light'] = is_night
+    msg = format_standard_message('scene', 'welcome', hvac_res)
     return {
         "success": True,
         "message": msg,
-        "action": f"welcome_{hvac_type}_{'light' if is_night else 'nolight'}"
+        "action": f"welcome_{hvac_res['hvac']}_{'light' if is_night else 'nolight'}"
     }
 
 def parse_and_execute(prompt: str, send_api_fn=None):
@@ -227,14 +275,14 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = f"本日の木月の日の入りは{w['sunset']}、日の出は{w['sunrise']}です。"
         return {"success": True, "message": msg, "action": "weather_solar"}
 
-    if any(k in text for k in ['気温', '外気温', '外の温度', '外温度', '何度', '外は寒い', '外は暑い', '外寒い', '外暑い']):
+    if any(k in text for k in ['気温', '外気温', '外の温度', '外温度', '何度', '外は寒い', '外は暑い', '外寒い', '外暑い', '体感温度', '体感']):
         w = weather_service.get_weather_data()
-        msg = f"現在の木月の外気温は{w['temp']}℃、湿度は{w['humidity']}%です。"
+        msg = f"現在の木月の気温は{w['temp']}℃（体感温度 {w['feels_like']}℃）、湿度は{w['humidity']}%です。"
         return {"success": True, "message": msg, "action": "weather_temp"}
 
     if any(k in text for k in ['天気', 'てんき', '雨降る', '傘', '晴れ', 'weather']):
         w = weather_service.get_weather_data()
-        msg = f"現在の木月の天気は{w['weather']}、外気温は{w['temp']}℃です。"
+        msg = f"現在の木月の天気は{w['weather']}、外気温は{w['temp']}℃（体感 {w['feels_like']}℃）です。"
         return {"success": True, "message": msg, "action": "weather_condition"}
 
     # 3. 在宅検出・在宅状況確認 (Presence)
@@ -244,20 +292,16 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = f"現在の状況は{status_str}です。（最終検知: {p['last_seen_str']}）"
         return {"success": True, "message": msg, "action": "presence_status"}
 
-    # 3. シーン一括操作 (優先度高)
-    # 3-A. おはよう (リビングのライトをつける)
+    # 4. スマートシーン一括操作 (優先度高)
+    # 4-A. おはよう (ライト点灯 + 体感温度によるスマート空調)
     if any(k in text for k in ['おはよう', 'おはよ', '起きた', 'おきた', '朝のシーン', 'morning']):
-        if send_api_fn:
-            send_api_fn('/api/light', {'action': 'on'})
-        return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "scene_morning"}
+        return execute_smart_morning(send_api_fn)
 
-    # 3-B. おやすみ (ライトを消灯)
+    # 4-B. おやすみ (ライト消灯 + 体感温度によるスマート就寝空調)
     if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', 'ベッド', 'goodnight']):
-        if send_api_fn:
-            send_api_fn('/api/light', {'action': 'off'})
-        return {"success": True, "message": format_standard_message('scene', 'goodnight'), "action": "scene_goodnight"}
+        return execute_smart_goodnight(send_api_fn)
 
-    # 3-C. いってきます (リビングライトと空調全部消す)
+    # 4-C. いってきます (リビングライトと空調全部消す)
     if any(k in text for k in ['いってきます', '行ってきます', '外出', 'がいしゅつ', '出かける', 'でかける', '家出る', 'leave']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
@@ -265,11 +309,11 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             send_api_fn('/api/heater', {'action': 'off'})
         return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
 
-    # 3-D. ただいま (木月のリアルタイム日没・外気温連動)
+    # 4-D. ただいま (日没判定ライト + 体感温度によるスマート空調)
     if any(k in text for k in ['ただいま', '帰宅', 'きたく', '家着いた', 'ついた', '着いた', '帰った', 'かえった', 'welcome']):
         return execute_smart_welcome(send_api_fn)
 
-    # 3-E. 全部消して / 全消し
+    # 4-E. 全部消して / 全消し
     if any(k in text for k in ['全部消して', '全消し', 'ぜんぶけして', 'すべて消して', '消灯して', '全部オフ']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
@@ -277,7 +321,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             send_api_fn('/api/heater', {'action': 'off'})
         return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "scene_all_off"}
 
-    # 4. クリーナー / 掃除 (Cleaner)
+    # 5. クリーナー / 掃除 (Cleaner)
     if any(k in text for k in ['掃除', 'そうじ', 'クリーナー', 'くりーなー', '掃除機', 'そうじき', 'ルンバ', 'るんば', 'eufy', 'vacuum', 'cleaner']):
         if any(k in text for k in ['帰って', 'かえって', 'おうち', '戻って', 'もどって', '充電', 'じゅうでん', 'ホーム', 'ほーむ', 'ドック', 'どっく', 'dock', 'home', 'やめて', '終了', 'しゅうりょう', '終わり', 'おわり']):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'home'})
@@ -292,7 +336,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'start'})
             return {"success": True, "message": format_standard_message('cleaner', 'start'), "action": "cleaner_start"}
 
-    # 5. ライト / 照明 (Light)
+    # 6. ライト / 照明 (Light)
     if any(k in text for k in ['ライト', 'らいと', '電気', 'でんき', '照明', 'しょうめい', 'あかり', '明かり', 'light']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '消灯', 'しょうとう', '暗く', 'くらく', 'off', '切って', 'きって', '消す', 'けす', '落として', 'おとして']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'off'})
@@ -310,7 +354,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/light', {'action': 'toggle'})
             return {"success": True, "message": format_standard_message('light', 'toggle'), "action": "light_toggle"}
 
-    # 6. ヒーター / 暖房 (Heater: 温度直指定不可、相対上下またはオンオフ/エコのみ)
+    # 7. ヒーター / 暖房 (Heater: 温度直指定不可、相対上下またはオンオフ/エコのみ)
     if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater']):
         # オフ
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す']):
@@ -334,7 +378,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             count = max(1, min(5, count))
             if send_api_fn: send_api_fn('/api/heater', {'action': 'minus', 'count': count})
             return {"success": True, "message": format_standard_message('heater', 'minus', {'count': count}), "action": f"heater_minus_{count}"}
-        # 温度直指定（例: 「ヒーター24度にして」）に対する注意ガード
+        # 温度直指定に対する注意ガード
         elif re.search(r'(\d{2})\s*(度|℃)', text):
             return {
                 "success": False,
@@ -349,7 +393,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'on'})
             return {"success": True, "message": format_standard_message('heater', 'on'), "action": "heater_on"}
 
-    # 7. エアコン / クーラー / 冷房 / 除湿 (AC: 温度直指定可)
+    # 8. エアコン / クーラー / 冷房 / 除湿 (AC: 温度直指定可)
     if any(k in text for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ドライ', 'どらい', 'ac', 'aircon']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す', 'けす']):
             if send_api_fn: send_api_fn('/api/ac', {'mode': 'off'})
@@ -362,7 +406,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         if send_api_fn: send_api_fn('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
 
-    # 温度のみの指定（「24度」「24度にして」「25℃設定」など ──▶ エアコン冷房）
+    # 温度のみの指定（「24度」「24度にして」など ──▶ エアコン冷房）
     if re.search(r'^\s*(\d{2})\s*(度|℃|c)?(にして|に設定|にしてよ|設定|)?\s*$', text):
         temp = int(re.search(r'(\d{2})', text).group(1))
         temp = max(22, min(28, temp))
@@ -379,12 +423,9 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         if device == 'scene':
             act = llm_res.get('action', 'all_off')
             if act == 'morning':
-                if send_api_fn: send_api_fn('/api/light', {'action': 'on'})
-                return {"success": True, "message": format_standard_message('scene', 'morning'), "action": "scene_morning"}
+                return execute_smart_morning(send_api_fn)
             elif act == 'goodnight':
-                if send_api_fn:
-                    send_api_fn('/api/light', {'action': 'off'})
-                return {"success": True, "message": format_standard_message('scene', 'goodnight'), "action": "scene_goodnight"}
+                return execute_smart_goodnight(send_api_fn)
             elif act == 'leaving':
                 if send_api_fn:
                     send_api_fn('/api/light', {'action': 'off'})
@@ -433,11 +474,10 @@ def parse_and_execute(prompt: str, send_api_fn=None):
 
 if __name__ == '__main__':
     test_queries = [
+        "おはよう",
+        "おやすみ",
         "ただいま",
-        "ヒーターつけて",
-        "暖房3度上げて",
-        "ヒーター24度にして",
-        "ヒーター消して"
+        "いってきます"
     ]
     for q in test_queries:
         res = parse_and_execute(q, lambda ep, data: print(f"  [API Call] {ep} {data}"))
