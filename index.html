@@ -227,12 +227,12 @@
     <div class="flex-1 min-w-0 pt-24 md:pt-6 pb-28 flex flex-col">
       
       <!-- ======================================================================= -->
-      <!-- タブ1：メインダッシュボード                                             -->
+      <!-- タブ1：メインダッシュボード (Masonry多段カラムで縦隙間なく自動詰め)       -->
       <!-- ======================================================================= -->
-      <main id="view-dashboard" class="tab-view w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+      <main id="view-dashboard" class="tab-view w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 columns-1 md:columns-2 lg:columns-3 gap-6">
         
         <!-- セクション: ライト -->
-        <section class="space-y-3">
+        <section class="break-inside-avoid mb-6 space-y-3">
           <h2 class="text-base font-bold text-white px-1">ライト</h2>
           
           <div class="flex flex-col gap-3.5">
@@ -258,7 +258,7 @@
         </section>
 
         <!-- セクション: 空調 -->
-        <section class="space-y-3">
+        <section class="break-inside-avoid mb-6 space-y-3">
           <h2 class="text-base font-bold text-white px-1">空調</h2>
           
           <div class="flex flex-col gap-3.5">
@@ -343,7 +343,7 @@
         </section>
 
         <!-- セクション: 掃除 -->
-        <section class="space-y-3">
+        <section class="break-inside-avoid mb-6 space-y-3">
           <h2 class="text-base font-bold text-white px-1">掃除</h2>
           
           <div class="flex flex-col gap-3.5">
@@ -403,7 +403,7 @@
         </section>
 
         <!-- セクション: センサー -->
-        <section class="space-y-3">
+        <section class="break-inside-avoid mb-6 space-y-3">
           <h2 class="text-base font-bold text-white px-1">センサー</h2>
           
           <div class="flex flex-col gap-3.5">
@@ -1327,11 +1327,7 @@
         if (viewEl) {
           if (t === tabId) {
             viewEl.classList.remove('hidden');
-            if (t === 'dashboard') {
-              viewEl.classList.add('grid');
-            } else {
-              viewEl.classList.add('block');
-            }
+            viewEl.classList.add('block');
           } else {
             viewEl.classList.add('hidden');
             viewEl.classList.remove('block', 'grid');
