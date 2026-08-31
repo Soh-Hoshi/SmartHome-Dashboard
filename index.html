@@ -537,11 +537,11 @@
           
           <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) -->
           <svg id="ac-gauge-svg" class="w-full h-full cursor-pointer touch-none" viewBox="0 0 280 280">
-            <!-- 蹄型 背景トラック -->
+            <!-- 蹄型 背景トラック (深みのあるダークブルーグレー) -->
             <path id="ac-track-bg"
                   d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
                   fill="none"
-                  stroke="#252830"
+                  stroke="#18222d"
                   stroke-width="24"
                   stroke-linecap="round" />
             
@@ -849,11 +849,11 @@
           
           <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) ※ノブなし・タップ判定なし -->
           <svg id="heater-gauge-svg" class="w-full h-full select-none pointer-events-none" viewBox="0 0 280 280">
-            <!-- 蹄型 背景トラック -->
+            <!-- 蹄型 背景トラック (深みのあるダークウォームグレー) -->
             <path id="heater-track-bg"
                   d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
                   fill="none"
-                  stroke="#252830"
+                  stroke="#251e1b"
                   stroke-width="24"
                   stroke-linecap="round" />
             
@@ -1366,7 +1366,15 @@
       }
 
       const activePath = document.getElementById('ac-active-path');
+      const trackBg = document.getElementById('ac-track-bg');
       const knobGroup = document.getElementById('ac-knob-group');
+
+      if (trackBg) {
+        if (state.acMode === 'cool') trackBg.setAttribute('stroke', '#18222d');
+        else if (state.acMode === 'dry') trackBg.setAttribute('stroke', '#152227');
+        else trackBg.setAttribute('stroke', '#171a20');
+      }
+
       if (activePath) {
         if (state.acMode === 'off') {
           activePath.style.display = 'none';
@@ -1700,6 +1708,13 @@
       }
 
       const activePath = document.getElementById('heater-active-path');
+      const trackBg = document.getElementById('heater-track-bg');
+
+      if (trackBg) {
+        if (state.heaterMode === 'heat') trackBg.setAttribute('stroke', '#251e1b');
+        else trackBg.setAttribute('stroke', '#171a20');
+      }
+
       if (activePath) {
         if (state.heaterMode === 'off') {
           activePath.style.display = 'none';
