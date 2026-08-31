@@ -209,24 +209,24 @@
       <!-- ======================================================================= -->
       <!-- 全デバイス共通 トップヘッダー (コマンド検索バー ＆ マイクボタン)          -->
       <!-- ======================================================================= -->
-      <header class="sticky top-0 z-30 w-full bg-app-bg/85 backdrop-blur-md border-b border-white/[0.03] px-4 sm:px-6 lg:px-8 py-3.5 mb-2">
-        <div class="w-full max-w-6xl mx-auto flex items-center space-x-3">
+      <header class="sticky top-0 z-30 w-full bg-[#16181d]/90 backdrop-blur-md border-b border-white/[0.05] px-4 sm:px-6 lg:px-8 py-4 sm:py-4.5 mb-3 shadow-md">
+        <div class="w-full max-w-6xl mx-auto flex items-center space-x-3.5">
           
-          <!-- コマンド検索バー (入力フォーム) -->
-          <div class="relative flex-1 flex items-center bg-[#1c1e23] hover:bg-[#22252c] focus-within:bg-[#22252c] focus-within:ring-1 focus-within:ring-[#2196f3]/50 rounded-2xl border border-white/[0.05] transition-all px-3.5 py-2 shadow-sm">
-            <span class="material-symbols-rounded text-neutral-400 text-xl shrink-0 mr-2.5 select-none">search</span>
+          <!-- コマンド検索バー (端が半円のピル型・ゆったりとした縦幅) -->
+          <div class="relative flex-1 flex items-center bg-[#21242c] hover:bg-[#272b35] focus-within:bg-[#272b35] focus-within:ring-2 focus-within:ring-[#2196f3]/40 rounded-full border border-white/[0.06] transition-all px-4 sm:px-5 py-2.5 sm:py-3 h-12 sm:h-13 shadow-inner">
+            <span class="material-symbols-rounded text-neutral-400 text-2xl shrink-0 mr-3 select-none">search</span>
             <input type="text" 
                    id="command-search-input" 
                    placeholder="検索またはコマンドを入力..." 
-                   class="w-full bg-transparent text-sm text-white placeholder-neutral-400 focus:outline-none"
+                   class="w-full bg-transparent text-[15px] sm:text-base text-white placeholder-neutral-400 focus:outline-none"
                    autocomplete="off" />
           </div>
 
-          <!-- 音声コマンド マイクボタン -->
+          <!-- 音声コマンド マイクボタン (円形・存在感のあるサイズ) -->
           <button id="btn-voice-command"
-                  class="w-10 h-10 rounded-2xl bg-[#1c1e23] hover:bg-[#252830] active:scale-95 text-neutral-300 hover:text-white border border-white/[0.05] flex items-center justify-center transition-all shrink-0 shadow-sm"
+                  class="w-12 h-12 rounded-full bg-[#21242c] hover:bg-[#2a2e38] active:scale-95 text-neutral-300 hover:text-white border border-white/[0.06] flex items-center justify-center transition-all shrink-0 shadow-md"
                   aria-label="音声コマンド入力">
-            <span class="material-symbols-rounded text-xl">mic</span>
+            <span class="material-symbols-rounded text-2xl">mic</span>
           </button>
 
         </div>
