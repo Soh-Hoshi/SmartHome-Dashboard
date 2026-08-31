@@ -715,15 +715,15 @@
 
       <!-- 中央: オン/オフ表示 ＆ 縦型スイッチスライダー (画面サイズ非依存・完全固定グループ) -->
       <div class="flex-1 flex flex-col items-center justify-center my-auto py-2 shrink-0">
-        <div id="detail-light-title" class="text-3xl font-bold tracking-tight text-white mb-5 transition-all duration-300">オフ</div>
+        <div id="detail-light-title" class="text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300">オフ</div>
         
         <div id="light-slider-container"
              onclick="toggleLightDetail()" 
-             class="slider-track relative w-32 h-[260px] bg-[#282b32] rounded-[36px] overflow-hidden p-2 cursor-pointer shadow-inner shrink-0">
+             class="slider-track relative w-[120px] h-[240px] bg-[#282b32] rounded-[34px] overflow-hidden p-2 cursor-pointer shadow-inner shrink-0">
           
           <div id="light-detail-block" 
                style="transform: translateY(0);"
-               class="slider-thumb absolute inset-x-2 bottom-2 h-[122px] rounded-[28px] bg-[#434752] flex items-center justify-center text-white shadow-md">
+               class="slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-white shadow-md">
             
             <div id="light-detail-icon-wrap" class="transition-transform duration-300 flex items-center justify-center">
               <div class="w-7 h-7 rounded-full border-2 border-neutral-300"></div>
@@ -1917,7 +1917,7 @@
         if (titleEl) titleEl.textContent = 'オン';
         if (containerEl) containerEl.style.backgroundColor = '#443717';
         if (blockEl) {
-          blockEl.style.transform = 'translateY(-122px)';
+          blockEl.style.transform = 'translateY(-112px)';
           blockEl.style.backgroundColor = '#fbc02d';
           blockEl.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.35)';
         }
