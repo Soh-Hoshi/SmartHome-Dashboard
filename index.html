@@ -537,11 +537,11 @@
           
           <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) -->
           <svg id="ac-gauge-svg" class="w-full h-full cursor-pointer touch-none" viewBox="0 0 280 280">
-            <!-- 蹄型 背景トラック (深みのあるダークブルーグレー) -->
+            <!-- 蹄型 背景トラック (Google Home風 半透明ダークブルーブレンド) -->
             <path id="ac-track-bg"
                   d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
                   fill="none"
-                  stroke="#18222d"
+                  stroke="rgba(33, 150, 243, 0.15)"
                   stroke-width="24"
                   stroke-linecap="round" />
             
@@ -849,11 +849,11 @@
           
           <!-- SVG 蹄型ゲージ (22℃ 〜 28℃, 角度: 135° 〜 405°) ※ノブなし・タップ判定なし -->
           <svg id="heater-gauge-svg" class="w-full h-full select-none pointer-events-none" viewBox="0 0 280 280">
-            <!-- 蹄型 背景トラック (深みのあるダークウォームグレー) -->
+            <!-- 蹄型 背景トラック (Google Home風 半透明ダークアンバーブレンド) -->
             <path id="heater-track-bg"
                   d="M 65.75 214.25 A 105 105 0 1 1 214.25 214.25"
                   fill="none"
-                  stroke="#251e1b"
+                  stroke="rgba(234, 122, 30, 0.15)"
                   stroke-width="24"
                   stroke-linecap="round" />
             
@@ -1370,9 +1370,9 @@
       const knobGroup = document.getElementById('ac-knob-group');
 
       if (trackBg) {
-        if (state.acMode === 'cool') trackBg.setAttribute('stroke', '#18222d');
-        else if (state.acMode === 'dry') trackBg.setAttribute('stroke', '#152227');
-        else trackBg.setAttribute('stroke', '#171a20');
+        if (state.acMode === 'cool') trackBg.setAttribute('stroke', 'rgba(33, 150, 243, 0.15)');
+        else if (state.acMode === 'dry') trackBg.setAttribute('stroke', 'rgba(0, 188, 212, 0.15)');
+        else trackBg.setAttribute('stroke', 'rgba(255, 255, 255, 0.05)');
       }
 
       if (activePath) {
@@ -1711,8 +1711,8 @@
       const trackBg = document.getElementById('heater-track-bg');
 
       if (trackBg) {
-        if (state.heaterMode === 'heat') trackBg.setAttribute('stroke', '#251e1b');
-        else trackBg.setAttribute('stroke', '#171a20');
+        if (state.heaterMode === 'heat') trackBg.setAttribute('stroke', 'rgba(234, 122, 30, 0.15)');
+        else trackBg.setAttribute('stroke', 'rgba(255, 255, 255, 0.05)');
       }
 
       if (activePath) {
