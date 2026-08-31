@@ -82,6 +82,7 @@ import switchbot_client
 import eufy_client
 import assistant_engine
 import weather_service
+import presence_service
 
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
 
@@ -180,6 +181,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path == '/api/weather':
             data = weather_service.get_weather_data()
             return self.send_json_response({"status": "success", "weather": data})
+
+        if clean_path == '/api/presence':
+            data = presence_service.get_presence_status()
+            return self.send_json_response({"status": "success", "presence": data})
 
         if clean_path == '/api/cleaner/status':
             try:
@@ -462,6 +467,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         pass
 
 if __name__ == '__main__':
+    presence_service.start_presence_service()
     watcher_thread = threading.Thread(target=file_watcher, daemon=True)
     watcher_thread.start()
 

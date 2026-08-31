@@ -16,6 +16,7 @@ import urllib.request
 import urllib.error
 
 import weather_service
+import presence_service
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
@@ -234,6 +235,13 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         w = weather_service.get_weather_data()
         msg = f"現在の木月の天気は{w['weather']}、外気温は{w['temp']}℃です。"
         return {"success": True, "message": msg, "action": "weather_condition"}
+
+    # 3. 在宅検出・在宅状況確認 (Presence)
+    if any(k in text for k in ['在宅', 'ざいたく', '家にいる', '外出', 'がいしゅつ', '帰ってる', '家に誰か', 'スマホいる', 'スマホある']):
+        p = presence_service.get_presence_status()
+        status_str = "「在宅中」" if p["is_home"] else "「外出中」"
+        msg = f"現在の状況は{status_str}です。（最終検知: {p['last_seen_str']}）"
+        return {"success": True, "message": msg, "action": "presence_status"}
 
     # 3. シーン一括操作 (優先度高)
     # 3-A. おはよう (リビングのライトをつける)

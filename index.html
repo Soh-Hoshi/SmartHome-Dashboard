@@ -407,6 +407,23 @@
           <h2 class="text-base font-bold text-white px-1">センサー</h2>
           
           <div class="flex flex-col gap-3.5">
+            <!-- 在宅状況タイル (タップで詳細シートへ) -->
+            <div onclick="openSheet('presence-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              
+              <!-- 在宅アイコン (在宅: 緑系 / 外出: グレー) -->
+              <div id="tile-presence-icon-wrap" 
+                   class="w-11 h-11 rounded-full bg-[#1b332b] text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
+                <span id="tile-presence-icon" class="material-symbols-rounded text-2xl">home_pin</span>
+              </div>
+
+              <!-- テキスト -->
+              <div class="flex-1 min-w-0">
+                <div class="text-[15px] font-semibold text-white leading-tight">在宅</div>
+                <div id="tile-presence-status" class="text-xs text-emerald-400 font-normal mt-0.5 truncate transition-colors">在宅中</div>
+              </div>
+            </div>
+
             <!-- 気象タイル (タップで詳細シートへ) -->
             <div onclick="openSheet('weather-sheet')" 
                  class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
@@ -1267,6 +1284,82 @@
           <div>
             <div class="text-[10px] text-neutral-400 font-normal">日の出</div>
             <div id="sheet-weather-sunrise" class="text-xs sm:text-sm font-bold text-white font-num">05:13</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- 画面7：在宅状況詳細画面 (Bottom Sheet Modal)                               -->
+  <!-- ======================================================================= -->
+  <div id="presence-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(640px,calc(100dvh-48px))] sm:min-h-[480px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-y-auto shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('presence-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight">在宅状況</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央メインヒーロー: 在宅/外出ステータス -->
+      <div class="my-auto py-6 flex flex-col items-center justify-center text-center select-none shrink-0">
+        <div id="sheet-presence-icon-wrap" class="w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-inner">
+          <span id="sheet-presence-icon" class="material-symbols-rounded text-5xl">home_pin</span>
+        </div>
+        <div id="sheet-presence-status" class="text-2xl sm:text-3xl font-bold text-white mb-1">在宅中</div>
+        <div id="sheet-presence-desc" class="text-xs text-neutral-400 font-medium max-w-xs">
+          登録デバイスがローカルネットワークに接続されています
+        </div>
+      </div>
+
+      <!-- 下部: デバイス詳細グリッド (2x2) -->
+      <div class="grid grid-cols-2 gap-2 pt-1 shrink-0">
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-sky-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">smartphone</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">端末</div>
+            <div id="sheet-presence-device" class="text-xs font-bold text-white truncate">スマートフォン</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-emerald-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">wifi</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">IP アドレス</div>
+            <div id="sheet-presence-ip" class="text-xs font-bold text-white font-num truncate">192.168.0.30</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-amber-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">fingerprint</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">MAC アドレス</div>
+            <div id="sheet-presence-mac" class="text-[10px] font-bold text-white font-num truncate">72:58:BA:C7:40:FA</div>
+          </div>
+        </div>
+
+        <div class="bg-[#2a2d36] rounded-2xl p-2.5 flex items-center space-x-2.5 border border-white/[0.04]">
+          <div class="w-8 h-8 rounded-xl bg-white/[0.04] text-purple-400 flex items-center justify-center shrink-0">
+            <span class="material-symbols-rounded text-lg">history</span>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-[10px] text-neutral-400 font-normal">最終検知</div>
+            <div id="sheet-presence-time" class="text-xs font-bold text-white font-num truncate">--:--:--</div>
           </div>
         </div>
       </div>
@@ -2706,6 +2799,60 @@
       }
     }
 
+    async function fetchPresenceData() {
+      try {
+        const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
+        const res = await fetch(basePath + '/api/presence');
+        const data = await res.json();
+        if (data.status === 'success' && data.presence) {
+          const p = data.presence;
+          const isHome = p.is_home;
+
+          // 1. ダッシュボードの在宅タイル更新
+          const tileStatus = document.getElementById('tile-presence-status');
+          const tileIconWrap = document.getElementById('tile-presence-icon-wrap');
+          if (tileStatus) {
+            tileStatus.textContent = isHome ? '在宅中' : '外出中';
+            tileStatus.className = isHome 
+              ? "text-xs text-emerald-400 font-normal mt-0.5 truncate transition-colors"
+              : "text-xs text-neutral-400 font-normal mt-0.5 truncate transition-colors";
+          }
+          if (tileIconWrap) {
+            tileIconWrap.className = isHome
+              ? "w-11 h-11 rounded-full bg-[#1b332b] text-emerald-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0"
+              : "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0";
+          }
+
+          // 2. 在宅詳細モーダル更新
+          const sheetStatus = document.getElementById('sheet-presence-status');
+          const sheetDesc = document.getElementById('sheet-presence-desc');
+          const sheetIconWrap = document.getElementById('sheet-presence-icon-wrap');
+          const sheetDevice = document.getElementById('sheet-presence-device');
+          const sheetIp = document.getElementById('sheet-presence-ip');
+          const sheetMac = document.getElementById('sheet-presence-mac');
+          const sheetTime = document.getElementById('sheet-presence-time');
+
+          if (sheetStatus) sheetStatus.textContent = isHome ? '在宅中' : '外出中';
+          if (sheetDesc) {
+            sheetDesc.textContent = isHome 
+              ? '登録デバイスがローカルネットワークに接続されています'
+              : '登録デバイスの接続が確認されていません（外出中）';
+          }
+          if (sheetIconWrap) {
+            sheetIconWrap.className = isHome
+              ? "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-inner"
+              : "w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-neutral-400 mb-3 shadow-inner";
+          }
+          if (sheetDevice) sheetDevice.textContent = p.device_name || 'スマートフォン';
+          if (sheetIp) sheetIp.textContent = p.ip || '192.168.0.30';
+          if (sheetMac) sheetMac.textContent = p.mac || '72:58:BA:C7:40:FA';
+          if (sheetTime) sheetTime.textContent = p.last_seen_str || '--:--:--';
+        }
+      } catch (err) {
+        console.warn('[Presence Fetch Error]', err);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       renderAcGauge();
       updateAcUi();
@@ -2715,9 +2862,12 @@
       updateCleanerUi();
       loadInitialState();
       fetchWeatherData();
+      fetchPresenceData();
 
       // クリーナーの定期状態同期 (10秒ごと)
       setInterval(syncCleanerStatus, 10000);
+      // 在宅センサーの定期同期 (10秒ごと)
+      setInterval(fetchPresenceData, 10000);
       // 天気・気象データの定期同期 (10分ごと)
       setInterval(fetchWeatherData, 600000);
 
