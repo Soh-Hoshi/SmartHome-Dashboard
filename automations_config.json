@@ -33,9 +33,9 @@
     "enabled": true,
     "trigger": {
       "type": "presence",
-      "target": "在宅センサー",
-      "value": "不在",
-      "condition": null,
+      "target": "在宅確認",
+      "value": "変更",
+      "condition": "在宅→不在",
       "icon": "person_off",
       "iconColor": "text-rose-400",
       "bgColor": "bg-rose-500/10"
@@ -70,18 +70,16 @@
       },
       {
         "type": "if",
-        "target": "IF 分岐",
-        "action": "稼働判定",
-        "condition": "いずれかがオン",
-        "icon": "alt_route",
-        "iconColor": "text-violet-400",
-        "bgColor": "bg-violet-500/10"
+        "target": "条件",
+        "action": "がオン",
+        "condition": null,
+        "icons": ["lightbulb", "ac_unit", "mode_heat"]
       },
       {
         "type": "device",
         "target": "スマホ通知",
         "action": "消灯確認",
-        "condition": "「いってきます」ボタン付与",
+        "condition": null,
         "icon": "notifications_active",
         "iconColor": "text-sky-400",
         "bgColor": "bg-sky-500/10"
