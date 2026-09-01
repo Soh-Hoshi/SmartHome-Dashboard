@@ -25,13 +25,14 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Make Gradlew Executable
         run: chmod +x android_bridge/gradlew
 
-      - name: Build with Gradle Wrapper
+      - name: Build Debug APK
         run: |
           cd android_bridge
           ./gradlew assembleDebug --no-daemon --stacktrace
