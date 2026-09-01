@@ -1,0 +1,105 @@
+{
+  "cached_at": 1788271043.560285,
+  "data": {
+    "location": "川崎市中原区木月",
+    "temp": 24.9,
+    "feels_like": 30.0,
+    "humidity": 89,
+    "wind_speed": 2.4,
+    "is_day": false,
+    "weather": "晴れ",
+    "weather_icon": "clear_night",
+    "weather_code": 1,
+    "temp_max": 29.3,
+    "temp_min": 22.1,
+    "sunrise": "05:13",
+    "sunset": "18:09",
+    "hourly": [
+      {
+        "time": "13:00",
+        "temp": 28.7,
+        "weather": "晴れ",
+        "icon": "wb_sunny",
+        "pop": 7
+      },
+      {
+        "time": "14:00",
+        "temp": 29.1,
+        "weather": "晴れ",
+        "icon": "wb_sunny",
+        "pop": 5
+      },
+      {
+        "time": "15:00",
+        "temp": 29.3,
+        "weather": "晴れ",
+        "icon": "wb_sunny",
+        "pop": 6
+      },
+      {
+        "time": "16:00",
+        "temp": 29.1,
+        "weather": "晴れ",
+        "icon": "wb_sunny",
+        "pop": 14
+      },
+      {
+        "time": "17:00",
+        "temp": 28.2,
+        "weather": "晴れ",
+        "icon": "wb_sunny",
+        "pop": 25
+      },
+      {
+        "time": "18:00",
+        "temp": 27.0,
+        "weather": "晴れ",
+        "icon": "clear_night",
+        "pop": 37
+      },
+      {
+        "time": "19:00",
+        "temp": 26.2,
+        "weather": "晴れ",
+        "icon": "clear_night",
+        "pop": 49
+      },
+      {
+        "time": "20:00",
+        "temp": 25.6,
+        "weather": "晴れ",
+        "icon": "clear_night",
+        "pop": 62
+      },
+      {
+        "time": "21:00",
+        "temp": 25.3,
+        "weather": "晴れ",
+        "icon": "clear_night",
+        "pop": 71
+      },
+      {
+        "time": "22:00",
+        "temp": 25.1,
+        "weather": "一部曇り",
+        "icon": "partly_cloudy_night",
+        "pop": 75
+      },
+      {
+        "time": "23:00",
+        "temp": 24.8,
+        "weather": "晴れ",
+        "icon": "clear_night",
+        "pop": 75
+      },
+      {
+        "time": "00:00",
+        "temp": 24.4,
+        "weather": "晴れ",
+        "icon": "clear_night",
+        "pop": 69
+      }
+    ],
+    "updated_at": "2026-09-01T22:45"
+  }
+}

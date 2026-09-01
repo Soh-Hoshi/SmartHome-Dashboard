@@ -86,7 +86,7 @@ def is_japanese_business_day(dt: datetime.date) -> bool:
 DEFAULT_AUTOMATIONS = [
     {
         "id": "weekday_morning_light",
-        "name": "目覚め",
+        "name": "朝",
         "category": "デイリー",
         "enabled": True,
         "trigger": {

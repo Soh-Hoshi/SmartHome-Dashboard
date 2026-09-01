@@ -472,7 +472,7 @@
           <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- オートメーション1: 目覚め (タイルタップでトリガー＆フロー詳細 / 右ボタンでテスト実行) -->
+            <!-- オートメーション1: 朝 (タイルタップでトリガー＆フロー詳細 / 右ボタンでテスト実行) -->
             <div onclick="openAutomationFlowSheet('weekday_morning_light')"
                  class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
               <div class="flex items-center space-x-3.5 min-w-0">
@@ -480,13 +480,13 @@
                   <span class="material-symbols-rounded text-2xl">alarm</span>
                 </div>
                 <div class="min-w-0">
-                  <div class="text-[15px] font-semibold text-white leading-tight truncate">目覚め</div>
+                  <div class="text-[15px] font-semibold text-white leading-tight truncate">朝</div>
                   <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">平日 06:30</div>
                 </div>
               </div>
               <button onclick="runAutomationDirectly('weekday_morning_light', event)" 
                       class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="目覚めを実行">
+                      aria-label="朝を実行">
                 <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
               </button>
             </div>
@@ -3336,7 +3336,7 @@
     const AUTOMATIONS_DATA = {
       weekday_morning_light: {
         id: 'weekday_morning_light',
-        title: '目覚め',
+        title: '朝',
         trigger: {
           target: '時間',
           value: '06:30',
