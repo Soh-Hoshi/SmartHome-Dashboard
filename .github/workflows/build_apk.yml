@@ -30,7 +30,7 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android_bridge
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace --info
 
       - name: Prepare APK Output
         run: |
