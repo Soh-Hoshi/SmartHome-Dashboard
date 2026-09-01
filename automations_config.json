@@ -6,11 +6,16 @@
     "enabled": true,
     "trigger": {
       "type": "time",
-      "time": "06:30",
-      "condition": "日本の平日（土日祝除く）"
+      "target": "時間",
+      "value": "06:30",
+      "condition": "日本の平日（土日祝除く）",
+      "icon": "alarm",
+      "iconColor": "text-amber-400",
+      "bgColor": "bg-amber-500/10"
     },
     "flow": [
       {
+        "type": "device",
         "target": "リビング",
         "action": "オン",
         "condition": null,
@@ -28,30 +33,55 @@
     "enabled": true,
     "trigger": {
       "type": "presence",
-      "event": "leave",
-      "condition": "在宅➔不在変化 かつ 機器稼働中"
+      "target": "在宅センサー",
+      "value": "不在（外出）",
+      "condition": "在宅 ➔ 不在 変化時",
+      "icon": "person_off",
+      "iconColor": "text-rose-400",
+      "bgColor": "bg-rose-500/10"
     },
     "flow": [
       {
-        "target": "在宅センサー",
-        "action": "外出検知",
-        "condition": "在宅から不在へ変化",
-        "icon": "person_off",
-        "iconColor": "text-rose-400",
-        "bgColor": "bg-rose-500/10"
-      },
-      {
-        "target": "稼働チェック",
-        "action": "照明・空調確認",
-        "condition": "ライトまたはエアコンがON",
-        "icon": "checklist",
+        "type": "device",
+        "target": "リビング",
+        "action": "状態取得",
+        "condition": null,
+        "icon": "lightbulb",
         "iconColor": "text-amber-400",
         "bgColor": "bg-amber-500/10"
       },
       {
+        "type": "device",
+        "target": "エアコン",
+        "action": "状態取得",
+        "condition": null,
+        "icon": "ac_unit",
+        "iconColor": "text-sky-400",
+        "bgColor": "bg-sky-500/10"
+      },
+      {
+        "type": "device",
+        "target": "ヒーター",
+        "action": "状態取得",
+        "condition": null,
+        "icon": "mode_heat",
+        "iconColor": "text-orange-400",
+        "bgColor": "bg-orange-500/10"
+      },
+      {
+        "type": "if",
+        "target": "IF 分岐",
+        "action": "稼働判定",
+        "condition": "いずれかがオン",
+        "icon": "alt_route",
+        "iconColor": "text-violet-400",
+        "bgColor": "bg-violet-500/10"
+      },
+      {
+        "type": "device",
         "target": "スマホ通知",
-        "action": "「いってきます」実行ボタン送信",
-        "condition": "通知からワンタップ全消灯",
+        "action": "消灯確認",
+        "condition": "「いってきます」ボタン付与",
         "icon": "notifications_active",
         "iconColor": "text-sky-400",
         "bgColor": "bg-sky-500/10"
