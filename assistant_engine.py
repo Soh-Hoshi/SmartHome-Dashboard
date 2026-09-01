@@ -146,7 +146,7 @@ def query_gemini_api(prompt_text):
 - 鍵の所在に関する回答は「室内にあります」または「室内にはありません」のみとする。
 - 余計な説明やMarkdownコードブロックは一切含めず、純粋なJSONオブジェクト1つだけを出力してください。"""
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={api_key}"
     payload = {
         "contents": [
             {
