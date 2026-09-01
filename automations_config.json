@@ -34,8 +34,8 @@
     "trigger": {
       "type": "presence",
       "target": "在宅センサー",
-      "value": "不在（外出）",
-      "condition": "在宅 ➔ 不在 変化時",
+      "value": "不在",
+      "condition": null,
       "icon": "person_off",
       "iconColor": "text-rose-400",
       "bgColor": "bg-rose-500/10"
