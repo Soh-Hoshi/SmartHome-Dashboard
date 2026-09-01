@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ダッシュボード - スマートホーム</title>
 
-  <!-- PWA (Progressive Web App) 設定 -->
-  <link rel="manifest" href="manifest.json">
+  <!-- PWA (Progressive Web App) 設定: Home Assistantとの競合を防ぐ絶対パス指定 -->
+  <link id="pwa-manifest" rel="manifest" href="/dashboard/manifest.json">
   <meta name="theme-color" content="#0d0f12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SmartHome">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="/dashboard/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/dashboard/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/dashboard/icon-192.png">
   
   <!-- Google Fonts: 幾何学的で洗練された Outfit (数字・英字) + Noto Sans JP (日本語) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3504,13 +3504,22 @@
           }
         }
       });
-      // PWA Service Worker 登録 (オフライン対応 & スタンドアロン動作)
+      // PWA Service Worker 登録 (スコープを /dashboard/ に明示指定)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
-          navigator.serviceWorker.register(basePath + '/sw.js')
+          const swUrl = (basePath || '') + '/sw.js';
+          const scopeUrl = (basePath || '') + '/';
+          
+          // ローカルアクセス時はマニフェストパスを調整
+          const manifestEl = document.getElementById('pwa-manifest');
+          if (manifestEl && !basePath) {
+            manifestEl.setAttribute('href', '/manifest.json');
+          }
+
+          navigator.serviceWorker.register(swUrl, { scope: scopeUrl })
             .then((reg) => {
-              console.log('[PWA] Service Worker registered successfully:', reg.scope);
+              console.log('[PWA] Service Worker registered for scope:', reg.scope);
             })
             .catch((err) => {
               console.warn('[PWA] Service Worker registration failed:', err);

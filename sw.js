@@ -1,8 +1,14 @@
 // SmartHome Dashboard PWA Service Worker
-// Network-First Strategy (スピーディーな更新・即時反映に最適化)
+// Dedicated Scope: /dashboard
 
-const CACHE_NAME = 'smarthome-pwa-v1';
+const CACHE_NAME = 'smarthome-dashboard-v3';
 const STATIC_ASSETS = [
+  '/dashboard',
+  '/dashboard/',
+  '/dashboard/manifest.json',
+  '/dashboard/icon-192.png',
+  '/dashboard/icon-512.png',
+  '/dashboard/icon.svg',
   './',
   './index.html',
   './manifest.json',
@@ -63,7 +69,7 @@ self.addEventListener('fetch', (event) => {
             return cachedResponse;
           }
           if (event.request.headers.get('accept')?.includes('text/html')) {
-            return caches.match('./index.html');
+            return caches.match('/dashboard') || caches.match('./index.html');
           }
         });
       })
