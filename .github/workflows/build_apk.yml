@@ -37,7 +37,7 @@ jobs:
         working-directory: android_bridge
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Rename APK
+      - name: Prepare APK Output
         run: |
           mkdir -p build_output
           cp android_bridge/app/build/outputs/apk/debug/app-debug.apk build_output/NovaAssist.apk
@@ -63,5 +63,6 @@ jobs:
             2. インストール後、Androidの **「設定 ➔ アプリ ➔ デフォルトアプリ ➔ デジタルアシスタントアプリ」** で **「Nova Assist」** を選択
             3. 電源ボタン長押しや画面下端スワイプで即座にNovaが音声入力待機状態で起動します！
           files: build_output/NovaAssist.apk
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
