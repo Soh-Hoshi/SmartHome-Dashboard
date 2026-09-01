@@ -3530,6 +3530,16 @@
             });
         });
       }
+
+      // Android アシスタントブリッジ連携: URLに ?assist=1 または ?voice=1 が付いている場合は即座に音声起動
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('assist') || urlParams.has('voice')) {
+        setTimeout(() => {
+          if (!isRecording) {
+            toggleVoiceRecognition();
+          }
+        }, 300);
+      }
     });
   </script>
 </body>

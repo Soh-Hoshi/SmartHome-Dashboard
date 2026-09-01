@@ -1,0 +1,66 @@
+name: Build Nova Assist APK
+
+on:
+  push:
+    paths:
+      - 'android_bridge/**'
+      - '.github/workflows/build_apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android_bridge
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle Wrapper
+        run: |
+          gradle wrapper --gradle-version 8.5
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NovaAssist-Debug-APK
+          path: android_bridge/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Create GitHub Release with APK
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: android-v1.0.0
+          name: "Nova Assist Android Bridge v1.0.0"
+          body: |
+            ### 🤖 Nova Assist Android Bridge APK
+            Androidの「デフォルトのデジタルアシスタントアプリ」として設定可能な超軽量ブリッジアプリです。
+
+            **インストール方法**:
+            1. 下記の `NovaAssist.apk` をスマホでダウンロード
+            2. インストール後、Androidの **「設定 ➔ アプリ ➔ デフォルトアプリ ➔ デジタルアシスタントアプリ」** で **「Nova Assist」** を選択
+            3. 電源ボタン長押しや画面端スワイプで即座にNovaが音声待機状態で起動します！
+          files: |
+            android_bridge/app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

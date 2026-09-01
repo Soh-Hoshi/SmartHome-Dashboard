@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Nova Assist</string>
+    <string name="default_dashboard_url">https://server.tail52d127.ts.net/dashboard</string>
+</resources>
