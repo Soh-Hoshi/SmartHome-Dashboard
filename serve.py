@@ -196,6 +196,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             data = automation_service.load_automations()
             return self.send_json_response({"status": "success", "automations": data})
 
+        if clean_path == '/api/push/vapid-key':
+            try:
+                import push_service
+                keys = push_service.get_or_create_vapid_keys()
+                return self.send_json_response({"status": "success", "public_key": keys["public_key"]})
+            except Exception as e:
+                return self.send_json_response({"status": "error", "error": str(e)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
         if clean_path == '/api/cleaner/status':
             try:
                 client = eufy_client.EufyG30Client()
@@ -459,6 +467,23 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             auto_id = req_data.get('id')
             ok = automation_service.execute_automation(auto_id)
             return self.send_json_response({"status": "success" if ok else "error"})
+
+        if clean_path == '/api/push/subscribe':
+            try:
+                import push_service
+                sub_data = req_data.get('subscription', req_data)
+                ok = push_service.save_subscription(sub_data)
+                return self.send_json_response({"status": "success" if ok else "error"})
+            except Exception as e:
+                return self.send_json_response({"status": "error", "error": str(e)})
+
+        if clean_path == '/api/push/test':
+            try:
+                import push_service
+                count = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
+                return self.send_json_response({"status": "success", "subscribers": count})
+            except Exception as e:
+                return self.send_json_response({"status": "error", "error": str(e)})
 
         if clean_path == '/api/state':
             current_state = load_state()

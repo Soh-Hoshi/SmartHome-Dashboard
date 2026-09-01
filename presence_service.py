@@ -67,10 +67,12 @@ def probe_device():
 
 def _presence_worker():
     global _state
+    prev_is_home = True
     while True:
         try:
             detected = probe_device()
             now = time.time()
+            changed_to_away = False
             with _lock:
                 _state["last_check"] = now
                 if detected:
@@ -80,12 +82,24 @@ def _presence_worker():
                 else:
                     # 30秒間完全に無応答なら「不在」に即切り替え
                     if now - _state["last_seen"] > GRACE_PERIOD_SECONDS:
+                        if _state["is_home"]:
+                            changed_to_away = True
                         _state["is_home"] = False
                         _state["status_text"] = "不在"
                     else:
                         # 猶予期間内は「在宅」をキープ
                         _state["is_home"] = True
                         _state["status_text"] = "在宅"
+
+            # 在宅 ➔ 不在 変化を検知したらオートメーション（消し忘れチェック＆プッシュ通知）を発火
+            if changed_to_away:
+                print("[Presence Service] State changed: Home -> Away. Checking active devices...")
+                try:
+                    import automation_service
+                    automation_service.trigger_away_check()
+                except Exception as ex:
+                    print(f"[Presence Away Trigger Error] {ex}")
+
         except Exception as e:
             print(f"[Presence Service Error] {e}")
 

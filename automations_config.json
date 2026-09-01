@@ -20,5 +20,43 @@
       }
     ],
     "command": "smarthome light on"
+  },
+  {
+    "id": "away_device_warning",
+    "name": "外出時消し忘れ防止",
+    "category": "外出",
+    "enabled": true,
+    "trigger": {
+      "type": "presence",
+      "event": "leave",
+      "condition": "在宅➔不在変化 かつ 機器稼働中"
+    },
+    "flow": [
+      {
+        "target": "在宅センサー",
+        "action": "外出検知",
+        "condition": "在宅から不在へ変化",
+        "icon": "person_off",
+        "iconColor": "text-rose-400",
+        "bgColor": "bg-rose-500/10"
+      },
+      {
+        "target": "稼働チェック",
+        "action": "照明・空調確認",
+        "condition": "ライトまたはエアコンがON",
+        "icon": "checklist",
+        "iconColor": "text-amber-400",
+        "bgColor": "bg-amber-500/10"
+      },
+      {
+        "target": "スマホ通知",
+        "action": "「いってきます」実行ボタン送信",
+        "condition": "通知からワンタップ全消灯",
+        "icon": "notifications_active",
+        "iconColor": "text-sky-400",
+        "bgColor": "bg-sky-500/10"
+      }
+    ],
+    "command": "notify away device warning"
   }
 ]

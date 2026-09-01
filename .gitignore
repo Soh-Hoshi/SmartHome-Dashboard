@@ -1,5 +1,7 @@
 # 機密情報・認証ファイル
 config.json
+vapid_keys.json
+push_subscriptions.json
 *.pem
 *.key
 *.cert

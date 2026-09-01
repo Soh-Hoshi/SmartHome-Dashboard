@@ -508,6 +508,32 @@
           </div>
         </section>
 
+        <!-- セクション: 外出 -->
+        <section class="break-inside-avoid mb-6 space-y-3">
+          <h2 class="text-base font-bold text-white px-1">外出</h2>
+          
+          <div class="flex flex-col gap-3.5">
+            <!-- オートメーション2: 外出時消し忘れ防止 -->
+            <div onclick="openAutomationFlowSheet('away_device_warning')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              <div class="flex items-center space-x-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                  <span class="material-symbols-rounded text-2xl">notifications_active</span>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[15px] font-semibold text-white leading-tight truncate">外出時消し忘れ防止</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">外出時 ➔ 消灯確認通知</div>
+                </div>
+              </div>
+              <button onclick="runAutomationDirectly('away_device_warning', event)" 
+                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
+                      aria-label="外出時消し忘れ防止をテスト実行">
+                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
       </div>
 
       <!-- ======================================================================= -->
@@ -3371,6 +3397,45 @@
           }
         ],
         commandText: 'リビングの電気をつけて'
+      },
+      away_device_warning: {
+        id: 'away_device_warning',
+        title: '外出時消し忘れ防止',
+        trigger: {
+          target: '在宅センサー',
+          value: '不在検知',
+          condition: '在宅 ➔ 不在変化 かつ 機器稼働中',
+          icon: 'person_off',
+          iconColor: 'text-rose-400',
+          bgColor: 'bg-rose-500/10'
+        },
+        flow: [
+          {
+            target: '在宅センサー',
+            action: '外出検知',
+            condition: '在宅から不在へ変化',
+            icon: 'person_off',
+            iconColor: 'text-rose-400',
+            bgColor: 'bg-rose-500/10'
+          },
+          {
+            target: '稼働チェック',
+            action: '照明・空調確認',
+            condition: 'ライトまたはエアコンがON',
+            icon: 'checklist',
+            iconColor: 'text-amber-400',
+            bgColor: 'bg-amber-500/10'
+          },
+          {
+            target: 'スマホ通知',
+            action: '「いってきます」実行ボタン送信',
+            condition: '通知からワンタップ全消灯',
+            icon: 'notifications_active',
+            iconColor: 'text-sky-400',
+            bgColor: 'bg-sky-500/10'
+          }
+        ],
+        commandText: '消し忘れ通知テスト'
       }
     };
 
@@ -3508,7 +3573,7 @@
           }
         }
       });
-      // PWA Service Worker 登録 (スコープを /dashboard/ に明示指定)
+      // PWA Service Worker 登録 (スコープを /dashboard/ に明示指定) ＆ WebPush 購読
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
@@ -3522,13 +3587,70 @@
           }
 
           navigator.serviceWorker.register(swUrl, { scope: scopeUrl })
-            .then((reg) => {
+            .then(async (reg) => {
               console.log('[PWA] Service Worker registered for scope:', reg.scope);
+              
+              // WebPush 通知サブスクリプションの自動初期化
+              if ('PushManager' in window && 'Notification' in window) {
+                try {
+                  // 初回ユーザー操作時に通知許可をリクエスト
+                  if (Notification.permission === 'default') {
+                    const reqPushPerm = async () => {
+                      document.removeEventListener('click', reqPushPerm);
+                      const perm = await Notification.requestPermission();
+                      if (perm === 'granted') {
+                        subscribePush(reg, basePath);
+                      }
+                    };
+                    document.addEventListener('click', reqPushPerm, { once: true });
+                  } else if (Notification.permission === 'granted') {
+                    subscribePush(reg, basePath);
+                  }
+                } catch (pe) {
+                  console.warn('[PWA Push Error]', pe);
+                }
+              }
             })
             .catch((err) => {
               console.warn('[PWA] Service Worker registration failed:', err);
             });
         });
+      }
+
+      // WebPush 購読ヘルパー
+      async function subscribePush(registration, basePath) {
+        try {
+          const res = await fetch((basePath || '') + '/api/push/vapid-key');
+          const data = await res.json();
+          if (!data || !data.public_key) return;
+
+          const padding = '='.repeat((4 - data.public_key.length % 4) % 4);
+          const base64 = (data.public_key + padding).replace(/\-/g, '+').replace(/_/g, '/');
+          const rawData = window.atob(base64);
+          const appServerKey = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            appServerKey[i] = rawData.charCodeAt(i);
+          }
+
+          let sub = await registration.pushManager.getSubscription();
+          if (!sub) {
+            sub = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: appServerKey
+            });
+          }
+
+          if (sub) {
+            await fetch((basePath || '') + '/api/push/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(sub)
+            });
+            console.log('[PWA Push] Registered with server successfully.');
+          }
+        } catch (e) {
+          console.warn('[PWA Subscribe Error]', e);
+        }
       }
 
       // Android アシスタントブリッジ連携: URLに ?assist=1 または ?voice=1 が付いている場合は即座に音声起動

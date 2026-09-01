@@ -137,10 +137,51 @@ def toggle_automation(auto_id):
                 return a
     return None
 
+STATE_FILE = "/home/soh/dashboard/state.json"
+
+def trigger_away_check():
+    """
+    在宅 ➔ 不在 変化時に呼ばれる消し忘れチェック＆プッシュ通知トリガー
+    """
+    autos = load_automations()
+    away_auto = next((a for a in autos if a.get("id") == "away_device_warning"), None)
+    if not away_auto or not away_auto.get("enabled", True):
+        return
+
+    if not os.path.exists(STATE_FILE):
+        return
+
+    try:
+        with open(STATE_FILE, 'r', encoding='utf-8') as f:
+            st = json.load(f)
+    except Exception:
+        return
+
+    active_devices = []
+    if st.get('lightOn', False):
+        active_devices.append('リビング照明')
+    if st.get('acMode', 'off') != 'off':
+        mode_str = 'エアコン（冷房）' if st.get('acMode') == 'cool' else ('エアコン（除湿）' if st.get('acMode') == 'dry' else 'エアコン')
+        active_devices.append(mode_str)
+    if st.get('heaterMode', 'off') != 'off':
+        active_devices.append('ヒーター')
+
+    if active_devices:
+        devices_str = '・'.join(active_devices)
+        print(f"[Automation Alert] Away detected with active devices: {devices_str}")
+        try:
+            import push_service
+            push_service.send_away_device_warning(devices_str)
+        except Exception as e:
+            print(f"[Push Trigger Error] {e}")
+
 def execute_automation(auto_id):
     autos = load_automations()
     for a in autos:
         if a["id"] == auto_id:
+            if auto_id == "away_device_warning":
+                trigger_away_check()
+                return True
             cmd = a.get("command")
             if cmd:
                 print(f"[Automation Executing] {a['name']} -> {cmd}")
