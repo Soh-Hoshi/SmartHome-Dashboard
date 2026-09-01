@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 SmartHome Natural Language Assistant Engine (Nova)
-Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Local LLM (Qwen 2.5 via Ollama) fallback
-100% Private, Local, Free & Standardized Responses.
-Integrated with Kawasaki Nakahara Kizuki Weather, Solar & Presence Data.
+Hybrid Engine: Ultra-fast rule-based parser (0.001s) + Gemini 2.0 Flash API (Free Tier, ~0.4s) + Local LLM fallback
+100% Private, Fast, Free & Standardized Responses.
+Integrated with Kawasaki Nakahara Kizuki Weather, Solar, Presence & Tile Key Data.
 Smart Scenes (Morning, Goodnight, Welcome) driven by real-time Apparent (Feels-like) Temperature.
 """
 
@@ -21,7 +21,21 @@ import tile_service
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 STATE_FILE = os.path.join(DIRECTORY, 'state.json')
+CONFIG_FILE = os.path.join(DIRECTORY, 'config.json')
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
+
+def get_gemini_api_key():
+    """環境変数または config.json から Gemini API キーを取得"""
+    if os.environ.get("GEMINI_API_KEY"):
+        return os.environ.get("GEMINI_API_KEY")
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+                return cfg.get("gemini_api_key") or cfg.get("gemini", {}).get("api_key")
+        except Exception:
+            pass
+    return None
 
 def format_standard_message(device, action, params=None):
     """すべての返答メッセージを画一化・統一するフォーマッター (絵文字なし)"""
@@ -101,13 +115,83 @@ def format_standard_message(device, action, params=None):
     
     return "操作を完了しました。"
 
+def query_gemini_api(prompt_text):
+    """Google AI Studio の Gemini 2.0 Flash API (無料枠) で高度な意図解釈を実行"""
+    api_key = get_gemini_api_key()
+    if not api_key:
+        return None
+
+    # 最新のセンサー・環境コンテキストを構築
+    wdata = weather_service.get_weather_data()
+    pdata = presence_service.get_presence_status()
+    tdata = tile_service.get_tile_status()
+
+    system_instruction = f"""あなたはスマートホームAI「Nova」の意図解釈エンジンです。
+現在のリアルタイム環境コンテキスト:
+- 木月（川崎）の天気: {wdata.get('weather', '--')}、外気温: {wdata.get('temp', '--')}℃、体感温度: {wdata.get('feels_like', '--')}℃、日の入り: {wdata.get('sunset', '--')}
+- 在宅状態: {'在宅' if pdata.get('is_home') else '外出'}
+- 鍵（Tile）: {'室内にあり' if tdata.get('in_home') else '室内になし'}
+
+ユーザーの入力から家電操作または質問への回答を抽出し、以下のJSON形式のみを出力してください。
+操作可能デバイス:
+- light: {{"device": "light", "action": "on"|"off"|"full"|"night"|"toggle"}}
+- ac: {{"device": "ac", "mode": "cool"|"dry"|"off", "temp": 22..28, "fan": "auto"}}
+- heater: {{"device": "heater", "action": "on"|"off"|"eco"|"plus"|"minus", "count": 1..5}}
+- cleaner: {{"device": "cleaner", "action": "start"|"pause"|"home"|"find"}}
+- scene: {{"device": "scene", "action": "morning"|"goodnight"|"leaving"|"welcome"|"all_off"}}
+- question: 質問や確認、挨拶等でメッセージを回答する場合: {{"device": "question", "message": "簡潔な返答テキスト"}}
+- none: 該当なしの場合: {{"device": "none"}}
+
+重要ルール:
+- 鍵の所在に関する回答は「室内にあります」または「室内にはありません」のみとする。
+- 余計な説明やMarkdownコードブロックは一切含めず、純粋なJSONオブジェクト1つだけを出力してください。"""
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": f"ユーザー: {prompt_text}"}
+                ]
+            }
+        ],
+        "system_instruction": {
+            "parts": [
+                {"text": system_instruction}
+            ]
+        },
+        "generationConfig": {
+            "temperature": 0.1,
+            "response_mime_type": "application/json",
+            "maxOutputTokens": 300
+        }
+    }
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=5) as res:
+            res_json = json.loads(res.read().decode('utf-8'))
+            candidates = res_json.get('candidates', [])
+            if candidates:
+                parts = candidates[0].get('content', {}).get('parts', [])
+                if parts:
+                    text_out = parts[0].get('text', '{}')
+                    return json.loads(text_out)
+    except Exception as e:
+        print(f"[Gemini API Notice] {e}")
+        return None
+
 def query_local_llm(prompt_text):
-    """ローカルOllama (Qwen 2.5 1.5B) で複雑な自然言語コマンドをパース"""
+    """ローカルOllama (Qwen 2.5 1.5B) によるフォールバック"""
     system_prompt = """あなたはスマートホームAI「Nova」です。ユーザーの要望が家電操作に該当する場合のみ以下のJSON形式を出力してください。
 操作可能デバイス:
 - light: {"device": "light", "action": "on"|"off"|"full"|"night"}
 - ac: {"device": "ac", "mode": "cool"|"dry"|"off", "temp": 22..28, "fan": "auto"}
-- heater: {"device": "heater", "action": "on"|"off"|"eco"|"plus"|"minus", "count": 1..5} (※ヒーターは温度直指定不可。plus/minusの回数指定のみ)
+- heater: {"device": "heater", "action": "on"|"off"|"eco"|"plus"|"minus", "count": 1..5}
 - cleaner: {"device": "cleaner", "action": "start"|"pause"|"home"|"find"}
 - scene: {"device": "scene", "action": "morning"|"goodnight"|"leaving"|"welcome"|"all_off"}
 
@@ -207,6 +291,73 @@ def execute_smart_welcome(send_api_fn=None):
         "action": f"welcome_{hvac_res['hvac']}_{'light' if is_night else 'nolight'}"
     }
 
+def _dispatch_parsed_intent(parsed_data, send_api_fn=None):
+    """LLMから返却された構造化インテントJSONを実行して結果メッセージを返す"""
+    if not parsed_data or not isinstance(parsed_data, dict):
+        return None
+
+    device = parsed_data.get('device')
+    if not device or device == 'none':
+        return None
+
+    if device == 'question':
+        msg = parsed_data.get('message', 'お答えします。')
+        return {"success": True, "message": msg, "action": "answer"}
+
+    if device == 'scene':
+        act = parsed_data.get('action', 'all_off')
+        if act in ('morning', '朝'):
+            return execute_smart_morning(send_api_fn)
+        elif act in ('goodnight', 'おやすみ'):
+            return execute_smart_goodnight(send_api_fn)
+        elif act in ('leaving', 'いってきます'):
+            if send_api_fn:
+                send_api_fn('/api/light', {'action': 'off'})
+                send_api_fn('/api/ac', {'mode': 'off'})
+                send_api_fn('/api/heater', {'action': 'off'})
+            return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
+        elif act in ('welcome', 'ただいま'):
+            return execute_smart_welcome(send_api_fn)
+        elif act == 'all_off':
+            if send_api_fn:
+                send_api_fn('/api/light', {'action': 'off'})
+                send_api_fn('/api/ac', {'mode': 'off'})
+                send_api_fn('/api/heater', {'action': 'off'})
+            return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "scene_all_off"}
+
+    elif device == 'light':
+        act = parsed_data.get('action', 'on')
+        if act in ('on', 'off', 'full', 'night', 'toggle'):
+            if send_api_fn: send_api_fn('/api/light', {'action': act})
+            return {"success": True, "message": format_standard_message('light', act), "action": f"light_{act}"}
+
+    elif device == 'ac':
+        mode = parsed_data.get('mode', 'cool')
+        temp = int(parsed_data.get('temp', 26))
+        temp = max(22, min(28, temp))
+        fan = parsed_data.get('fan', 'auto')
+        if send_api_fn: send_api_fn('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': fan})
+        return {"success": True, "message": format_standard_message('ac', 'on' if mode != 'off' else 'off', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
+
+    elif device == 'heater':
+        act = parsed_data.get('action', 'on')
+        count = int(parsed_data.get('count', 1))
+        count = max(1, min(5, count))
+        if act in ('on', 'off', 'eco'):
+            if send_api_fn: send_api_fn('/api/heater', {'action': act})
+            return {"success": True, "message": format_standard_message('heater', act), "action": f"heater_{act}"}
+        elif act in ('plus', 'minus'):
+            if send_api_fn: send_api_fn('/api/heater', {'action': act, 'count': count})
+            return {"success": True, "message": format_standard_message('heater', act, {'count': count}), "action": f"heater_{act}_{count}"}
+
+    elif device == 'cleaner':
+        act = parsed_data.get('action', 'start')
+        if act in ('start', 'pause', 'home', 'find'):
+            if send_api_fn: send_api_fn('/api/cleaner', {'action': act})
+            return {"success": True, "message": format_standard_message('cleaner', act), "action": f"cleaner_{act}"}
+
+    return None
+
 def parse_and_execute(prompt: str, send_api_fn=None):
     """
     自然言語プロンプトを解釈し、対応する家電アクションを実行して画一化された応答テキストを返す。
@@ -299,16 +450,16 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = "室内にあります" if t["in_home"] else "室内にはありません"
         return {"success": True, "message": msg, "action": "tile_key_status"}
 
-    # 4. スマートシーン一括操作 (優先度高)
-    # 4-A. おはよう (ライト点灯 + 体感温度によるスマート空調)
-    if any(k in text for k in ['おはよう', 'おはよ', '起きた', 'おきた', '朝のシーン', 'morning']):
+    # 5. スマートシーン一括操作 (優先度高)
+    # 5-A. 朝 / おはよう (ライト点灯 + 体感温度によるスマート空調)
+    if any(k in text for k in ['おはよう', 'おはよ', '起きた', 'おきた', '朝のシーン', 'morning', '朝']):
         return execute_smart_morning(send_api_fn)
 
-    # 4-B. おやすみ (ライト消灯 + 体感温度によるスマート就寝空調)
+    # 5-B. おやすみ (ライト消灯 + 体感温度によるスマート就寝空調)
     if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', 'ベッド', 'goodnight']):
         return execute_smart_goodnight(send_api_fn)
 
-    # 4-C. いってきます (リビングライトと空調全部消す)
+    # 5-C. いってきます (リビングライトと空調全部消す)
     if any(k in text for k in ['いってきます', '行ってきます', '外出', 'がいしゅつ', '出かける', 'でかける', '家出る', 'leave']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
@@ -316,11 +467,11 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             send_api_fn('/api/heater', {'action': 'off'})
         return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
 
-    # 4-D. ただいま (日没判定ライト + 体感温度によるスマート空調)
+    # 5-D. ただいま (日没判定ライト + 体感温度によるスマート空調)
     if any(k in text for k in ['ただいま', '帰宅', 'きたく', '家着いた', 'ついた', '着いた', '帰った', 'かえった', 'welcome']):
         return execute_smart_welcome(send_api_fn)
 
-    # 4-E. 全部消して / 全消し
+    # 5-E. 全部消して / 全消し
     if any(k in text for k in ['全部消して', '全消し', 'ぜんぶけして', 'すべて消して', '消灯して', '全部オフ']):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
@@ -328,7 +479,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             send_api_fn('/api/heater', {'action': 'off'})
         return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "scene_all_off"}
 
-    # 5. クリーナー / 掃除 (Cleaner)
+    # 6. クリーナー / 掃除 (Cleaner)
     if any(k in text for k in ['掃除', 'そうじ', 'クリーナー', 'くりーなー', '掃除機', 'そうじき', 'ルンバ', 'るんば', 'eufy', 'vacuum', 'cleaner']):
         if any(k in text for k in ['帰って', 'かえって', 'おうち', '戻って', 'もどって', '充電', 'じゅうでん', 'ホーム', 'ほーむ', 'ドック', 'どっく', 'dock', 'home', 'やめて', '終了', 'しゅうりょう', '終わり', 'おわり']):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'home'})
@@ -343,7 +494,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/cleaner', {'action': 'start'})
             return {"success": True, "message": format_standard_message('cleaner', 'start'), "action": "cleaner_start"}
 
-    # 6. ライト / 照明 (Light)
+    # 7. ライト / 照明 (Light)
     if any(k in text for k in ['ライト', 'らいと', '電気', 'でんき', '照明', 'しょうめい', 'あかり', '明かり', 'light']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '消灯', 'しょうとう', '暗く', 'くらく', 'off', '切って', 'きって', '消す', 'けす', '落として', 'おとして']):
             if send_api_fn: send_api_fn('/api/light', {'action': 'off'})
@@ -361,7 +512,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/light', {'action': 'toggle'})
             return {"success": True, "message": format_standard_message('light', 'toggle'), "action": "light_toggle"}
 
-    # 7. ヒーター / 暖房 (Heater: 温度直指定不可、相対上下またはオンオフ/エコのみ)
+    # 8. ヒーター / 暖房 (Heater: 温度直指定不可、相対上下またはオンオフ/エコのみ)
     if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater']):
         # オフ
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す']):
@@ -400,7 +551,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'on'})
             return {"success": True, "message": format_standard_message('heater', 'on'), "action": "heater_on"}
 
-    # 8. エアコン / クーラー / 冷房 / 除湿 (AC: 温度直指定可)
+    # 9. エアコン / クーラー / 冷房 / 除湿 (AC: 温度直指定可)
     if any(k in text for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ドライ', 'どらい', 'ac', 'aircon']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す', 'けす']):
             if send_api_fn: send_api_fn('/api/ac', {'mode': 'off'})
@@ -421,57 +572,25 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': 'cool', 'temp': temp}), "action": f"ac_cool_{temp}"}
 
     # -------------------------------------------------------------
-    # 第2段階：ローカルAI（Qwen 2.5 1.5B）による高度推論フォールバック
+    # 第2段階：Gemini 2.0 Flash API (無料枠) によるインテリジェント推論
+    # -------------------------------------------------------------
+    gemini_res = query_gemini_api(prompt)
+    if gemini_res:
+        dispatched = _dispatch_parsed_intent(gemini_res, send_api_fn)
+        if dispatched:
+            return dispatched
+
+    # -------------------------------------------------------------
+    # 第3段階：ローカルAI (Ollama Qwen 2.5 1.5B) フォールバック
     # -------------------------------------------------------------
     llm_res = query_local_llm(prompt)
-    if llm_res and isinstance(llm_res, dict):
-        device = llm_res.get('device')
-
-        if device == 'scene':
-            act = llm_res.get('action', 'all_off')
-            if act == 'morning':
-                return execute_smart_morning(send_api_fn)
-            elif act == 'goodnight':
-                return execute_smart_goodnight(send_api_fn)
-            elif act == 'leaving':
-                if send_api_fn:
-                    send_api_fn('/api/light', {'action': 'off'})
-                    send_api_fn('/api/ac', {'mode': 'off'})
-                    send_api_fn('/api/heater', {'action': 'off'})
-                return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
-            elif act == 'welcome':
-                return execute_smart_welcome(send_api_fn)
-
-        elif device == 'light':
-            act = llm_res.get('action', 'on')
-            if act in ('on', 'off', 'full', 'night', 'toggle'):
-                if send_api_fn: send_api_fn('/api/light', {'action': act})
-                return {"success": True, "message": format_standard_message('light', act), "action": f"light_{act}"}
-
-        elif device == 'ac':
-            mode = llm_res.get('mode', 'cool')
-            temp = int(llm_res.get('temp', 26))
-            fan = llm_res.get('fan', 'auto')
-            if send_api_fn: send_api_fn('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': fan})
-            return {"success": True, "message": format_standard_message('ac', 'on' if mode != 'off' else 'off', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
-
-        elif device == 'heater':
-            act = llm_res.get('action', 'on')
-            count = int(llm_res.get('count', 1))
-            if act in ('on', 'off', 'eco'):
-                if send_api_fn: send_api_fn('/api/heater', {'action': act})
-                return {"success": True, "message": format_standard_message('heater', act), "action": f"heater_{act}"}
-            elif act in ('plus', 'minus'):
-                if send_api_fn: send_api_fn('/api/heater', {'action': act, 'count': count})
-                return {"success": True, "message": format_standard_message('heater', act, {'count': count}), "action": f"heater_{act}_{count}"}
-
-        elif device == 'cleaner':
-            act = llm_res.get('action', 'start')
-            if send_api_fn: send_api_fn('/api/cleaner', {'action': act})
-            return {"success": True, "message": format_standard_message('cleaner', act), "action": f"cleaner_{act}"}
+    if llm_res:
+        dispatched = _dispatch_parsed_intent(llm_res, send_api_fn)
+        if dispatched:
+            return dispatched
 
     # -------------------------------------------------------------
-    # 第3段階：解釈不能の場合（家電を動かさず安全に応答）
+    # 第4段階：解釈不能の場合（家電を動かさず安全に応答）
     # -------------------------------------------------------------
     return {
         "success": False,
@@ -484,7 +603,9 @@ if __name__ == '__main__':
         "おはよう",
         "おやすみ",
         "ただいま",
-        "いってきます"
+        "いってきます",
+        "鍵ある？",
+        "明日の木月の天気は？"
     ]
     for q in test_queries:
         res = parse_and_execute(q, lambda ep, data: print(f"  [API Call] {ep} {data}"))

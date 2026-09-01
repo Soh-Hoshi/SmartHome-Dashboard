@@ -12,5 +12,6 @@
     "ip": "192.168.x.x",
     "local_key": "YOUR_LOCAL_KEY",
     "dev_id": "YOUR_DEV_ID"
-  }
+  },
+  "gemini_api_key": "YOUR_GEMINI_API_KEY"
 }
