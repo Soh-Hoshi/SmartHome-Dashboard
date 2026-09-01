@@ -70,16 +70,18 @@
       },
       {
         "type": "if",
-        "target": "条件",
-        "action": "がオン",
+        "target": "分岐",
+        "action": "が オン",
         "condition": null,
-        "icons": ["lightbulb", "ac_unit", "mode_heat"]
+        "icon": "alt_route",
+        "iconColor": "text-violet-400",
+        "bgColor": "bg-violet-500/10"
       },
       {
         "type": "device",
-        "target": "スマホ通知",
-        "action": "消灯確認",
-        "condition": null,
+        "target": "通知",
+        "action": "オン",
+        "condition": "不在確認",
         "icon": "notifications_active",
         "iconColor": "text-sky-400",
         "bgColor": "bg-sky-500/10"

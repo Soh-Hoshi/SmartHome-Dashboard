@@ -3439,16 +3439,18 @@
           },
           {
             type: 'if',
-            target: '条件',
-            action: 'がオン',
+            target: '分岐',
+            action: 'が オン',
             condition: null,
-            icons: ['lightbulb', 'ac_unit', 'mode_heat']
+            icon: 'alt_route',
+            iconColor: 'text-violet-400',
+            bgColor: 'bg-violet-500/10'
           },
           {
             type: 'device',
-            target: 'スマホ通知',
-            action: '消灯確認',
-            condition: null,
+            target: '通知',
+            action: 'オン',
+            condition: '不在確認',
             icon: 'notifications_active',
             iconColor: 'text-sky-400',
             bgColor: 'bg-sky-500/10'
@@ -3493,23 +3495,27 @@
         `;
       }
 
-      // フロー表示（デバイスベース ＋ 3アイコン「がオン」構文スタイル）
+      // フロー表示（IFの左アイコンalt_route維持 ＋ 文章内にインライン3アイコン ＋ 「通知」を オン [不在確認]）
       if (flowContainer) {
         flowContainer.innerHTML = auto.flow.map((step) => {
           const isIfBranch = step.type === 'if' || (step.target && step.target.startsWith('IF'));
           
           if (isIfBranch) {
             return `
-              <div class="flex items-center space-x-3.5 my-0.5">
-                <div class="h-11 px-3 rounded-2xl bg-[#272a31] flex items-center justify-center space-x-1.5 border border-white/[0.04] shadow-sm shrink-0">
-                  <span class="material-symbols-rounded text-lg text-amber-400">lightbulb</span>
-                  <span class="material-symbols-rounded text-lg text-sky-400">ac_unit</span>
-                  <span class="material-symbols-rounded text-lg text-orange-400">mode_heat</span>
+              <div class="flex items-center space-x-3.5">
+                <div class="w-11 h-11 rounded-2xl ${step.bgColor || 'bg-violet-500/10'} ${step.iconColor || 'text-violet-400'} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
+                  <span class="material-symbols-rounded text-xl">${step.icon || 'alt_route'}</span>
                 </div>
                 <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-                  <div class="text-[15px] font-semibold text-white truncate">
-                    がオン
+                  <div class="flex items-center space-x-2 text-[15px] font-semibold text-white truncate">
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                      <span class="material-symbols-rounded text-lg text-amber-400">lightbulb</span>
+                      <span class="material-symbols-rounded text-lg text-sky-400">ac_unit</span>
+                      <span class="material-symbols-rounded text-lg text-orange-400">mode_heat</span>
+                    </div>
+                    <span class="text-white font-medium">が オン</span>
                   </div>
+                  ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
                 </div>
               </div>
             `;
