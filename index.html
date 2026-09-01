@@ -238,8 +238,8 @@
       </nav>
     </aside>
 
-    <!-- メインコンテンツ表示エリア (スマホ: 上部大型ヘッダー用 pt-24 / 下部ボトムナビ用 pb-28) -->
-    <div class="flex-1 min-w-0 pt-24 md:pt-6 pb-28 flex flex-col">
+    <!-- メインコンテンツ表示エリア (スマホ: 上部ヘッダー用 pt-[calc(env(safe-area-inset-top,0px)+74px)] / 下部ボトムナビ用 pb-28) -->
+    <div class="flex-1 min-w-0 pt-[calc(env(safe-area-inset-top,0px)+74px)] md:pt-6 pb-28 flex flex-col">
       
       <!-- ======================================================================= -->
       <!-- タブ1：メインダッシュボード (Masonry多段カラムで縦隙間なく自動詰め)       -->
@@ -594,7 +594,7 @@
   <!-- ======================================================================= -->
   <!-- Nova プロンプトバー (スマホ: 画面最上部固定ヘッダー / PC: 画面最下部フローティング) -->
   <!-- ======================================================================= -->
-  <div class="fixed top-0 md:top-auto md:bottom-6 inset-x-0 z-40 flex flex-col items-center pointer-events-none pt-[max(0.6rem,env(safe-area-inset-top))] md:pt-0 pb-3 md:pb-0 px-3.5 sm:px-6 bg-[#0d0f12]/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-white/[0.04] md:border-b-0 shadow-lg md:shadow-none">
+  <div class="fixed top-0 md:top-auto md:bottom-6 inset-x-0 z-40 flex flex-col items-center pointer-events-none pt-[env(safe-area-inset-top,0.25rem)] md:pt-0 pb-2 md:pb-0 px-3 sm:px-6 bg-[#0d0f12]/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-white/[0.04] md:border-b-0 shadow-lg md:shadow-none">
     
     <!-- アシスタント応答トースト吹き出し (スマホはバー直下、PCはバー直上に表示) -->
     <div id="assistant-toast" 
