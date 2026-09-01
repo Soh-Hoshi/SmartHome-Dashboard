@@ -468,6 +468,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
         return self.send_json_response({"status": "error", "message": "Endpoint not found"}, status=HTTPStatus.NOT_FOUND)
 
+    def translate_path(self, path):
+        if path.startswith('/dashboard'):
+            path = path[len('/dashboard'):] or '/'
+        return super().translate_path(path)
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')

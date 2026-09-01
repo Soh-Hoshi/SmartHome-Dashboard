@@ -43,6 +43,11 @@
   - 「鍵ある？」 ➔ **「室内にあります」** / **「室内にはありません」**（未確定な推測を言わず、検知事実のみを即答）
 - **ミリ秒応答のルールベース ＋ Gemini 2.0 Flash（無料枠）ハイブリッドインテリジェンス**。
 
+### 5. 📱 PWA（Progressive Web App）完全対応
+- **スマホ・タブレットへのアプリインストール**:
+  - Safari / Chrome の「ホーム画面に追加」で、URLバーのない全画面ネイティブアプリとして起動。
+  - **Network-First 戦略**: サーバーコード更新時は即座に最新UIが反映される爆速開発サイクル。
+
 ---
 
 ## 🛠️ システム構成・アーキテクチャ
@@ -50,12 +55,14 @@
 | ファイル | 役割 |
 | :--- | :--- |
 | `index.html` | Tailwind CSS ＋ Material Symbols による洗練されたフロントエンド UI |
+| `manifest.json` | PWA Web App Manifest（アプリアイコン・スタンドアロン起動設定） |
+| `sw.js` | PWA サービスワーカー（Network First キャッシュ・高速更新対応） |
 | `serve.py` | LiveReload 対応 HTTP ＆ REST API サーバー（Port: 8080） |
 | `weather_service.py` | 川崎市中原区木月の気象データ取得・キャッシュ（Open-Meteo） |
 | `presence_service.py` | スマートフォンの高速 LAN 検知（2秒間隔プローブ） |
-| `tile_service.py` | Tile Mate BLE リアルタイムスキャン判定 |
+| `tile_service.py` | Tile Mate BLE リアルタイムスキャン判定（RPA動的追跡） |
 | `automation_service.py` | 日本の祝日判定対応バックグラウンド・オートメーション |
-| `assistant_engine.py` | 自然言語アシスタント「NOVA」エンジン |
+| `assistant_engine.py` | 自然言語アシスタント「NOVA」エンジン（Geminiハイブリッド） |
 | `switchbot_client.py` | SwitchBot API（エアコン操作）クライアント |
 | `eufy_client.py` | Eufy RoboVac G30 ローカルプロトコル連携クライアント |
 | `PROJECT_MEMORY.md` | プロジェクト記憶・設計思想・デザイン規約の永続化ファイル |

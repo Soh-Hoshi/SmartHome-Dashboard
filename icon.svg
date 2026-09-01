@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1e23"/>
+      <stop offset="100%" stop-color="#0d0f12"/>
+    </linearGradient>
+    <linearGradient id="homeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#38bdf8" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  
+  <!-- Base Background with Apple style rounded corners -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+  
+  <!-- Ambient Center Glow -->
+  <circle cx="256" cy="256" r="160" fill="#38bdf8" opacity="0.08" filter="blur(30px)"/>
+  
+  <!-- Smart Home Main Icon -->
+  <g filter="url(#glow)">
+    <!-- Roof & Chimney -->
+    <path d="M 256 120 L 130 230 C 122 237 122 248 130 254 C 138 260 148 260 156 254 L 256 166 L 356 254 C 364 260 374 260 382 254 C 390 248 390 237 382 230 Z" fill="url(#homeGrad)"/>
+    
+    <!-- Home Body -->
+    <path d="M 160 240 L 160 360 C 160 375 173 388 188 388 L 324 388 C 339 388 352 375 352 360 L 352 240 L 256 156 Z" fill="url(#homeGrad)"/>
+    
+    <!-- Door Cutout -->
+    <rect x="226" y="296" width="60" height="92" rx="16" fill="#1c1e23"/>
+    
+    <!-- Smart Energy / AI Pulse Diamond -->
+    <polygon points="256,206 270,224 256,242 242,224" fill="#ffffff"/>
+  </g>
+</svg>
