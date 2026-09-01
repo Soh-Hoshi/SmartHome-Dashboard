@@ -5,9 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -26,7 +24,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 背景とステータスバーをダーク色（#0d0f12）に設定
         window.statusBarColor = Color.parseColor("#0d0f12")
         window.navigationBarColor = Color.parseColor("#0d0f12")
 
@@ -51,13 +48,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContentView(webView)
-
-        // マイクパーミッションを要求
         checkAudioPermission()
 
         val sharedPref = getPreferences(Context.MODE_PRIVATE)
-        val url = sharedPref.getString("dashboard_url", getString(R.string.default_dashboard_url))
-            ?: getString(R.string.default_dashboard_url)
+        val defaultUrl = "https://server.tail52d127.ts.net/dashboard"
+        val url = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
 
         val targetUrl = intent?.getStringExtra("TARGET_URL") ?: url
         webView.loadUrl(targetUrl)
@@ -72,14 +67,6 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.RECORD_AUDIO),
                 RECORD_AUDIO_REQUEST_CODE
             )
-        }
-    }
-
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
         }
     }
 }

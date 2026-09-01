@@ -10,10 +10,9 @@ class AssistActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // デフォルトURLに ?assist=1 を付加してMainActivityを起動
+        val defaultUrl = "https://server.tail52d127.ts.net/dashboard"
         val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
-        val baseUrl = sharedPref.getString("dashboard_url", getString(R.string.default_dashboard_url))
-            ?: getString(R.string.default_dashboard_url)
+        val baseUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
 
         val assistUrl = if (baseUrl.contains("?")) {
             "$baseUrl&assist=1"
