@@ -1,7 +1,7 @@
 // SmartHome Dashboard PWA Service Worker
 // Dedicated Scope: /dashboard
 
-const CACHE_NAME = 'smarthome-dashboard-v5';
+const CACHE_NAME = 'smarthome-dashboard-v6';
 const STATIC_ASSETS = [
   '/dashboard',
   '/dashboard/',
@@ -42,7 +42,6 @@ self.addEventListener('activate', (event) => {
 
 // フェッチ処理 (Network First: 常に最新コード・APIデータを優先)
 self.addEventListener('fetch', (event) => {
-  // LiveReload や POST リクエスト、APIはネットワークをダイレクト通過
   if (
     event.request.method !== 'GET' ||
     event.request.url.includes('/__livereload__') ||
@@ -63,7 +62,6 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // オフライン時はキャッシュから返す
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse;
@@ -77,47 +75,49 @@ self.addEventListener('fetch', (event) => {
 });
 
 // =======================================================================
-// WebPush & 通知アクションハンドラー (消し忘れ通知 ＆ バックグラウンド一括消灯)
+// WebPush & 通知アクションハンドラー (Android Chrome 完全準拠)
 // =======================================================================
 
 self.addEventListener('push', (event) => {
-  console.log('[SW Push Event Received]', event);
-  let data = {
-    title: 'スマートホーム',
-    body: '通知を受信しました。',
-    tag: 'smarthome-alert',
-    actions: []
-  };
+  let title = 'お出かけですか？';
+  let body = '照明・空調が稼働したままです。消灯しますか？';
+  let actions = [
+    { action: 'run_leaving', title: '🚪 いってきます（全消灯）' },
+    { action: 'dismiss', title: 'そのまま' }
+  ];
+  let customData = { url: '/dashboard', scene: 'leaving' };
 
   if (event.data) {
     try {
-      data = Object.assign(data, event.data.json());
+      const payload = event.data.json();
+      if (payload.title) title = payload.title;
+      if (payload.body) body = payload.body;
+      if (payload.actions && payload.actions.length > 0) actions = payload.actions;
+      if (payload.data) customData = payload.data;
     } catch (e) {
-      data.body = event.data.text();
+      const text = event.data.text();
+      if (text) body = text;
     }
   }
 
-  const primaryOptions = {
-    body: data.body,
-    tag: data.tag || 'smarthome-alert',
+  const notifPromise = self.registration.showNotification(title, {
+    body: body,
+    tag: 'away-device-warning',
     renotify: true,
     requireInteraction: true,
-    data: data.data || { url: '/dashboard' },
-    actions: data.actions || []
-  };
+    actions: actions,
+    data: customData
+  }).catch(() => {
+    // actions が拒否された場合のフォールバック（シンプルな通知）
+    return self.registration.showNotification(title, {
+      body: body,
+      tag: 'away-device-warning',
+      renotify: true,
+      data: customData
+    });
+  });
 
-  const fallbackOptions = {
-    body: data.body,
-    tag: data.tag || 'smarthome-alert',
-    renotify: true
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, primaryOptions).catch((err) => {
-      console.warn('[SW Push Primary Failed, trying fallback]', err);
-      return self.registration.showNotification(data.title, fallbackOptions);
-    })
-  );
+  event.waitUntil(notifPromise);
 });
 
 self.addEventListener('notificationclick', (event) => {
