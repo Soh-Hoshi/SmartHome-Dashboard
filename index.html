@@ -1686,10 +1686,8 @@
         if (viewEl) {
           if (t === tabId) {
             viewEl.classList.remove('hidden');
-            viewEl.classList.add('block');
           } else {
             viewEl.classList.add('hidden');
-            viewEl.classList.remove('block', 'grid');
           }
         }
 
@@ -3165,8 +3163,6 @@
       }
     }
 
-    // シーンのアクションフロー定義 (デバイス名と操作に基づいた画一的な定義)
-    const SCENE_FLOWS = {
     // =======================================================================
     // フロー駆動システム (SSOT: Single Source of Truth)
     // =======================================================================
@@ -3426,30 +3422,6 @@
       if (currentActiveAutomation) {
         closeSheet('automation-flow-sheet');
         submitAssistantCommand(currentActiveAutomation.commandText || currentActiveAutomation.title || currentActiveAutomation.name);
-      }
-    }
-
-      openSheet('automation-flow-sheet');
-    }
-
-    /**
-     * オートメーションタイル右端の実行ボタンから直接実行
-     */
-    function runAutomationDirectly(autoId, event) {
-      if (event) event.stopPropagation();
-      const auto = AUTOMATIONS_DATA[autoId];
-      if (auto) {
-        submitAssistantCommand(auto.commandText || auto.title);
-      }
-    }
-
-    /**
-     * オートメーション詳細モーダル内の実行ボタンから実行
-     */
-    function runAutomationFromSheet() {
-      if (currentActiveAutomation) {
-        closeSheet('automation-flow-sheet');
-        submitAssistantCommand(currentActiveAutomation.commandText || currentActiveAutomation.title);
       }
     }
 
