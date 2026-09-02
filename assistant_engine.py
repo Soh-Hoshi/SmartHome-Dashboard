@@ -397,6 +397,15 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = "登録されているオートメーションは「朝」（平日 06:30）と「外出時消し忘れ防止」（外出時に消灯確認通知）の全2種類です。"
         return {"success": True, "message": msg, "action": "automations_list"}
 
+    # 2.5 通知テスト・消し忘れ通知送信
+    if any(k in text for k in ['通知テスト', 'プッシュテスト', '消し忘れ通知テスト', '通知送って', '通知を送って', '通知テストして', '通知確認']):
+        try:
+            import push_service
+            push_service.send_away_device_warning('照明・エアコン（冷房）')
+            return {"success": True, "message": "消し忘れ確認のテスト通知を送信しました。", "action": "push_test"}
+        except Exception as e:
+            return {"success": False, "message": f"通知送信でエラーが発生しました: {e}", "action": "push_error"}
+
     # 3. 機能一覧 / ヘルプ
     if any(k in text for k in ['何ができる', 'なにができる', '使い方', 'つかいかた', 'ヘルプ', 'help', 'コマンド一覧', '操作一覧']):
         msg = "照明・エアコン・ヒーター・クリーナーの操作、気象や在宅・鍵の確認、および4つのシーン（「おはよう」「おやすみ」「いってきます」「ただいま」）を実行できます。"

@@ -1,11 +1,11 @@
 {
-  "cached_at": 1788341090.7535543,
+  "cached_at": 1788341782.871822,
   "data": {
     "location": "川崎市中原区木月",
-    "temp": 27.4,
-    "feels_like": 32.4,
+    "temp": 27.2,
+    "feels_like": 32.1,
     "humidity": 80,
-    "wind_speed": 5.5,
+    "wind_speed": 5.4,
     "is_day": false,
     "weather": "快晴",
     "weather_icon": "clear_night",
@@ -100,6 +100,6 @@
         "pop": 0
       }
     ],
-    "updated_at": "2026-09-02T18:15"
+    "updated_at": "2026-09-02T18:30"
   }
 }

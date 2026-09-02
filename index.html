@@ -3176,18 +3176,21 @@
               // WebPush 通知サブスクリプションの自動初期化
               if ('PushManager' in window && 'Notification' in window) {
                 try {
-                  // 初回ユーザー操作時に通知許可をリクエスト
-                  if (Notification.permission === 'default') {
-                    const reqPushPerm = async () => {
-                      document.removeEventListener('click', reqPushPerm);
+                  const initPush = async () => {
+                    if (Notification.permission === 'default') {
                       const perm = await Notification.requestPermission();
                       if (perm === 'granted') {
-                        subscribePush(reg, basePath);
+                        await subscribePush(reg, basePath);
                       }
-                    };
-                    document.addEventListener('click', reqPushPerm, { once: true });
-                  } else if (Notification.permission === 'granted') {
-                    subscribePush(reg, basePath);
+                    } else if (Notification.permission === 'granted') {
+                      await subscribePush(reg, basePath);
+                    }
+                  };
+
+                  if (Notification.permission === 'granted') {
+                    initPush();
+                  } else {
+                    document.addEventListener('click', initPush, { once: true });
                   }
                 } catch (pe) {
                   console.warn('[PWA Push Error]', pe);
@@ -3229,7 +3232,7 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(sub)
             });
-            console.log('[PWA Push] Registered with server successfully.');
+            console.log('[PWA Push] Registered with server successfully:', sub.endpoint);
           }
         } catch (e) {
           console.warn('[PWA Subscribe Error]', e);

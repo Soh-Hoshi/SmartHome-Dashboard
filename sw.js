@@ -1,7 +1,7 @@
 // SmartHome Dashboard PWA Service Worker
 // Dedicated Scope: /dashboard
 
-const CACHE_NAME = 'smarthome-dashboard-v4';
+const CACHE_NAME = 'smarthome-dashboard-v5';
 const STATIC_ASSETS = [
   '/dashboard',
   '/dashboard/',
@@ -81,6 +81,7 @@ self.addEventListener('fetch', (event) => {
 // =======================================================================
 
 self.addEventListener('push', (event) => {
+  console.log('[SW Push Event Received]', event);
   let data = {
     title: 'スマートホーム',
     body: '通知を受信しました。',
