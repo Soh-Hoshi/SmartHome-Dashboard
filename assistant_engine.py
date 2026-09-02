@@ -18,9 +18,9 @@ import urllib.error
 import weather_service
 import presence_service
 import tile_service
+import state_manager
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
-STATE_FILE = os.path.join(DIRECTORY, 'state.json')
 CONFIG_FILE = os.path.join(DIRECTORY, 'config.json')
 OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 
@@ -38,29 +38,8 @@ def get_gemini_api_key():
     return None
 
 def load_current_state():
-    """state.json から現在の機器状態を取得"""
-    default_state = {
-        "acMode": "cool",
-        "acTemp": 26,
-        "acFan": "auto",
-        "heaterMode": "off",
-        "heaterTemp": 22,
-        "heaterEco": False,
-        "heaterPower": 2,
-        "lightOn": True,
-        "lightFull": False,
-        "lightNight": False,
-        "cleanerStatus": "standby",
-        "cleanerPlay": False
-    }
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                default_state.update(data)
-        except Exception:
-            pass
-    return default_state
+    """state_manager から現在の機器状態を取得"""
+    return state_manager.load_state()
 
 def normalize_japanese_numbers(text: str) -> str:
     """漢数字を半角数字に変換（例: 二度 -> 2度, 一度 -> 1度, 三度 -> 3度）"""
@@ -410,44 +389,14 @@ def query_local_llm(prompt_text):
         print(f"[Local LLM Fallback Notice] {e}")
         return None
 
+import flow_engine
+
 def determine_smart_hvac(send_api_fn=None, sleep_mode=False):
     """
     木月のリアルタイム体感温度（feels_like）に基づく空調（エアコン/ヒーター）自動判定・制御
-    sleep_mode=True の場合は就寝冷房27℃、通常時は冷房26℃
+    flow_engine.execute_smart_hvac に一本化
     """
-    wdata = weather_service.get_weather_data()
-    feels_like = wdata.get('feels_like', wdata.get('temp', 24.0))
-    target_ac_temp = 27 if sleep_mode else 26
-
-    # 体感温度 24.0℃以上 ──▶ エアコン冷房
-    if feels_like >= 24.0:
-        hvac_type = 'ac'
-        temp = target_ac_temp
-        if send_api_fn:
-            send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
-            send_api_fn('/api/heater', {'action': 'off'})
-    # 体感温度 19.0℃以下 ──▶ ヒーターON
-    elif feels_like <= 19.0:
-        hvac_type = 'heater'
-        temp = None
-        if send_api_fn:
-            send_api_fn('/api/heater', {'action': 'on'})
-            send_api_fn('/api/ac', {'mode': 'off'})
-    # 快適（20.0〜23.9℃） ──▶ 空調OFF（節電）
-    else:
-        hvac_type = 'none'
-        temp = None
-        if send_api_fn:
-            send_api_fn('/api/ac', {'mode': 'off'})
-            send_api_fn('/api/heater', {'action': 'off'})
-
-    return {
-        "hvac": hvac_type,
-        "temp": temp,
-        "feels_like": feels_like
-    }
-
-import flow_engine
+    return flow_engine.execute_smart_hvac(send_api_fn=send_api_fn, sleep_mode=sleep_mode)
 
 def execute_smart_morning(send_api_fn=None):
     """おはようシーン：フロー定義（scenes_config.json）に基づいて自動実行"""
@@ -600,25 +549,22 @@ def parse_and_execute(prompt: str, send_api_fn=None):
 
     # 4. 状態確認 (Status)
     if any(k in text for k in ['状態', 'ステータス', 'どうなってる', '今の設定', '確認', 'status', 'じょうたい']):
-        if os.path.exists(STATE_FILE):
-            try:
-                with open(STATE_FILE, 'r', encoding='utf-8') as f:
-                    st = json.load(f)
-                light_st = '点灯中' if st.get('lightOn') else '消灯'
-                if st.get('lightFull'): light_st = '全灯'
-                elif st.get('lightNight'): light_st = '常夜灯'
-                
-                ac_st = f"冷房 {st.get('acTemp', 26)}℃" if st.get('acMode') == 'cool' else ('除湿' if st.get('acMode') == 'dry' else '停止中')
-                heater_st = f"暖房 {st.get('heaterTemp', 22)}℃" if st.get('heaterMode') == 'heat' else '停止中'
-                cleaner_st = st.get('cleanerStatus', 'standby')
-                cleaner_map = {'running': '掃除中', 'charging': '充電中', 'recharge': '充電に戻り中', 'standby': '待機中', 'completed': '掃除完了'}
-                cleaner_desc = cleaner_map.get(cleaner_st, cleaner_st)
+        try:
+            st = state_manager.load_state()
+            light_st = '点灯中' if st.get('lightOn') else '消灯'
+            if st.get('lightFull'): light_st = '全灯'
+            elif st.get('lightNight'): light_st = '常夜灯'
 
-                msg = f"現在の状態：ライトは{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}です。"
-                return {"success": True, "message": msg, "action": "status"}
-            except Exception:
-                pass
-        return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}
+            ac_st = f"冷房 {st.get('acTemp', 26)}℃" if st.get('acMode') == 'cool' else ('除湿' if st.get('acMode') == 'dry' else '停止中')
+            heater_st = f"暖房 {st.get('heaterTemp', 22)}℃" if st.get('heaterMode') == 'heat' else '停止中'
+            cleaner_st = st.get('cleanerStatus', 'standby')
+            cleaner_map = {'running': '掃除中', 'charging': '充電中', 'recharge': '充電に戻り中', 'standby': '待機中', 'completed': '掃除完了'}
+            cleaner_desc = cleaner_map.get(cleaner_st, cleaner_st)
+
+            msg = f"現在の状態：ライトは{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}です。"
+            return {"success": True, "message": msg, "action": "status"}
+        except Exception:
+            return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}
 
     # 2. 木月エリアの気象情報（外気温・天気・日の出・日の入り）
     if any(k in text for k in ['日の入り', '日没', '日の出', '日照', '夕暮れ', '日暮れ']):

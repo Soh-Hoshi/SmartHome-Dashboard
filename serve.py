@@ -1,20 +1,36 @@
 #!/usr/bin/env python3
 """
-Lightweight Live-Reload HTTP Server for Tailscale Serve / Funnel Proxy
-Supports serving from root (/) and subpaths (/dashboard/).
+Lightweight Live-Reload HTTP Server for SmartHome Dashboard
+Supports serving from root (/) and subpaths (/dashboard/) over Tailscale HTTPS.
 """
 
 import os
 import sys
 import time
+import json
 import socket
+import threading
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-import threading
+from concurrent.futures import ThreadPoolExecutor
+
+import state_manager
+import switchbot_client
+import eufy_client
+import presence_service
+import tile_service
+import automation_service
+import weather_service
+import assistant_engine
+import flow_engine
 
 PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
+# バックグラウンドタスク用スレッドプール (最大8並列)
+_bg_executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="SmartHomeWorker")
+
+# LiveReload クライアント管理
 clients = []
 clients_lock = threading.Lock()
 last_mtime = 0
@@ -23,7 +39,7 @@ def get_latest_mtime():
     max_m = 0
     for root, _, files in os.walk(DIRECTORY):
         for f in files:
-            if f.endswith(('.html', '.css', '.js', '.png', '.jpg', '.svg')):
+            if f.endswith(('.html', '.css', '.js', '.png', '.jpg', '.svg', '.json')) and not f.endswith(('weather_cache.json', 'server.log')):
                 try:
                     p = os.path.join(root, f)
                     m = os.path.getmtime(p)
@@ -57,7 +73,6 @@ LIVE_RELOAD_SCRIPT = b"""
 (() => {
   let es;
   function connect() {
-    // Determine the SSE path based on current path
     const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
     es = new EventSource(basePath + '/__livereload__');
     es.onmessage = (e) => {
@@ -77,118 +92,152 @@ LIVE_RELOAD_SCRIPT = b"""
 </body>
 """
 
-import json
-import switchbot_client
-import eufy_client
-import presence_service
-import tile_service
-import automation_service
-import weather_service
-import assistant_engine
+# =======================================================================
+# デバイス制御コアロジック (内部API呼び出しとHTTPリクエストで完全共通化)
+# =======================================================================
 
-STATE_FILE = os.path.join(DIRECTORY, 'state.json')
+def execute_light_command(action: str) -> dict:
+    """照明制御を実行し、最新状態を返す"""
+    current_state = state_manager.load_state()
+    if action in ('on', 'turnOn', 'full', 'night'):
+        current_state['lightOn'] = True
+        if action == 'full':
+            current_state['lightFull'] = True
+            current_state['lightNight'] = False
+        elif action == 'night':
+            current_state['lightNight'] = True
+            current_state['lightFull'] = False
+    elif action in ('off', 'turnOff'):
+        current_state['lightOn'] = False
+        current_state['lightFull'] = False
+        current_state['lightNight'] = False
+    elif action == 'toggle':
+        current_state['lightOn'] = not current_state.get('lightOn', False)
+        action = 'turnOn' if current_state['lightOn'] else 'turnOff'
+        if not current_state['lightOn']:
+            current_state['lightFull'] = False
+            current_state['lightNight'] = False
 
-DEFAULT_STATE = {
-    "acMode": "cool",
-    "acTemp": 26,
-    "acFan": "auto",
-    "heaterMode": "off",
-    "heaterTemp": 24,
-    "heaterEco": False,
-    "heaterPower": 2,
-    "lightOn": False,
-    "lightFull": False,
-    "lightNight": False,
-    "cleanerStatus": "charging",
-    "cleanerPlay": False
-}
+    saved_state = state_manager.save_state(current_state)
 
-def load_state():
-    if os.path.exists(STATE_FILE):
+    def _send():
         try:
-            with open(STATE_FILE, 'r', encoding='utf-8') as f:
-                return {**DEFAULT_STATE, **json.load(f)}
-        except Exception:
-            pass
-    return DEFAULT_STATE.copy()
+            switchbot_client.control_light(action)
+        except Exception as e:
+            print(f"[Light Control Error] {e}")
 
-def save_state(state):
-    try:
-        with open(STATE_FILE, 'w', encoding='utf-8') as f:
-            json.dump(state, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        print(f"[State Save Error] {e}")
+    _bg_executor.submit(_send)
+    return {"status": "success", "message": f"Light command dispatched ({action})", "state": saved_state}
 
-def dispatch_internal_api(endpoint, payload):
-    """内部から家電操作APIを実行・状態保存する共通ハンドラー"""
+def execute_ac_command(mode: str = 'cool', temp: int = 26, fan_mode: str = 'auto') -> dict:
+    """エアコン制御を実行し、最新状態を返す"""
+    temp = max(22, min(28, int(temp)))
+    current_state = state_manager.load_state()
+    current_state['acMode'] = mode
+    current_state['acTemp'] = temp
+    current_state['acFan'] = fan_mode
+    saved_state = state_manager.save_state(current_state)
+
+    def _send():
+        try:
+            switchbot_client.control_ac(mode, temp, fan_mode)
+        except Exception as e:
+            print(f"[AC Control Error] {e}")
+
+    _bg_executor.submit(_send)
+    return {"status": "success", "message": f"AC command dispatched ({mode}, {temp}C, {fan_mode})", "state": saved_state}
+
+def execute_heater_command(action: str = 'toggle', count: int = 1, temp: int = None, eco: bool = None) -> dict:
+    """ヒーター制御を実行し、最新状態を返す"""
+    count = max(1, min(10, int(count)))
+    current_state = state_manager.load_state()
+
+    if action in ('on', 'turnOn', 'heat'):
+        current_state['heaterMode'] = 'heat'
+    elif action in ('off', 'turnOff'):
+        current_state['heaterMode'] = 'off'
+    elif action == 'toggle':
+        current_state['heaterMode'] = 'off' if current_state.get('heaterMode') == 'heat' else 'heat'
+        action = 'turnOn' if current_state['heaterMode'] == 'heat' else 'turnOff'
+    elif action in ('eco', 'エコ'):
+        current_state['heaterEco'] = eco if eco is not None else not current_state.get('heaterEco', False)
+    elif action in ('plus', 'minus'):
+        current_temp = current_state.get('heaterTemp', 22)
+        if action == 'plus':
+            current_state['heaterTemp'] = min(28, current_temp + count)
+        else:
+            current_state['heaterTemp'] = max(22, current_temp - count)
+
+    if temp is not None:
+        current_state['heaterTemp'] = int(temp)
+
+    saved_state = state_manager.save_state(current_state)
+
+    def _send():
+        try:
+            for i in range(count):
+                switchbot_client.control_heater(action)
+                if i < count - 1:
+                    time.sleep(0.5)
+        except Exception as e:
+            print(f"[Heater Control Error] {e}")
+
+    _bg_executor.submit(_send)
+    return {"status": "success", "message": f"Heater command dispatched ({action}, count={count})", "state": saved_state}
+
+def execute_cleaner_command(action: str = 'start', speed: str = None) -> dict:
+    """クリーナー制御を実行し、最新状態を返す"""
+    current_state = state_manager.load_state()
+
+    if action in ('start', 'play', 'resume'):
+        current_state['cleanerStatus'] = 'running'
+        current_state['cleanerPlay'] = True
+    elif action in ('pause',):
+        current_state['cleanerStatus'] = 'standby'
+        current_state['cleanerPlay'] = False
+    elif action in ('stop', 'dock', 'home', 'return'):
+        current_state['cleanerStatus'] = 'recharge'
+        current_state['cleanerPlay'] = False
+    elif action == 'speed' and speed:
+        current_state['cleanerSpeed'] = speed
+
+    saved_state = state_manager.save_state(current_state)
+
+    def _send():
+        try:
+            client = eufy_client.EufyG30Client()
+            if action in ('start', 'play', 'resume'):
+                client.play()
+            elif action in ('pause',):
+                client.pause()
+            elif action in ('stop', 'dock', 'home', 'return'):
+                client.return_to_dock()
+            elif action == 'speed' and speed:
+                client.set_clean_speed(speed)
+            elif action in ('find_me', 'find', 'beep'):
+                client.find_robot()
+        except Exception as e:
+            print(f"[Cleaner Control Error] {e}")
+
+    _bg_executor.submit(_send)
+    return {"status": "success", "message": f"Cleaner command dispatched ({action})", "state": saved_state}
+
+def dispatch_internal_api(endpoint: str, payload: dict):
+    """内部（フローエンジン・アシスタント等）から家電操作を実行する共通エントリーポイント"""
     if endpoint == '/api/light':
-        action = payload.get('action', 'toggle')
-        current_st = load_state()
-        if action in ('on', 'turnOn', 'full', 'night'):
-            current_st['lightOn'] = True
-            if action == 'full':
-                current_st['lightFull'] = True
-                current_st['lightNight'] = False
-            elif action == 'night':
-                current_st['lightNight'] = True
-                current_st['lightFull'] = False
-        elif action in ('off', 'turnOff'):
-            current_st['lightOn'] = False
-            current_st['lightFull'] = False
-            current_st['lightNight'] = False
-        elif action == 'toggle':
-            current_st['lightOn'] = not current_st['lightOn']
-            action = 'turnOn' if current_st['lightOn'] else 'turnOff'
-        save_state(current_st)
-        threading.Thread(target=lambda: switchbot_client.control_light(action), daemon=True).start()
-
+        return execute_light_command(payload.get('action', 'toggle'))
     elif endpoint == '/api/ac':
-        mode = payload.get('mode', 'cool')
-        temp = int(payload.get('temp', 26))
-        fan = payload.get('fan_mode', 'auto')
-        current_st = load_state()
-        current_st['acMode'] = mode
-        current_st['acTemp'] = temp
-        current_st['acFan'] = fan
-        save_state(current_st)
-        threading.Thread(target=lambda: switchbot_client.control_ac(mode, temp, fan), daemon=True).start()
-
+        return execute_ac_command(payload.get('mode', 'cool'), payload.get('temp', 26), payload.get('fan_mode', 'auto'))
     elif endpoint == '/api/heater':
-        action = payload.get('action', 'heat')
-        temp = payload.get('temp')
-        current_st = load_state()
-        if action in ('on', 'turnOn', 'heat'):
-            current_st['heaterMode'] = 'heat'
-        elif action in ('off', 'turnOff'):
-            current_st['heaterMode'] = 'off'
-        if temp:
-            current_st['heaterTemp'] = int(temp)
-        save_state(current_st)
-        threading.Thread(target=lambda: switchbot_client.control_heater(action), daemon=True).start()
-
+        return execute_heater_command(payload.get('action', 'toggle'), payload.get('count', 1), payload.get('temp'), payload.get('eco'))
     elif endpoint == '/api/cleaner':
-        action = payload.get('action', 'start')
-        current_st = load_state()
-        if action in ('start', 'play', 'resume'):
-            current_st['cleanerStatus'] = 'running'
-            current_st['cleanerPlay'] = True
-        elif action in ('pause',):
-            current_st['cleanerStatus'] = 'standby'
-            current_st['cleanerPlay'] = False
-        elif action in ('stop', 'dock', 'home', 'return'):
-            current_st['cleanerStatus'] = 'recharge'
-            current_st['cleanerPlay'] = False
-        save_state(current_st)
-        def run_cleaner():
-            try:
-                c = eufy_client.EufyG30Client()
-                if action in ('start', 'play', 'resume'): c.play()
-                elif action in ('pause',): c.pause()
-                elif action in ('stop', 'dock', 'home', 'return'): c.return_to_dock()
-                elif action in ('find', 'find_me', 'beep'): c.find_robot()
-            except Exception as ce:
-                print(f"[Cleaner Assistant Error] {ce}")
-        threading.Thread(target=run_cleaner, daemon=True).start()
+        return execute_cleaner_command(payload.get('action', 'start'), payload.get('speed'))
+    return {"status": "error", "message": f"Unknown internal endpoint {endpoint}"}
+
+
+# =======================================================================
+# HTTP リクエストハンドラー & ルーティング
+# =======================================================================
 
 class LiveReloadHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -217,6 +266,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path.startswith('/dashboard'):
             clean_path = clean_path[len('/dashboard'):] or '/'
 
+        # LiveReload SSE
         if clean_path == '/__livereload__':
             self.send_response(HTTPStatus.OK)
             self.send_header('Content-Type', 'text/event-stream')
@@ -224,15 +274,13 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             self.send_header('Connection', 'keep-alive')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            
+
             queue = []
             with clients_lock:
                 clients.append(queue)
-            
             try:
                 self.wfile.write(b"data: connected\n\n")
                 self.wfile.flush()
-                
                 while True:
                     time.sleep(0.2)
                     if queue:
@@ -247,30 +295,21 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                         clients.remove(queue)
             return
 
-        if clean_path == '/api/state':
-            state = load_state()
-            return self.send_json_response({"status": "success", "state": state})
+        # GET API ルーティング
+        get_routes = {
+            '/api/state': lambda: {"status": "success", "state": state_manager.load_state()},
+            '/api/weather': lambda: {"status": "success", "weather": weather_service.get_weather_data()},
+            '/api/presence': lambda: {"status": "success", "presence": presence_service.get_presence_status()},
+            '/api/tile': lambda: {"status": "success", "tile": tile_service.get_tile_status()},
+            '/api/automations': lambda: {"status": "success", "automations": automation_service.load_automations()},
+            '/api/scenes': lambda: {"status": "success", "scenes": flow_engine.load_scenes()},
+        }
 
-        if clean_path == '/api/weather':
-            data = weather_service.get_weather_data()
-            return self.send_json_response({"status": "success", "weather": data})
-
-        if clean_path == '/api/presence':
-            data = presence_service.get_presence_status()
-            return self.send_json_response({"status": "success", "presence": data})
-
-        if clean_path == '/api/tile':
-            data = tile_service.get_tile_status()
-            return self.send_json_response({"status": "success", "tile": data})
-
-        if clean_path == '/api/automations':
-            data = automation_service.load_automations()
-            return self.send_json_response({"status": "success", "automations": data})
-
-        if clean_path == '/api/scenes':
-            import flow_engine
-            data = flow_engine.load_scenes()
-            return self.send_json_response({"status": "success", "scenes": data})
+        if clean_path in get_routes:
+            try:
+                return self.send_json_response(get_routes[clean_path]())
+            except Exception as e:
+                return self.send_json_response({"status": "error", "error": str(e)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         if clean_path == '/api/push/vapid-key':
             try:
@@ -285,16 +324,15 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 client = eufy_client.EufyG30Client()
                 res = client.get_status()
                 if res.get("success"):
-                    current_state = load_state()
-                    # status: Running, Charging, standby, Sleeping, Recharge, completed
-                    current_state['cleanerStatus'] = res.get('status', 'standby').lower()
-                    current_state['cleanerPlay'] = res.get('play', False)
-                    save_state(current_state)
+                    st = state_manager.load_state()
+                    st['cleanerStatus'] = res.get('status', 'standby').lower()
+                    st['cleanerPlay'] = res.get('play', False)
+                    state_manager.save_state(st)
                 return self.send_json_response(res)
             except Exception as e:
                 return self.send_json_response({"success": False, "error": str(e)})
 
-        # /dashboard へのリクエストを / にマップして配信
+        # 静的ファイル配信 (/dashboard へのリクエストを / にマップ)
         self.path = clean_path
         return super().do_GET()
 
@@ -310,156 +348,41 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         except Exception:
             req_data = {}
 
-        if clean_path == '/api/ac':
-            mode = req_data.get('mode', 'cool')
-            temp = int(req_data.get('temp', 26))
-            fan_mode = req_data.get('fan_mode', 'auto')
-
-            # 状態を保存
-            current_state = load_state()
-            current_state['acMode'] = mode
-            current_state['acTemp'] = temp
-            current_state['acFan'] = fan_mode
-            save_state(current_state)
-
-            # SwitchBot API へ送信 (別スレッドで非同期送信して高速応答)
-            def send_bg():
-                try:
-                    switchbot_client.control_ac(mode, temp, fan_mode)
-                except Exception as e:
-                    print(f"[AC Control Error] {e}")
-
-            threading.Thread(target=send_bg, daemon=True).start()
-
+        # 1. 家電操作 API
         if clean_path == '/api/light':
-            action = req_data.get('action', 'toggle')
-            current_state = load_state()
+            res = execute_light_command(req_data.get('action', 'toggle'))
+            return self.send_json_response(res)
 
-            if action in ('on', 'turnOn', 'full', 'night'):
-                current_state['lightOn'] = True
-                if action == 'full':
-                    current_state['lightFull'] = True
-                    current_state['lightNight'] = False
-                elif action == 'night':
-                    current_state['lightNight'] = True
-                    current_state['lightFull'] = False
-            elif action in ('off', 'turnOff'):
-                current_state['lightOn'] = False
-                current_state['lightFull'] = False
-                current_state['lightNight'] = False
-            elif action == 'toggle':
-                current_state['lightOn'] = not current_state['lightOn']
-                action = 'turnOn' if current_state['lightOn'] else 'turnOff'
-                if not current_state['lightOn']:
-                    current_state['lightFull'] = False
-                    current_state['lightNight'] = False
-
-            save_state(current_state)
-
-            def send_light_bg():
-                try:
-                    switchbot_client.control_light(action)
-                except Exception as e:
-                    print(f"[Light Control Error] {e}")
-
-            threading.Thread(target=send_light_bg, daemon=True).start()
-
-            return self.send_json_response({
-                "status": "success",
-                "message": f"Light command dispatched ({action})",
-                "state": current_state
-            })
+        if clean_path == '/api/ac':
+            res = execute_ac_command(req_data.get('mode', 'cool'), req_data.get('temp', 26), req_data.get('fan_mode', 'auto'))
+            return self.send_json_response(res)
 
         if clean_path == '/api/heater':
-            action = req_data.get('action', 'toggle')
-            count = max(1, min(10, int(req_data.get('count', 1))))
-            current_state = load_state()
-
-            if action in ('on', 'turnOn', 'heat'):
-                current_state['heaterMode'] = 'heat'
-            elif action in ('off', 'turnOff'):
-                current_state['heaterMode'] = 'off'
-            elif action == 'toggle':
-                current_state['heaterMode'] = 'off' if current_state['heaterMode'] == 'heat' else 'heat'
-                action = 'turnOn' if current_state['heaterMode'] == 'heat' else 'turnOff'
-            elif action in ('eco', 'エコ'):
-                current_state['heaterEco'] = req_data.get('eco', not current_state.get('heaterEco', False))
-            elif action in ('plus', 'minus'):
-                current_temp = current_state.get('heaterTemp', 22)
-                if action == 'plus':
-                    current_state['heaterTemp'] = min(28, current_temp + count)
-                else:
-                    current_state['heaterTemp'] = max(22, current_temp - count)
-                if 'temp' in req_data:
-                    current_state['heaterTemp'] = int(req_data['temp'])
-
-            save_state(current_state)
-
-            def send_heater_bg():
-                try:
-                    for i in range(count):
-                        switchbot_client.control_heater(action)
-                        if i < count - 1:
-                            time.sleep(0.5)
-                except Exception as e:
-                    print(f"[Heater Control Error] {e}")
-
-            threading.Thread(target=send_heater_bg, daemon=True).start()
-
-            return self.send_json_response({
-                "status": "success",
-                "message": f"Heater command dispatched ({action}, count={count})",
-                "state": current_state
-            })
+            res = execute_heater_command(
+                req_data.get('action', 'toggle'),
+                req_data.get('count', 1),
+                req_data.get('temp'),
+                req_data.get('eco')
+            )
+            return self.send_json_response(res)
 
         if clean_path == '/api/cleaner':
-            action = req_data.get('action', 'start')
-            speed = req_data.get('speed')
-            current_state = load_state()
+            res = execute_cleaner_command(req_data.get('action', 'start'), req_data.get('speed'))
+            return self.send_json_response(res)
 
-            if action in ('start', 'play', 'resume'):
-                current_state['cleanerStatus'] = 'running'
-                current_state['cleanerPlay'] = True
-            elif action in ('pause',):
-                current_state['cleanerStatus'] = 'standby'
-                current_state['cleanerPlay'] = False
-            elif action in ('stop', 'dock', 'home', 'return'):
-                current_state['cleanerStatus'] = 'recharge'
-                current_state['cleanerPlay'] = False
-            elif action == 'speed' and speed:
-                current_state['cleanerSpeed'] = speed
-
-            save_state(current_state)
-
-            def send_cleaner_bg():
-                try:
-                    client = eufy_client.EufyG30Client()
-                    if action in ('start', 'play', 'resume'):
-                        client.play()
-                    elif action in ('pause',):
-                        client.pause()
-                    elif action in ('stop', 'dock', 'home', 'return'):
-                        client.return_to_dock()
-                    elif action == 'speed' and speed:
-                        client.set_clean_speed(speed)
-                    elif action in ('find_me', 'find', 'beep'):
-                        client.find_robot()
-                except Exception as e:
-                    print(f"[Cleaner Control Error] {e}")
-
-            threading.Thread(target=send_cleaner_bg, daemon=True).start()
-
-            return self.send_json_response({
-                "status": "success",
-                "message": f"Cleaner command dispatched ({action})",
-                "state": current_state
-            })
-
+        # 2. アシスタント自然言語 API
         if clean_path == '/api/assistant':
             prompt = req_data.get('prompt', '')
             result = assistant_engine.parse_and_execute(prompt, dispatch_internal_api)
-            result['state'] = load_state()
+            result['state'] = state_manager.load_state()
             return self.send_json_response(result)
+
+        # 3. シーン & オートメーション API
+        if clean_path == '/api/scenes/execute':
+            scene_id = req_data.get('id')
+            res = flow_engine.execute_scene(scene_id, send_api_fn=dispatch_internal_api)
+            res['state'] = state_manager.load_state()
+            return self.send_json_response(res)
 
         if clean_path == '/api/automations/toggle':
             auto_id = req_data.get('id')
@@ -473,13 +396,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             ok = automation_service.execute_automation(auto_id)
             return self.send_json_response({"status": "success" if ok else "error"})
 
-        if clean_path == '/api/scenes/execute':
-            import flow_engine
-            scene_id = req_data.get('id')
-            res = flow_engine.execute_scene(scene_id, send_api_fn=dispatch_internal_api)
-            res['state'] = load_state()
-            return self.send_json_response(res)
-
+        # 4. WebPush API
         if clean_path == '/api/push/subscribe':
             try:
                 import push_service
@@ -497,11 +414,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 return self.send_json_response({"status": "error", "error": str(e)})
 
+        # 5. 状態直接更新 API
         if clean_path == '/api/state':
-            current_state = load_state()
-            current_state.update(req_data)
-            save_state(current_state)
-            return self.send_json_response({"status": "success", "state": current_state})
+            saved_state = state_manager.save_state(req_data)
+            return self.send_json_response({"status": "success", "state": saved_state})
 
         return self.send_json_response({"status": "error", "message": "Endpoint not found"}, status=HTTPStatus.NOT_FOUND)
 
@@ -538,10 +454,9 @@ if __name__ == '__main__':
     watcher_thread.start()
 
     server = ThreadingHTTPServer(('0.0.0.0', PORT), LiveReloadHandler)
-    
+
     print(f"🚀 Live Reload HTTP サーバーが起動しました (Port: {PORT})")
     print(f"  - ローカル:     http://localhost:{PORT}")
-    print(f"  - Tailscale IP: http://100.100.1.1:{PORT}")
     print(f"  - Tailscale Funnel パス (/dashboard) 受信準備完了")
 
     try:

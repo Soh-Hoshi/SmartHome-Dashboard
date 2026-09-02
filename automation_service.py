@@ -137,7 +137,7 @@ def toggle_automation(auto_id):
                 return a
     return None
 
-STATE_FILE = "/home/soh/dashboard/state.json"
+import state_manager
 
 def trigger_away_check():
     """
@@ -148,14 +148,7 @@ def trigger_away_check():
     if not away_auto or not away_auto.get("enabled", True):
         return
 
-    if not os.path.exists(STATE_FILE):
-        return
-
-    try:
-        with open(STATE_FILE, 'r', encoding='utf-8') as f:
-            st = json.load(f)
-    except Exception:
-        return
+    st = state_manager.load_state()
 
     active_devices = []
     if st.get('lightOn', False):

@@ -3,7 +3,7 @@
     "id": "weekday_morning_light",
     "name": "平日 6:30",
     "category": "デイリー",
-    "enabled": true,
+    "enabled": false,
     "summary": "リビング点灯",
     "command": "smarthome light on"
   },

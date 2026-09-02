@@ -41,14 +41,9 @@ def direct_fallback(endpoint, data, original_error):
     try:
         import switchbot_client
         import eufy_client
+        import state_manager
         
-        state = {}
-        if os.path.exists(STATE_FILE):
-            try:
-                with open(STATE_FILE, 'r', encoding='utf-8') as f:
-                    state = json.load(f)
-            except Exception:
-                pass
+        state = state_manager.load_state()
 
         if endpoint == '/api/light':
             action = data.get('action', 'toggle')
@@ -97,8 +92,7 @@ def direct_fallback(endpoint, data, original_error):
         else:
             res = {"status": "error", "message": str(original_error)}
 
-        with open(STATE_FILE, 'w', encoding='utf-8') as f:
-            json.dump(state, f, indent=2, ensure_ascii=False)
+        state_manager.save_state(state)
         return res
     except Exception as fallback_err:
         return {"status": "error", "message": f"API and fallback both failed: {original_error} / {fallback_err}"}
