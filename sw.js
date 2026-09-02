@@ -85,8 +85,6 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'スマートホーム',
     body: '通知を受信しました。',
-    icon: '/dashboard/icon-192.png',
-    badge: '/dashboard/icon-192.png',
     tag: 'smarthome-alert',
     actions: []
   };
@@ -99,19 +97,26 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const options = {
+  const primaryOptions = {
     body: data.body,
-    icon: data.icon || '/dashboard/icon-192.png',
-    badge: data.badge || '/dashboard/icon-192.png',
-    tag: data.tag || 'smarthome-notification',
+    tag: data.tag || 'smarthome-alert',
     renotify: true,
     requireInteraction: true,
     data: data.data || { url: '/dashboard' },
     actions: data.actions || []
   };
 
+  const fallbackOptions = {
+    body: data.body,
+    tag: data.tag || 'smarthome-alert',
+    renotify: true
+  };
+
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title, primaryOptions).catch((err) => {
+      console.warn('[SW Push Primary Failed, trying fallback]', err);
+      return self.registration.showNotification(data.title, fallbackOptions);
+    })
   );
 });
 

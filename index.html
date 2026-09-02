@@ -3069,10 +3069,34 @@
     }
 
     /**
-     * オートメーション直接テスト実行
+     * オートメーション直接テスト実行 (即時ローカル通知 ＋ バックエンド実行)
      */
-    function runAutomationDirectly(autoId, event) {
+    async function runAutomationDirectly(autoId, event) {
       if (event) event.stopPropagation();
+      
+      if (autoId === 'away_device_warning') {
+        if ('serviceWorker' in navigator && 'Notification' in window) {
+          if (Notification.permission === 'granted') {
+            try {
+              const reg = await navigator.serviceWorker.ready;
+              reg.showNotification('お出かけですか？', {
+                body: 'リビング照明・エアコン（冷房）が稼働したままです。消灯しますか？',
+                tag: 'away-device-warning',
+                renotify: true,
+                requireInteraction: true,
+                actions: [
+                  { action: 'run_leaving', title: '🚪 いってきます（全消灯）' },
+                  { action: 'dismiss', title: 'そのまま' }
+                ],
+                data: { url: window.location.pathname, scene: 'leaving' }
+              });
+            } catch (ne) {
+              console.warn('[Local Notification Error]', ne);
+            }
+          }
+        }
+      }
+
       const cmdMap = {
         'weekday_morning_light': 'リビングの電気をつけて',
         'away_device_warning': '消し忘れ通知テスト'
