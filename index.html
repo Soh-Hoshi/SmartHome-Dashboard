@@ -3167,148 +3167,118 @@
 
     // シーンのアクションフロー定義 (デバイス名と操作に基づいた画一的な定義)
     const SCENE_FLOWS = {
+    // =======================================================================
+    // フロー駆動システム (SSOT: Single Source of Truth)
+    // =======================================================================
+
+    // デバイスメタデータ辞書（アイコン・カラーの自動解決）
+    const DEVICE_METAS = {
+      'リビング': { icon: 'lightbulb', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+      'エアコン': { icon: 'ac_unit', iconColor: 'text-sky-400', bgColor: 'bg-sky-500/10' },
+      'ヒーター': { icon: 'mode_heat', iconColor: 'text-orange-400', bgColor: 'bg-orange-500/10' },
+      'クリーナー': { icon: 'smart_toy', iconColor: 'text-emerald-400', bgColor: 'bg-emerald-500/10' },
+      '気象': { icon: 'partly_cloudy_day', iconColor: 'text-sky-400', bgColor: 'bg-sky-500/10' },
+      '在宅確認': { icon: 'person_off', iconColor: 'text-rose-400', bgColor: 'bg-rose-500/10' },
+      '鍵': { icon: 'vpn_key_alert', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+      '通知': { icon: 'notifications_active', iconColor: 'text-sky-400', bgColor: 'bg-sky-500/10' },
+      '時間': { icon: 'alarm', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+      '分岐': { icon: 'alt_route', iconColor: 'text-violet-400', bgColor: 'bg-violet-500/10' }
+    };
+
+    /**
+     * フローステップを共通DSLに基づき画一的なHTMLとして自動生成
+     */
+    function renderFlowStepHTML(step) {
+      const isIfBranch = step.type === 'if' || step.target === '分岐';
+      const meta = DEVICE_METAS[step.target] || {
+        icon: step.icon || 'bolt',
+        iconColor: step.iconColor || 'text-neutral-400',
+        bgColor: step.bgColor || 'bg-neutral-500/10'
+      };
+
+      if (isIfBranch) {
+        return `
+          <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl ${step.bgColor || meta.bgColor} ${step.iconColor || meta.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
+              <span class="material-symbols-rounded text-xl">${step.icon || meta.icon}</span>
+            </div>
+            <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
+              <div class="flex items-center space-x-2 text-[15px] font-semibold text-white truncate">
+                <div class="flex items-center space-x-1.5 shrink-0">
+                  <span class="material-symbols-rounded text-lg text-amber-400">lightbulb</span>
+                  <span class="material-symbols-rounded text-lg text-sky-400">ac_unit</span>
+                  <span class="material-symbols-rounded text-lg text-orange-400">mode_heat</span>
+                </div>
+                <span class="text-white font-medium">${step.action || 'が オン'}</span>
+              </div>
+              ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      const icon = step.icon || meta.icon;
+      const iconColor = step.iconColor || meta.iconColor;
+      const bgColor = step.bgColor || meta.bgColor;
+
+      return `
+        <div class="flex items-center space-x-3.5">
+          <div class="w-11 h-11 rounded-2xl ${bgColor} ${iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
+            <span class="material-symbols-rounded text-xl">${icon}</span>
+          </div>
+          <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
+            <div class="text-[15px] font-semibold text-white truncate">
+              「${step.target}」を ${step.action}
+            </div>
+            ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // シーン定義 (フローAST)
+    let SCENE_FLOWS = {
       morning: {
+        id: 'morning',
         title: 'おはよう',
         command: 'おはよう',
-        steps: [
-          {
-            target: 'リビング',
-            action: 'オン',
-            condition: null,
-            icon: 'lightbulb',
-            iconColor: 'text-amber-400',
-            bgColor: 'bg-amber-500/10'
-          },
-          {
-            target: '気象',
-            action: '取得',
-            condition: null,
-            icon: 'partly_cloudy_day',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            target: 'エアコン',
-            action: '冷房26℃',
-            condition: '体感24℃以上',
-            icon: 'ac_unit',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            target: 'ヒーター',
-            action: 'オン',
-            condition: '体感19℃以下',
-            icon: 'mode_heat',
-            iconColor: 'text-orange-400',
-            bgColor: 'bg-orange-500/10'
-          }
+        flow: [
+          { target: 'リビング', action: 'オン', condition: null },
+          { target: '気象', action: '取得', condition: null },
+          { target: 'エアコン', action: '冷房26℃', condition: '体感24℃以上' },
+          { target: 'ヒーター', action: 'オン', condition: '体感19℃以下' }
         ]
       },
       goodnight: {
+        id: 'goodnight',
         title: 'おやすみ',
         command: 'おやすみ',
-        steps: [
-          {
-            target: 'リビング',
-            action: 'オフ',
-            condition: null,
-            icon: 'lightbulb',
-            iconColor: 'text-neutral-400',
-            bgColor: 'bg-neutral-500/10'
-          },
-          {
-            target: '気象',
-            action: '取得',
-            condition: null,
-            icon: 'partly_cloudy_day',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            target: 'エアコン',
-            action: '冷房27℃',
-            condition: '体感24℃以上',
-            icon: 'ac_unit',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            target: 'ヒーター',
-            action: 'オン',
-            condition: '体感19℃以下',
-            icon: 'mode_heat',
-            iconColor: 'text-orange-400',
-            bgColor: 'bg-orange-500/10'
-          }
+        flow: [
+          { target: 'リビング', action: 'オフ', condition: null },
+          { target: '気象', action: '取得', condition: null },
+          { target: 'エアコン', action: '冷房27℃', condition: '体感24℃以上' },
+          { target: 'ヒーター', action: 'オン', condition: '体感19℃以下' }
         ]
       },
       leaving: {
+        id: 'leaving',
         title: 'いってきます',
         command: 'いってきます',
-        steps: [
-          {
-            target: 'リビング',
-            action: 'オフ',
-            condition: null,
-            icon: 'lightbulb',
-            iconColor: 'text-neutral-400',
-            bgColor: 'bg-neutral-500/10'
-          },
-          {
-            target: 'エアコン',
-            action: 'オフ',
-            condition: null,
-            icon: 'ac_unit',
-            iconColor: 'text-neutral-400',
-            bgColor: 'bg-neutral-500/10'
-          },
-          {
-            target: 'ヒーター',
-            action: 'オフ',
-            condition: null,
-            icon: 'mode_heat',
-            iconColor: 'text-neutral-400',
-            bgColor: 'bg-neutral-500/10'
-          }
+        flow: [
+          { target: 'リビング', action: 'オフ', condition: null },
+          { target: 'エアコン', action: 'オフ', condition: null },
+          { target: 'ヒーター', action: 'オフ', condition: null }
         ]
       },
       welcome: {
+        id: 'welcome',
         title: 'ただいま',
         command: 'ただいま',
-        steps: [
-          {
-            target: '気象',
-            action: '取得',
-            condition: null,
-            icon: 'partly_cloudy_day',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            target: 'リビング',
-            action: 'オン',
-            condition: '日没後のみ',
-            icon: 'lightbulb',
-            iconColor: 'text-amber-400',
-            bgColor: 'bg-amber-500/10'
-          },
-          {
-            target: 'エアコン',
-            action: '冷房26℃',
-            condition: '体感24℃以上',
-            icon: 'ac_unit',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            target: 'ヒーター',
-            action: 'オン',
-            condition: '体感19℃以下',
-            icon: 'mode_heat',
-            iconColor: 'text-orange-400',
-            bgColor: 'bg-orange-500/10'
-          }
+        flow: [
+          { target: '気象', action: '取得', condition: null },
+          { target: 'リビング', action: 'オン', condition: '日没後のみ' },
+          { target: 'エアコン', action: '冷房26℃', condition: '体感24℃以上' },
+          { target: 'ヒーター', action: 'オン', condition: '体感19℃以下' }
         ]
       }
     };
@@ -3316,47 +3286,30 @@
     let currentActiveFlowScene = null;
 
     /**
-     * シーンのアクションフロー詳細シートを開く (完璧な縦中央揃え ＆ 文字色なしの画一的表示)
+     * シーンのアクションフロー詳細シートを開く
      */
     function openSceneFlowSheet(sceneKey) {
-      const flow = SCENE_FLOWS[sceneKey];
-      if (!flow) return;
+      const scene = SCENE_FLOWS[sceneKey];
+      if (!scene) return;
 
-      currentActiveFlowScene = flow;
+      currentActiveFlowScene = scene;
 
       const titleEl = document.getElementById('sheet-scene-title');
       const container = document.getElementById('sheet-scene-steps-container');
       const btnText = document.getElementById('sheet-scene-run-btn-text');
 
-      if (titleEl) titleEl.textContent = flow.title;
+      if (titleEl) titleEl.textContent = scene.title || scene.name;
       if (btnText) btnText.textContent = '実行';
 
       if (container) {
-        container.innerHTML = flow.steps.map((step) => {
-          return `
-            <div class="flex items-center space-x-3.5">
-              <!-- 左側: アイコン (高さ44px・上下完全中央) -->
-              <div class="w-11 h-11 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-                <span class="material-symbols-rounded text-xl">${step.icon}</span>
-              </div>
-
-              <!-- 右側: アクションカード (高さ44px・アイコンと高さ・上下中央が完全一致) -->
-              <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-                <div class="text-[15px] font-semibold text-white truncate">
-                  「${step.target}」を ${step.action}
-                </div>
-                ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('');
+        container.innerHTML = (scene.flow || scene.steps || []).map(renderFlowStepHTML).join('');
       }
 
       openSheet('scene-flow-sheet');
     }
 
     /**
-     * シーンタイル右端の実行ボタンから直接実行
+     * シーン直接実行
      */
     function runSceneDirectly(commandText, event) {
       if (event) event.stopPropagation();
@@ -3369,32 +3322,22 @@
     function runSceneFromSheet() {
       if (currentActiveFlowScene) {
         closeSheet('scene-flow-sheet');
-        submitAssistantCommand(currentActiveFlowScene.command);
+        submitAssistantCommand(currentActiveFlowScene.command || currentActiveFlowScene.title);
       }
     }
 
-    // オートメーション定義
-    const AUTOMATIONS_DATA = {
+    // オートメーション定義 (フローAST)
+    let AUTOMATIONS_DATA = {
       weekday_morning_light: {
         id: 'weekday_morning_light',
         title: '朝',
         trigger: {
           target: '時間',
           value: '06:30',
-          condition: '日本の平日（土日祝除く）',
-          icon: 'alarm',
-          iconColor: 'text-amber-400',
-          bgColor: 'bg-amber-500/10'
+          condition: '日本の平日（土日祝除く）'
         },
         flow: [
-          {
-            target: 'リビング',
-            action: 'オン',
-            condition: null,
-            icon: 'lightbulb',
-            iconColor: 'text-amber-400',
-            bgColor: 'bg-amber-500/10'
-          }
+          { target: 'リビング', action: 'オン', condition: null }
         ],
         commandText: 'リビングの電気をつけて'
       },
@@ -3404,57 +3347,14 @@
         trigger: {
           target: '在宅確認',
           value: '変更',
-          condition: '在宅→不在',
-          icon: 'person_off',
-          iconColor: 'text-rose-400',
-          bgColor: 'bg-rose-500/10'
+          condition: '在宅→不在'
         },
         flow: [
-          {
-            type: 'device',
-            target: 'リビング',
-            action: '状態取得',
-            condition: null,
-            icon: 'lightbulb',
-            iconColor: 'text-amber-400',
-            bgColor: 'bg-amber-500/10'
-          },
-          {
-            type: 'device',
-            target: 'エアコン',
-            action: '状態取得',
-            condition: null,
-            icon: 'ac_unit',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          },
-          {
-            type: 'device',
-            target: 'ヒーター',
-            action: '状態取得',
-            condition: null,
-            icon: 'mode_heat',
-            iconColor: 'text-orange-400',
-            bgColor: 'bg-orange-500/10'
-          },
-          {
-            type: 'if',
-            target: '分岐',
-            action: 'が オン',
-            condition: null,
-            icon: 'alt_route',
-            iconColor: 'text-violet-400',
-            bgColor: 'bg-violet-500/10'
-          },
-          {
-            type: 'device',
-            target: '通知',
-            action: 'オン',
-            condition: '不在確認',
-            icon: 'notifications_active',
-            iconColor: 'text-sky-400',
-            bgColor: 'bg-sky-500/10'
-          }
+          { target: 'リビング', action: '状態取得', condition: null },
+          { target: 'エアコン', action: '状態取得', condition: null },
+          { target: 'ヒーター', action: '状態取得', condition: null },
+          { target: '分岐', action: 'が オン', type: 'if', condition: null },
+          { target: '通知', action: 'オン', condition: '不在確認' }
         ],
         commandText: '消し忘れ通知テスト'
       }
@@ -3475,15 +3375,20 @@
       const trigContainer = document.getElementById('sheet-automation-trigger-container');
       const flowContainer = document.getElementById('sheet-automation-flow-container');
 
-      if (titleEl) titleEl.textContent = auto.title;
+      if (titleEl) titleEl.textContent = auto.title || auto.name;
 
       // トリガー表示
       if (trigContainer) {
         const trig = auto.trigger;
+        const meta = DEVICE_METAS[trig.target] || { icon: 'bolt', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' };
+        const icon = trig.icon || meta.icon;
+        const iconColor = trig.iconColor || meta.iconColor;
+        const bgColor = trig.bgColor || meta.bgColor;
+
         trigContainer.innerHTML = `
           <div class="flex items-center space-x-3.5">
-            <div class="w-11 h-11 rounded-2xl ${trig.bgColor} ${trig.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-              <span class="material-symbols-rounded text-xl">${trig.icon}</span>
+            <div class="w-11 h-11 rounded-2xl ${bgColor} ${iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
+              <span class="material-symbols-rounded text-xl">${icon}</span>
             </div>
             <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
               <div class="text-[15px] font-semibold text-white truncate">
@@ -3495,47 +3400,34 @@
         `;
       }
 
-      // フロー表示（IFの左アイコンalt_route維持 ＋ 文章内にインライン3アイコン ＋ 「通知」を オン [不在確認]）
+      // フロー表示（共通DSLレンダラー）
       if (flowContainer) {
-        flowContainer.innerHTML = auto.flow.map((step) => {
-          const isIfBranch = step.type === 'if' || (step.target && step.target.startsWith('IF'));
-          
-          if (isIfBranch) {
-            return `
-              <div class="flex items-center space-x-3.5">
-                <div class="w-11 h-11 rounded-2xl ${step.bgColor || 'bg-violet-500/10'} ${step.iconColor || 'text-violet-400'} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-                  <span class="material-symbols-rounded text-xl">${step.icon || 'alt_route'}</span>
-                </div>
-                <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-                  <div class="flex items-center space-x-2 text-[15px] font-semibold text-white truncate">
-                    <div class="flex items-center space-x-1.5 shrink-0">
-                      <span class="material-symbols-rounded text-lg text-amber-400">lightbulb</span>
-                      <span class="material-symbols-rounded text-lg text-sky-400">ac_unit</span>
-                      <span class="material-symbols-rounded text-lg text-orange-400">mode_heat</span>
-                    </div>
-                    <span class="text-white font-medium">が オン</span>
-                  </div>
-                  ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
-                </div>
-              </div>
-            `;
-          }
-
-          return `
-            <div class="flex items-center space-x-3.5">
-              <div class="w-11 h-11 rounded-2xl ${step.bgColor} ${step.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-                <span class="material-symbols-rounded text-xl">${step.icon}</span>
-              </div>
-              <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-                <div class="text-[15px] font-semibold text-white truncate">
-                  「${step.target}」を ${step.action}
-                </div>
-                ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('');
+        flowContainer.innerHTML = (auto.flow || []).map(renderFlowStepHTML).join('');
       }
+
+      openSheet('automation-flow-sheet');
+    }
+
+    /**
+     * オートメーション直接実行
+     */
+    function runAutomationDirectly(autoId, event) {
+      if (event) event.stopPropagation();
+      const auto = AUTOMATIONS_DATA[autoId];
+      if (auto) {
+        submitAssistantCommand(auto.commandText || auto.title || auto.name);
+      }
+    }
+
+    /**
+     * フロー詳細モーダル内の実行ボタンから実行
+     */
+    function runAutomationFromSheet() {
+      if (currentActiveAutomation) {
+        closeSheet('automation-flow-sheet');
+        submitAssistantCommand(currentActiveAutomation.commandText || currentActiveAutomation.title || currentActiveAutomation.name);
+      }
+    }
 
       openSheet('automation-flow-sheet');
     }

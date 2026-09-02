@@ -1,0 +1,151 @@
+[
+  {
+    "id": "morning",
+    "name": "おはよう",
+    "category": "デイリー",
+    "icon": "wb_sunny",
+    "iconColor": "text-amber-400",
+    "command": "おはよう",
+    "flow": [
+      {
+        "target": "リビング",
+        "action": "オン",
+        "condition": null,
+        "api": "/api/light",
+        "payload": { "action": "on" }
+      },
+      {
+        "target": "気象",
+        "action": "取得",
+        "condition": null,
+        "system": "weather"
+      },
+      {
+        "target": "エアコン",
+        "action": "冷房26℃",
+        "condition": "体感24℃以上",
+        "eval_rule": "feels_like >= 24.0",
+        "api": "/api/ac",
+        "payload": { "mode": "cool", "temp": 26, "fan_mode": "auto" }
+      },
+      {
+        "target": "ヒーター",
+        "action": "オン",
+        "condition": "体感19℃以下",
+        "eval_rule": "feels_like <= 19.0",
+        "api": "/api/heater",
+        "payload": { "action": "on" }
+      }
+    ]
+  },
+  {
+    "id": "goodnight",
+    "name": "おやすみ",
+    "category": "デイリー",
+    "icon": "bedtime",
+    "iconColor": "text-indigo-400",
+    "command": "おやすみ",
+    "flow": [
+      {
+        "target": "リビング",
+        "action": "オフ",
+        "condition": null,
+        "api": "/api/light",
+        "payload": { "action": "off" }
+      },
+      {
+        "target": "気象",
+        "action": "取得",
+        "condition": null,
+        "system": "weather"
+      },
+      {
+        "target": "エアコン",
+        "action": "冷房27℃",
+        "condition": "体感24℃以上",
+        "eval_rule": "feels_like >= 24.0",
+        "api": "/api/ac",
+        "payload": { "mode": "cool", "temp": 27, "fan_mode": "auto" }
+      },
+      {
+        "target": "ヒーター",
+        "action": "オン",
+        "condition": "体感19℃以下",
+        "eval_rule": "feels_like <= 19.0",
+        "api": "/api/heater",
+        "payload": { "action": "on" }
+      }
+    ]
+  },
+  {
+    "id": "leaving",
+    "name": "いってきます",
+    "category": "外出",
+    "icon": "door_open",
+    "iconColor": "text-rose-400",
+    "command": "いってきます",
+    "flow": [
+      {
+        "target": "リビング",
+        "action": "オフ",
+        "condition": null,
+        "api": "/api/light",
+        "payload": { "action": "off" }
+      },
+      {
+        "target": "エアコン",
+        "action": "オフ",
+        "condition": null,
+        "api": "/api/ac",
+        "payload": { "mode": "off" }
+      },
+      {
+        "target": "ヒーター",
+        "action": "オフ",
+        "condition": null,
+        "api": "/api/heater",
+        "payload": { "action": "off" }
+      }
+    ]
+  },
+  {
+    "id": "welcome",
+    "name": "ただいま",
+    "category": "帰宅",
+    "icon": "home",
+    "iconColor": "text-emerald-400",
+    "command": "ただいま",
+    "flow": [
+      {
+        "target": "気象",
+        "action": "取得",
+        "condition": null,
+        "system": "weather"
+      },
+      {
+        "target": "リビング",
+        "action": "オン",
+        "condition": "日没後のみ",
+        "eval_rule": "not is_day",
+        "api": "/api/light",
+        "payload": { "action": "on" }
+      },
+      {
+        "target": "エアコン",
+        "action": "冷房26℃",
+        "condition": "体感24℃以上",
+        "eval_rule": "feels_like >= 24.0",
+        "api": "/api/ac",
+        "payload": { "mode": "cool", "temp": 26, "fan_mode": "auto" }
+      },
+      {
+        "target": "ヒーター",
+        "action": "オン",
+        "condition": "体感19℃以下",
+        "eval_rule": "feels_like <= 19.0",
+        "api": "/api/heater",
+        "payload": { "action": "on" }
+      }
+    ]
+  }
+]

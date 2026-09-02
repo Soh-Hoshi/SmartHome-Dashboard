@@ -269,38 +269,23 @@ def determine_smart_hvac(send_api_fn=None, sleep_mode=False):
         "feels_like": feels_like
     }
 
+import flow_engine
+
 def execute_smart_morning(send_api_fn=None):
-    """おはようシーン：ライト点灯 ＋ 体感温度に基づくスマート空調"""
-    if send_api_fn:
-        send_api_fn('/api/light', {'action': 'on'})
-    hvac_res = determine_smart_hvac(send_api_fn, sleep_mode=False)
-    msg = format_standard_message('scene', 'morning', hvac_res)
-    return {"success": True, "message": msg, "action": "scene_morning"}
+    """おはようシーン：フロー定義（scenes_config.json）に基づいて自動実行"""
+    return flow_engine.execute_scene('morning', send_api_fn=send_api_fn)
 
 def execute_smart_goodnight(send_api_fn=None):
-    """おやすみシーン：ライト消灯 ＋ 体感温度に基づくスマート就寝空調"""
-    if send_api_fn:
-        send_api_fn('/api/light', {'action': 'off'})
-    hvac_res = determine_smart_hvac(send_api_fn, sleep_mode=True)
-    msg = format_standard_message('scene', 'goodnight', hvac_res)
-    return {"success": True, "message": msg, "action": "scene_goodnight"}
+    """おやすみシーン：フロー定義（scenes_config.json）に基づいて自動実行"""
+    return flow_engine.execute_scene('goodnight', send_api_fn=send_api_fn)
 
 def execute_smart_welcome(send_api_fn=None):
-    """ただいまシーン：日没後ライト点灯 ＋ 体感温度に基づくスマート空調"""
-    wdata = weather_service.get_weather_data()
-    is_night = not wdata.get('is_day', True)
+    """ただいまシーン：フロー定義（scenes_config.json）に基づいて自動実行"""
+    return flow_engine.execute_scene('welcome', send_api_fn=send_api_fn)
 
-    if is_night and send_api_fn:
-        send_api_fn('/api/light', {'action': 'on'})
-
-    hvac_res = determine_smart_hvac(send_api_fn, sleep_mode=False)
-    hvac_res['light'] = is_night
-    msg = format_standard_message('scene', 'welcome', hvac_res)
-    return {
-        "success": True,
-        "message": msg,
-        "action": f"welcome_{hvac_res['hvac']}_{'light' if is_night else 'nolight'}"
-    }
+def execute_smart_leaving(send_api_fn=None):
+    """いってきますシーン：フロー定義（scenes_config.json）に基づいて自動実行"""
+    return flow_engine.execute_scene('leaving', send_api_fn=send_api_fn)
 
 def _dispatch_parsed_intent(parsed_data, send_api_fn=None):
     """LLMから返却された構造化インテントJSONを実行して結果メッセージを返す"""
@@ -322,19 +307,11 @@ def _dispatch_parsed_intent(parsed_data, send_api_fn=None):
         elif act in ('goodnight', 'おやすみ'):
             return execute_smart_goodnight(send_api_fn)
         elif act in ('leaving', 'いってきます'):
-            if send_api_fn:
-                send_api_fn('/api/light', {'action': 'off'})
-                send_api_fn('/api/ac', {'mode': 'off'})
-                send_api_fn('/api/heater', {'action': 'off'})
-            return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
+            return execute_smart_leaving(send_api_fn)
         elif act in ('welcome', 'ただいま'):
             return execute_smart_welcome(send_api_fn)
         elif act == 'all_off':
-            if send_api_fn:
-                send_api_fn('/api/light', {'action': 'off'})
-                send_api_fn('/api/ac', {'mode': 'off'})
-                send_api_fn('/api/heater', {'action': 'off'})
-            return {"success": True, "message": format_standard_message('scene', 'all_off'), "action": "scene_all_off"}
+            return execute_smart_leaving(send_api_fn)
 
     elif device == 'light':
         act = parsed_data.get('action', 'on')
@@ -485,13 +462,9 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     if any(k in text for k in ['おやすみ', '寝る', 'ねる', '就寝', 'ベッド', 'goodnight']):
         return execute_smart_goodnight(send_api_fn)
 
-    # 5-C. いってきます (リビングライトと空調全部消す)
+    # 5-C. いってきます (フロー定義に基づき一括全停止)
     if any(k in text for k in ['いってきます', '行ってきます', '外出', 'がいしゅつ', '出かける', 'でかける', '家出る', 'leave']):
-        if send_api_fn:
-            send_api_fn('/api/light', {'action': 'off'})
-            send_api_fn('/api/ac', {'mode': 'off'})
-            send_api_fn('/api/heater', {'action': 'off'})
-        return {"success": True, "message": format_standard_message('scene', 'leaving'), "action": "scene_leaving"}
+        return execute_smart_leaving(send_api_fn)
 
     # 5-D. ただいま (日没判定ライト + 体感温度によるスマート空調)
     if any(k in text for k in ['ただいま', '帰宅', 'きたく', '家着いた', 'ついた', '着いた', '帰った', 'かえった', 'welcome']):

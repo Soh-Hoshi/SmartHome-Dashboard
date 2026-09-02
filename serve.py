@@ -119,6 +119,77 @@ def save_state(state):
     except Exception as e:
         print(f"[State Save Error] {e}")
 
+def dispatch_internal_api(endpoint, payload):
+    """内部から家電操作APIを実行・状態保存する共通ハンドラー"""
+    if endpoint == '/api/light':
+        action = payload.get('action', 'toggle')
+        current_st = load_state()
+        if action in ('on', 'turnOn', 'full', 'night'):
+            current_st['lightOn'] = True
+            if action == 'full':
+                current_st['lightFull'] = True
+                current_st['lightNight'] = False
+            elif action == 'night':
+                current_st['lightNight'] = True
+                current_st['lightFull'] = False
+        elif action in ('off', 'turnOff'):
+            current_st['lightOn'] = False
+            current_st['lightFull'] = False
+            current_st['lightNight'] = False
+        elif action == 'toggle':
+            current_st['lightOn'] = not current_st['lightOn']
+            action = 'turnOn' if current_st['lightOn'] else 'turnOff'
+        save_state(current_st)
+        threading.Thread(target=lambda: switchbot_client.control_light(action), daemon=True).start()
+
+    elif endpoint == '/api/ac':
+        mode = payload.get('mode', 'cool')
+        temp = int(payload.get('temp', 26))
+        fan = payload.get('fan_mode', 'auto')
+        current_st = load_state()
+        current_st['acMode'] = mode
+        current_st['acTemp'] = temp
+        current_st['acFan'] = fan
+        save_state(current_st)
+        threading.Thread(target=lambda: switchbot_client.control_ac(mode, temp, fan), daemon=True).start()
+
+    elif endpoint == '/api/heater':
+        action = payload.get('action', 'heat')
+        temp = payload.get('temp')
+        current_st = load_state()
+        if action in ('on', 'turnOn', 'heat'):
+            current_st['heaterMode'] = 'heat'
+        elif action in ('off', 'turnOff'):
+            current_st['heaterMode'] = 'off'
+        if temp:
+            current_st['heaterTemp'] = int(temp)
+        save_state(current_st)
+        threading.Thread(target=lambda: switchbot_client.control_heater(action), daemon=True).start()
+
+    elif endpoint == '/api/cleaner':
+        action = payload.get('action', 'start')
+        current_st = load_state()
+        if action in ('start', 'play', 'resume'):
+            current_st['cleanerStatus'] = 'running'
+            current_st['cleanerPlay'] = True
+        elif action in ('pause',):
+            current_st['cleanerStatus'] = 'standby'
+            current_st['cleanerPlay'] = False
+        elif action in ('stop', 'dock', 'home', 'return'):
+            current_st['cleanerStatus'] = 'recharge'
+            current_st['cleanerPlay'] = False
+        save_state(current_st)
+        def run_cleaner():
+            try:
+                c = eufy_client.EufyG30Client()
+                if action in ('start', 'play', 'resume'): c.play()
+                elif action in ('pause',): c.pause()
+                elif action in ('stop', 'dock', 'home', 'return'): c.return_to_dock()
+                elif action in ('find', 'find_me', 'beep'): c.find_robot()
+            except Exception as ce:
+                print(f"[Cleaner Assistant Error] {ce}")
+        threading.Thread(target=run_cleaner, daemon=True).start()
+
 class LiveReloadHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
@@ -195,6 +266,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path == '/api/automations':
             data = automation_service.load_automations()
             return self.send_json_response({"status": "success", "automations": data})
+
+        if clean_path == '/api/scenes':
+            import flow_engine
+            data = flow_engine.load_scenes()
+            return self.send_json_response({"status": "success", "scenes": data})
 
         if clean_path == '/api/push/vapid-key':
             try:
@@ -381,78 +457,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
         if clean_path == '/api/assistant':
             prompt = req_data.get('prompt', '')
-
-            def internal_api_caller(endpoint, payload):
-                if endpoint == '/api/light':
-                    action = payload.get('action', 'toggle')
-                    current_st = load_state()
-                    if action in ('on', 'turnOn', 'full', 'night'):
-                        current_st['lightOn'] = True
-                        if action == 'full':
-                            current_st['lightFull'] = True
-                            current_st['lightNight'] = False
-                        elif action == 'night':
-                            current_st['lightNight'] = True
-                            current_st['lightFull'] = False
-                    elif action in ('off', 'turnOff'):
-                        current_st['lightOn'] = False
-                        current_st['lightFull'] = False
-                        current_st['lightNight'] = False
-                    elif action == 'toggle':
-                        current_st['lightOn'] = not current_st['lightOn']
-                        action = 'turnOn' if current_st['lightOn'] else 'turnOff'
-                    save_state(current_st)
-                    threading.Thread(target=lambda: switchbot_client.control_light(action), daemon=True).start()
-
-                elif endpoint == '/api/ac':
-                    mode = payload.get('mode', 'cool')
-                    temp = int(payload.get('temp', 26))
-                    fan = payload.get('fan_mode', 'auto')
-                    current_st = load_state()
-                    current_st['acMode'] = mode
-                    current_st['acTemp'] = temp
-                    current_st['acFan'] = fan
-                    save_state(current_st)
-                    threading.Thread(target=lambda: switchbot_client.control_ac(mode, temp, fan), daemon=True).start()
-
-                elif endpoint == '/api/heater':
-                    action = payload.get('action', 'heat')
-                    temp = payload.get('temp')
-                    current_st = load_state()
-                    if action in ('on', 'turnOn', 'heat'):
-                        current_st['heaterMode'] = 'heat'
-                    elif action in ('off', 'turnOff'):
-                        current_st['heaterMode'] = 'off'
-                    if temp:
-                        current_st['heaterTemp'] = int(temp)
-                    save_state(current_st)
-                    threading.Thread(target=lambda: switchbot_client.control_heater(action), daemon=True).start()
-
-                elif endpoint == '/api/cleaner':
-                    action = payload.get('action', 'start')
-                    current_st = load_state()
-                    if action in ('start', 'play', 'resume'):
-                        current_st['cleanerStatus'] = 'running'
-                        current_st['cleanerPlay'] = True
-                    elif action in ('pause',):
-                        current_st['cleanerStatus'] = 'standby'
-                        current_st['cleanerPlay'] = False
-                    elif action in ('stop', 'dock', 'home', 'return'):
-                        current_st['cleanerStatus'] = 'recharge'
-                        current_st['cleanerPlay'] = False
-                    save_state(current_st)
-                    def run_cleaner():
-                        try:
-                            c = eufy_client.EufyG30Client()
-                            if action in ('start', 'play', 'resume'): c.play()
-                            elif action in ('pause',): c.pause()
-                            elif action in ('stop', 'dock', 'home', 'return'): c.return_to_dock()
-                            elif action in ('find', 'find_me', 'beep'): c.find_robot()
-                        except Exception as ce:
-                            print(f"[Cleaner Assistant Error] {ce}")
-                    threading.Thread(target=run_cleaner, daemon=True).start()
-
-            result = assistant_engine.parse_and_execute(prompt, internal_api_caller)
+            result = assistant_engine.parse_and_execute(prompt, dispatch_internal_api)
             result['state'] = load_state()
             return self.send_json_response(result)
 
@@ -467,6 +472,13 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             auto_id = req_data.get('id')
             ok = automation_service.execute_automation(auto_id)
             return self.send_json_response({"status": "success" if ok else "error"})
+
+        if clean_path == '/api/scenes/execute':
+            import flow_engine
+            scene_id = req_data.get('id')
+            res = flow_engine.execute_scene(scene_id, send_api_fn=dispatch_internal_api)
+            res['state'] = load_state()
+            return self.send_json_response(res)
 
         if clean_path == '/api/push/subscribe':
             try:
