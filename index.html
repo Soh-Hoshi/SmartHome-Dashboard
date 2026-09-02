@@ -2798,111 +2798,13 @@
     let isRecording = false;
     let finalTranscript = '';
 
-    // -------------------------------------------------------------
-    // デバイス個別：常時待ち受け（ウェイクワード 'Nova'）管理
-    // -------------------------------------------------------------
-    let wakeWordRecognizer = null;
-    let isWakeWordActive = false;
-
-    function isWakeWordEnabledOnThisDevice() {
-      return localStorage.getItem('smarthome_wake_word_enabled') === 'true';
-    }
-
-    function toggleWakeWordOnThisDevice() {
-      const current = isWakeWordEnabledOnThisDevice();
-      const next = !current;
-      localStorage.setItem('smarthome_wake_word_enabled', next ? 'true' : 'false');
-      
-      if (next) {
-        showAssistantToast('この端末での常時待ち受け（Nova）を有効にしました', 'mic', false);
-        startWakeWordDetector();
-      } else {
-        showAssistantToast('この端末での常時待ち受けを無効にしました', 'mic_off', false);
-        stopWakeWordDetector();
-      }
-      updateWakeWordUi();
-    }
-
-    function updateWakeWordUi() {
-      const enabled = isWakeWordEnabledOnThisDevice();
-      const micBtn = document.getElementById('btn-voice-command');
-      if (micBtn) {
-        if (enabled) {
-          micBtn.title = '常時待ち受け有効（Novaと呼ぶと起動）/ クリックで直接音声入力 / 長押しで無効化';
-          micBtn.classList.add('border-blue-500/50', 'bg-blue-500/10');
-        } else {
-          micBtn.title = '音声入力 / 長押しでこの端末での常時待ち受け（Nova）を有効化';
-          micBtn.classList.remove('border-blue-500/50', 'bg-blue-500/10');
-        }
-      }
-    }
-
-    function startWakeWordDetector() {
-      if (!isWakeWordEnabledOnThisDevice()) return;
-      if (isRecording || isWakeWordActive) return;
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return;
-
-      try {
-        if (!wakeWordRecognizer) {
-          wakeWordRecognizer = new SpeechRecognition();
-          wakeWordRecognizer.lang = 'ja-JP';
-          wakeWordRecognizer.continuous = true;
-          wakeWordRecognizer.interimResults = true;
-
-          wakeWordRecognizer.onresult = (e) => {
-            if (isRecording) return;
-            for (let i = e.resultIndex; i < e.results.length; ++i) {
-              const text = e.results[i][0].transcript.toLowerCase();
-              if (text.includes('nova') || text.includes('ノヴァ') || text.includes('ノバ') || text.includes('のば')) {
-                console.log('[Wake Word Detected] "Nova" called!');
-                stopWakeWordDetector();
-                toggleVoiceRecognition();
-                break;
-              }
-            }
-          };
-
-          wakeWordRecognizer.onerror = (e) => {
-            if (e.error !== 'no-speech') {
-              console.warn('[Wake Word Error]', e.error);
-            }
-          };
-
-          wakeWordRecognizer.onend = () => {
-            isWakeWordActive = false;
-            // 常時待ち受けがONなら自動再起動
-            if (isWakeWordEnabledOnThisDevice() && !isRecording) {
-              setTimeout(startWakeWordDetector, 800);
-            }
-          };
-        }
-
-        wakeWordRecognizer.start();
-        isWakeWordActive = true;
-        console.log('[Wake Word Detector] Active on this device');
-      } catch (err) {
-        console.warn('[Wake Word Start Error]', err);
-      }
-    }
-
-    function stopWakeWordDetector() {
-      isWakeWordActive = false;
-      if (wakeWordRecognizer) {
-        try {
-          wakeWordRecognizer.abort();
-        } catch (e) {}
-      }
-    }
-
     function initSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return null;
 
       const rec = new SpeechRecognition();
       rec.lang = 'ja-JP';
-      rec.interimResults = true;
+      rec.interimResults = true; // リアルタイムでストリーミング認識
       rec.maxAlternatives = 1;
       rec.continuous = false;
 
@@ -2917,7 +2819,7 @@
         if (micBtn) micBtn.classList.add('voice-listening');
         if (micIcon) micIcon.textContent = 'graphic_eq';
         if (cmdBar) cmdBar.classList.add('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
-        if (inputEl) inputEl.placeholder = 'Novaがお聞きしています...';
+        if (inputEl) inputEl.placeholder = 'Novaがお聞きしています...（例: 電気消して、エアコン24度）';
 
         showAssistantToast('Novaがお聞きしています...', 'mic', false);
       };
@@ -2939,6 +2841,7 @@
           inputEl.value = displayText;
         }
 
+        // 最終結果が確定したら即時実行
         if (finalTranscript) {
           stopVoiceRecognition();
           submitAssistantCommand(finalTranscript);
@@ -2957,12 +2860,9 @@
 
       rec.onend = () => {
         stopVoiceRecognition();
+        // 最終確定テキストがあり未送信なら送信
         if (finalTranscript && isRecording) {
           submitAssistantCommand(finalTranscript);
-        }
-        // 常時待ち受けが有効なら復帰
-        if (isWakeWordEnabledOnThisDevice()) {
-          setTimeout(startWakeWordDetector, 500);
         }
       };
 
@@ -2981,7 +2881,6 @@
       if (isRecording) {
         recognition.stop();
       } else {
-        stopWakeWordDetector();
         try {
           recognition.start();
         } catch (err) {
@@ -3236,29 +3135,6 @@
       fetchWeatherData();
       fetchPresenceData();
       fetchTileData();
-      updateWakeWordUi();
-      startWakeWordDetector();
-
-      // マイクボタン長押しでこの端末での常時待ち受けを切り替え
-      const micBtn = document.getElementById('btn-voice-command');
-      if (micBtn) {
-        let pressTimer = null;
-        micBtn.addEventListener('pointerdown', () => {
-          pressTimer = setTimeout(() => {
-            toggleWakeWordOnThisDevice();
-            pressTimer = null;
-          }, 800);
-        });
-        const clearPress = () => {
-          if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-          }
-        };
-        micBtn.addEventListener('pointerup', clearPress);
-        micBtn.addEventListener('pointerleave', clearPress);
-        micBtn.addEventListener('pointercancel', clearPress);
-      }
 
       // クリーナーの定期状態同期 (10秒ごと)
       setInterval(syncCleanerStatus, 10000);
