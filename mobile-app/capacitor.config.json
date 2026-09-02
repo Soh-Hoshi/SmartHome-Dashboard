@@ -1,0 +1,26 @@
+{
+  "appId": "com.soh.smarthome",
+  "appName": "SmartHome",
+  "webDir": "www",
+  "server": {
+    "url": "https://server.tail52d127.ts.net/dashboard",
+    "cleartext": true,
+    "allowNavigation": [
+      "server.tail52d127.ts.net",
+      "192.168.0.*",
+      "localhost"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#2196f3",
+      "sound": "beep.wav"
+    }
+  }
+}
