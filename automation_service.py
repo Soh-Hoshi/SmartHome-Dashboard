@@ -178,14 +178,8 @@ def trigger_away_check():
 def execute_automation(auto_id):
     import flow_engine
     from serve import dispatch_internal_api
-    autos = load_automations()
-    for a in autos:
-        if a["id"] == auto_id:
-            flow_steps = a.get("flow", [])
-            print(f"[Automation Executing Flow] {a['name']} ({len(flow_steps)} steps)")
-            flow_engine.execute_flow(flow_steps, send_api_fn=dispatch_internal_api)
-            return True
-    return False
+    res = flow_engine.execute_automation(auto_id, send_api_fn=dispatch_internal_api)
+    return res.get("success", False)
 
 def _automation_scheduler_worker():
     last_triggered_minute = ""

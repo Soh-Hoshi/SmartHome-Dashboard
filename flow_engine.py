@@ -2,7 +2,7 @@
 """
 Flow Execution Engine (SSOT: Single Source of Truth)
 Executes scenes and automations directly based on their declarative flow definitions,
-and automatically generates deterministic, natural response messages from execution results.
+supports logical condition branching (IF / OR / AND), and automatically generates deterministic responses.
 """
 
 import os
@@ -62,6 +62,47 @@ def evaluate_condition(step, context):
         print(f"[FlowEngine Eval Error] rule='{eval_rule}': {e}")
         return False
 
+def evaluate_conditions_block(conditions):
+    """
+    オートメーションの条件分岐ブロック（IF / OR / AND）を評価
+    """
+    if not conditions:
+        return True
+
+    op = conditions.get("operator", "OR").upper()
+    items = conditions.get("items", [])
+    
+    st = {}
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                st = json.load(f)
+        except Exception:
+            pass
+
+    results = []
+    for item in items:
+        target = item.get("target")
+        expected_state = item.get("state", "オン")
+        
+        is_match = False
+        if target == "リビング":
+            is_match = st.get("lightOn", False) if expected_state == "オン" else not st.get("lightOn", False)
+        elif target == "エアコン":
+            is_match = (st.get("acMode", "off") != "off") if expected_state == "オン" else (st.get("acMode", "off") == "off")
+        elif target == "ヒーター":
+            is_match = (st.get("heaterMode", "off") != "off") if expected_state == "オン" else (st.get("heaterMode", "off") == "off")
+        elif target == "クリーナー":
+            is_match = (st.get("cleanerStatus") == "running") if expected_state == "稼働中" else True
+
+        results.append(is_match)
+
+    if op == "OR":
+        return any(results)
+    elif op == "AND":
+        return all(results)
+    return True
+
 def execute_flow(flow_steps, send_api_fn=None):
     """
     フロー定義配列を逐次評価・実行し、実行されたアクション結果のリストを返す
@@ -88,7 +129,7 @@ def execute_flow(flow_steps, send_api_fn=None):
         if not should_run:
             continue
 
-        # 3. IF分岐ステップ (条件判定)
+        # 3. IF分岐ステップ
         if step_type == "if" or target == "分岐":
             if os.path.exists(STATE_FILE):
                 try:
@@ -204,5 +245,30 @@ def execute_scene(scene_id, send_api_fn=None):
         "scene_id": scene_id,
         "scene_name": scene.get("name"),
         "message": message,
+        "executed_steps": flow_result.get("executed_steps", [])
+    }
+
+def execute_automation(auto_id, send_api_fn=None):
+    """
+    指定されたオートメーションを評価・実行
+    """
+    autos = load_automations()
+    auto = next((a for a in autos if a.get("id") == auto_id), None)
+    if not auto:
+        return {"success": False, "message": f"オートメーション '{auto_id}' が見つかりません。"}
+
+    conditions = auto.get("conditions")
+    if conditions and not evaluate_conditions_block(conditions):
+        print(f"[Automation Skipped] {auto.get('name')}: Conditions not met")
+        return {"success": True, "executed": False, "message": "条件を満たさないためスキップしました。"}
+
+    actions = auto.get("actions") or auto.get("flow") or []
+    flow_result = execute_flow(actions, send_api_fn=send_api_fn)
+
+    return {
+        "success": True,
+        "executed": True,
+        "auto_id": auto_id,
+        "auto_name": auto.get("name"),
         "executed_steps": flow_result.get("executed_steps", [])
     }

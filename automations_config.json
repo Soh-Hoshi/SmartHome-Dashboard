@@ -5,7 +5,6 @@
     "category": "デイリー",
     "enabled": true,
     "trigger": {
-      "type": "time",
       "target": "時間",
       "value": "06:30",
       "condition": "日本の平日（土日祝除く）",
@@ -13,6 +12,17 @@
       "iconColor": "text-amber-400",
       "bgColor": "bg-amber-500/10"
     },
+    "conditions": null,
+    "actions": [
+      {
+        "type": "device",
+        "target": "リビング",
+        "action": "オン",
+        "condition": null,
+        "api": "/api/light",
+        "payload": { "action": "on" }
+      }
+    ],
     "flow": [
       {
         "type": "device",
@@ -31,7 +41,6 @@
     "category": "外出",
     "enabled": true,
     "trigger": {
-      "type": "presence",
       "target": "在宅確認",
       "value": "変更",
       "condition": "在宅→不在",
@@ -39,34 +48,46 @@
       "iconColor": "text-rose-400",
       "bgColor": "bg-rose-500/10"
     },
+    "conditions": {
+      "type": "or",
+      "operator": "OR",
+      "title": "いずれかがオン",
+      "icon": "alt_route",
+      "iconColor": "text-violet-400",
+      "bgColor": "bg-violet-500/10",
+      "items": [
+        {
+          "target": "リビング",
+          "state": "オン",
+          "icon": "lightbulb",
+          "iconColor": "text-amber-400",
+          "bgColor": "bg-amber-500/10"
+        },
+        {
+          "target": "エアコン",
+          "state": "オン",
+          "icon": "ac_unit",
+          "iconColor": "text-sky-400",
+          "bgColor": "bg-sky-500/10"
+        },
+        {
+          "target": "ヒーター",
+          "state": "オン",
+          "icon": "mode_heat",
+          "iconColor": "text-orange-400",
+          "bgColor": "bg-orange-500/10"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "type": "device",
+        "target": "通知",
+        "action": "オン",
+        "condition": "不在確認"
+      }
+    ],
     "flow": [
-      {
-        "type": "device",
-        "target": "リビング",
-        "action": "状態取得",
-        "condition": null
-      },
-      {
-        "type": "device",
-        "target": "エアコン",
-        "action": "状態取得",
-        "condition": null
-      },
-      {
-        "type": "device",
-        "target": "ヒーター",
-        "action": "状態取得",
-        "condition": null
-      },
-      {
-        "type": "if",
-        "target": "分岐",
-        "action": "が オン",
-        "condition": null,
-        "icon": "alt_route",
-        "iconColor": "text-violet-400",
-        "bgColor": "bg-violet-500/10"
-      },
       {
         "type": "device",
         "target": "通知",

@@ -1601,9 +1601,9 @@
         <div></div>
       </div>
 
-      <!-- 中央: トリガー ＆ フロー (セクション間隔をゆったり確保) -->
-      <div class="flex-1 overflow-y-auto my-2 py-1 pr-1 space-y-6 no-scrollbar">
-        <!-- トリガーセクション -->
+      <!-- 中央: トリガー ＆ 条件分岐 ＆ アクション (セクション間隔をゆったり確保) -->
+      <div class="flex-1 overflow-y-auto my-2 py-1 pr-1 space-y-5 no-scrollbar">
+        <!-- 1. トリガーセクション (When) -->
         <div>
           <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">トリガー</div>
           <div id="sheet-automation-trigger-container" class="space-y-2.5">
@@ -1611,9 +1611,17 @@
           </div>
         </div>
 
-        <!-- フローセクション -->
+        <!-- 2. 条件分岐セクション (If / Conditions) -->
+        <div id="sheet-automation-condition-section" class="hidden">
+          <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">条件分岐</div>
+          <div id="sheet-automation-condition-container" class="space-y-2.5">
+            <!-- JSで動的生成 -->
+          </div>
+        </div>
+
+        <!-- 3. アクションセクション (Then / Actions) -->
         <div>
-          <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">フロー</div>
+          <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">アクション</div>
           <div id="sheet-automation-flow-container" class="space-y-2.5">
             <!-- JSで動的生成 -->
           </div>
@@ -3322,7 +3330,51 @@
       }
     }
 
-    // オートメーション定義 (フローAST)
+    /**
+     * 条件分岐ブロック（IF / OR / AND）を専用UIカードとして美しく生成
+     */
+    function renderConditionBlockHTML(conditions) {
+      if (!conditions) return '';
+
+      const itemsHTML = (conditions.items || []).map(item => {
+        const meta = DEVICE_METAS[item.target] || { icon: item.icon || 'bolt', iconColor: item.iconColor || 'text-neutral-400', bgColor: item.bgColor || 'bg-neutral-500/10' };
+        const icon = item.icon || meta.icon;
+        const iconColor = item.iconColor || meta.iconColor;
+        const bgColor = item.bgColor || meta.bgColor;
+        
+        return `
+          <div class="flex items-center space-x-2.5 bg-[#1e2128] rounded-xl px-3 py-2 border border-white/[0.03]">
+            <div class="w-7 h-7 rounded-lg ${bgColor} ${iconColor} flex items-center justify-center shrink-0">
+              <span class="material-symbols-rounded text-base">${icon}</span>
+            </div>
+            <div class="flex-1 flex items-center justify-between min-w-0">
+              <span class="text-[13.5px] font-medium text-white truncate">「${item.target}」</span>
+              <span class="text-xs text-amber-400 font-medium px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 shrink-0 ml-1.5">${item.state || 'オン'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="bg-[#2a2d36] rounded-2xl p-3.5 border border-violet-500/20 shadow-sm space-y-2.5">
+          <div class="flex items-center space-x-2.5 text-violet-400 font-semibold text-[14px]">
+            <div class="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
+              <span class="material-symbols-rounded text-lg">alt_route</span>
+            </div>
+            <div class="flex items-center space-x-1.5 truncate">
+              <span>もし</span>
+              <span class="text-white font-bold">${conditions.title || 'いずれかがオンなら'}</span>
+              <span class="text-[10px] text-violet-300 font-bold px-1.5 py-0.5 rounded bg-violet-500/20 border border-violet-500/30 ml-1 tracking-wider">${conditions.operator || 'OR'}</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
+            ${itemsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // オートメーション定義 (トリガー・条件分岐・アクション構造)
     let AUTOMATIONS_DATA = {
       weekday_morning_light: {
         id: 'weekday_morning_light',
@@ -3332,6 +3384,10 @@
           value: '06:30',
           condition: '日本の平日（土日祝除く）'
         },
+        conditions: null,
+        actions: [
+          { target: 'リビング', action: 'オン', condition: null }
+        ],
         flow: [
           { target: 'リビング', action: 'オン', condition: null }
         ],
@@ -3345,11 +3401,20 @@
           value: '変更',
           condition: '在宅→不在'
         },
+        conditions: {
+          type: 'or',
+          operator: 'OR',
+          title: 'いずれかがオンなら',
+          items: [
+            { target: 'リビング', state: 'オン' },
+            { target: 'エアコン', state: 'オン' },
+            { target: 'ヒーター', state: 'オン' }
+          ]
+        },
+        actions: [
+          { target: '通知', action: 'オン', condition: '不在確認' }
+        ],
         flow: [
-          { target: 'リビング', action: '状態取得', condition: null },
-          { target: 'エアコン', action: '状態取得', condition: null },
-          { target: 'ヒーター', action: '状態取得', condition: null },
-          { target: '分岐', action: 'が オン', type: 'if', condition: null },
           { target: '通知', action: 'オン', condition: '不在確認' }
         ],
         commandText: '消し忘れ通知テスト'
@@ -3359,7 +3424,7 @@
     let currentActiveAutomation = null;
 
     /**
-     * オートメーション詳細シートを開く
+     * オートメーション詳細シートを開く (トリガー ➔ 条件分岐 ➔ アクション)
      */
     function openAutomationFlowSheet(autoId) {
       const auto = AUTOMATIONS_DATA[autoId];
@@ -3369,11 +3434,13 @@
 
       const titleEl = document.getElementById('sheet-automation-title');
       const trigContainer = document.getElementById('sheet-automation-trigger-container');
+      const condSection = document.getElementById('sheet-automation-condition-section');
+      const condContainer = document.getElementById('sheet-automation-condition-container');
       const flowContainer = document.getElementById('sheet-automation-flow-container');
 
       if (titleEl) titleEl.textContent = auto.title || auto.name;
 
-      // トリガー表示
+      // 1. トリガー表示
       if (trigContainer) {
         const trig = auto.trigger;
         const meta = DEVICE_METAS[trig.target] || { icon: 'bolt', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' };
@@ -3396,9 +3463,21 @@
         `;
       }
 
-      // フロー表示（共通DSLレンダラー）
+      // 2. 条件分岐セクションの表示/非表示 ＆ 描画
+      if (condSection && condContainer) {
+        if (auto.conditions) {
+          condSection.classList.remove('hidden');
+          condContainer.innerHTML = renderConditionBlockHTML(auto.conditions);
+        } else {
+          condSection.classList.add('hidden');
+          condContainer.innerHTML = '';
+        }
+      }
+
+      // 3. アクション（実行フロー）表示
       if (flowContainer) {
-        flowContainer.innerHTML = (auto.flow || []).map(renderFlowStepHTML).join('');
+        const actionsList = auto.actions || auto.flow || [];
+        flowContainer.innerHTML = actionsList.map(renderFlowStepHTML).join('');
       }
 
       openSheet('automation-flow-sheet');
