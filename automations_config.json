@@ -4,35 +4,7 @@
     "name": "朝",
     "category": "デイリー",
     "enabled": true,
-    "trigger": {
-      "target": "時間",
-      "value": "06:30",
-      "condition": "日本の平日（土日祝除く）",
-      "icon": "alarm",
-      "iconColor": "text-amber-400",
-      "bgColor": "bg-amber-500/10"
-    },
-    "conditions": null,
-    "actions": [
-      {
-        "type": "device",
-        "target": "リビング",
-        "action": "オン",
-        "condition": null,
-        "api": "/api/light",
-        "payload": { "action": "on" }
-      }
-    ],
-    "flow": [
-      {
-        "type": "device",
-        "target": "リビング",
-        "action": "オン",
-        "condition": null,
-        "api": "/api/light",
-        "payload": { "action": "on" }
-      }
-    ],
+    "summary": "平日 06:30 ➔ リビング点灯",
     "command": "smarthome light on"
   },
   {
@@ -40,61 +12,7 @@
     "name": "外出時消し忘れ防止",
     "category": "外出",
     "enabled": true,
-    "trigger": {
-      "target": "在宅確認",
-      "value": "変更",
-      "condition": "在宅→不在",
-      "icon": "person_off",
-      "iconColor": "text-rose-400",
-      "bgColor": "bg-rose-500/10"
-    },
-    "conditions": {
-      "type": "or",
-      "operator": "OR",
-      "title": "いずれかがオン",
-      "icon": "alt_route",
-      "iconColor": "text-violet-400",
-      "bgColor": "bg-violet-500/10",
-      "items": [
-        {
-          "target": "リビング",
-          "state": "オン",
-          "icon": "lightbulb",
-          "iconColor": "text-amber-400",
-          "bgColor": "bg-amber-500/10"
-        },
-        {
-          "target": "エアコン",
-          "state": "オン",
-          "icon": "ac_unit",
-          "iconColor": "text-sky-400",
-          "bgColor": "bg-sky-500/10"
-        },
-        {
-          "target": "ヒーター",
-          "state": "オン",
-          "icon": "mode_heat",
-          "iconColor": "text-orange-400",
-          "bgColor": "bg-orange-500/10"
-        }
-      ]
-    },
-    "actions": [
-      {
-        "type": "device",
-        "target": "通知",
-        "action": "オン",
-        "condition": "不在確認"
-      }
-    ],
-    "flow": [
-      {
-        "type": "device",
-        "target": "通知",
-        "action": "オン",
-        "condition": "不在確認"
-      }
-    ],
+    "summary": "外出検知 ➔ 消灯確認通知",
     "command": "notify away device warning"
   }
 ]

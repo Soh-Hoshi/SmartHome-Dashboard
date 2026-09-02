@@ -176,10 +176,14 @@ def trigger_away_check():
             print(f"[Push Trigger Error] {e}")
 
 def execute_automation(auto_id):
-    import flow_engine
     from serve import dispatch_internal_api
-    res = flow_engine.execute_automation(auto_id, send_api_fn=dispatch_internal_api)
-    return res.get("success", False)
+    if auto_id == "away_device_warning":
+        trigger_away_check()
+        return True
+    elif auto_id == "weekday_morning_light":
+        dispatch_internal_api('/api/light', {'action': 'on'})
+        return True
+    return False
 
 def _automation_scheduler_worker():
     last_triggered_minute = ""

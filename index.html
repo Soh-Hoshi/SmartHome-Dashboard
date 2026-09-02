@@ -478,7 +478,7 @@
       </main>
 
       <!-- ======================================================================= -->
-      <!-- タブ2：オートメーション (ダッシュボード・シーンと完全同一のカテゴリ制)   -->
+      <!-- タブ2：オートメーション (トグルスイッチ ＆ テスト実行)                     -->
       <!-- ======================================================================= -->
       <div id="view-automations" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 columns-1 md:columns-2 lg:columns-3 gap-6">
         
@@ -487,23 +487,28 @@
           <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- オートメーション1: 朝 (タイルタップでトリガー＆フロー詳細 / 右ボタンでテスト実行) -->
-            <div onclick="openAutomationFlowSheet('weekday_morning_light')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <!-- オートメーション1: 朝 -->
+            <div class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between transition-colors duration-150 shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center transition-all shrink-0 border border-white/[0.04]">
                   <span class="material-symbols-rounded text-2xl">alarm</span>
                 </div>
                 <div class="min-w-0">
                   <div class="text-[15px] font-semibold text-white leading-tight truncate">朝</div>
-                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">平日 06:30</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">平日 06:30 ➔ リビング点灯</div>
                 </div>
               </div>
-              <button onclick="runAutomationDirectly('weekday_morning_light', event)" 
-                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="朝を実行">
-                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
-              </button>
+              <div class="flex items-center space-x-2.5 shrink-0">
+                <button onclick="runAutomationDirectly('weekday_morning_light', event)" 
+                        class="w-9 h-9 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white flex items-center justify-center transition-all active:scale-95 border border-white/[0.04]"
+                        title="テスト実行">
+                  <span class="material-symbols-rounded text-lg">play_arrow</span>
+                </button>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggle-auto-weekday_morning_light" checked onchange="toggleAutomation('weekday_morning_light', this.checked)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-[#2a2d36] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2196f3]"></div>
+                </label>
+              </div>
             </div>
           </div>
         </section>
@@ -514,22 +519,27 @@
           
           <div class="flex flex-col gap-3.5">
             <!-- オートメーション2: 外出時消し忘れ防止 -->
-            <div onclick="openAutomationFlowSheet('away_device_warning')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between transition-colors duration-150 shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center transition-all shrink-0 border border-white/[0.04]">
                   <span class="material-symbols-rounded text-2xl">notifications_active</span>
                 </div>
                 <div class="min-w-0">
                   <div class="text-[15px] font-semibold text-white leading-tight truncate">外出時消し忘れ防止</div>
-                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">外出時 ➔ 消灯確認通知</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">外出検知 ➔ 消灯確認通知</div>
                 </div>
               </div>
-              <button onclick="runAutomationDirectly('away_device_warning', event)" 
-                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="外出時消し忘れ防止をテスト実行">
-                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
-              </button>
+              <div class="flex items-center space-x-2.5 shrink-0">
+                <button onclick="runAutomationDirectly('away_device_warning', event)" 
+                        class="w-9 h-9 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 hover:text-white flex items-center justify-center transition-all active:scale-95 border border-white/[0.04]"
+                        title="テスト実行">
+                  <span class="material-symbols-rounded text-lg">play_arrow</span>
+                </button>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggle-auto-away_device_warning" checked onchange="toggleAutomation('away_device_warning', this.checked)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-[#2a2d36] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2196f3]"></div>
+                </label>
+              </div>
             </div>
           </div>
         </section>
@@ -537,7 +547,7 @@
       </div>
 
       <!-- ======================================================================= -->
-      <!-- タブ3：シーン (ダッシュボードと完全同一のカテゴリ制レイアウト)           -->
+      <!-- タブ3：シーン (ワンタップ即実行・Apple Homeスタイル)                     -->
       <!-- ======================================================================= -->
       <div id="view-scenes" class="tab-view hidden w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 columns-1 md:columns-2 lg:columns-3 gap-6">
         
@@ -546,68 +556,72 @@
           <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- シーン1: おはよう (タイルタップでフロー詳細 / 右ボタンで直接実行) -->
-            <div onclick="openSceneFlowSheet('morning')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <!-- シーン1: おはよう (タップで即時実行) -->
+            <div onclick="runSceneDirectly('おはよう')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-all duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
                   <span class="material-symbols-rounded text-2xl">wb_sunny</span>
                 </div>
-                <div class="text-[15px] font-semibold text-white leading-tight truncate">おはよう</div>
+                <div class="min-w-0">
+                  <div class="text-[15px] font-semibold text-white leading-tight truncate">おはよう</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">照明点灯 ＋ 体感空調</div>
+                </div>
               </div>
-              <button onclick="runSceneDirectly('おはよう', event)" 
-                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="おはようを実行">
-                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
-              </button>
+              <div class="w-10 h-10 rounded-2xl bg-white/[0.04] group-hover:bg-[#2196f3]/15 group-hover:text-[#2196f3] text-neutral-400 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
+                <span class="material-symbols-rounded text-xl">play_arrow</span>
+              </div>
             </div>
 
             <!-- シーン2: おやすみ -->
-            <div onclick="openSceneFlowSheet('goodnight')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div onclick="runSceneDirectly('おやすみ')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-all duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-2xl bg-indigo-500/10 text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
                   <span class="material-symbols-rounded text-2xl">bedtime</span>
                 </div>
-                <div class="text-[15px] font-semibold text-white leading-tight truncate">おやすみ</div>
+                <div class="min-w-0">
+                  <div class="text-[15px] font-semibold text-white leading-tight truncate">おやすみ</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">照明消灯 ＋ 就寝空調</div>
+                </div>
               </div>
-              <button onclick="runSceneDirectly('おやすみ', event)" 
-                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="おやすみを実行">
-                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
-              </button>
+              <div class="w-10 h-10 rounded-2xl bg-white/[0.04] group-hover:bg-[#2196f3]/15 group-hover:text-[#2196f3] text-neutral-400 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
+                <span class="material-symbols-rounded text-xl">play_arrow</span>
+              </div>
             </div>
 
             <!-- シーン3: いってきます -->
-            <div onclick="openSceneFlowSheet('leaving')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div onclick="runSceneDirectly('いってきます')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-all duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
                   <span class="material-symbols-rounded text-2xl">logout</span>
                 </div>
-                <div class="text-[15px] font-semibold text-white leading-tight truncate">いってきます</div>
+                <div class="min-w-0">
+                  <div class="text-[15px] font-semibold text-white leading-tight truncate">いってきます</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">照明 ＆ 空調を一括全停止</div>
+                </div>
               </div>
-              <button onclick="runSceneDirectly('いってきます', event)" 
-                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="いってきますを実行">
-                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
-              </button>
+              <div class="w-10 h-10 rounded-2xl bg-white/[0.04] group-hover:bg-[#2196f3]/15 group-hover:text-[#2196f3] text-neutral-400 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
+                <span class="material-symbols-rounded text-xl">play_arrow</span>
+              </div>
             </div>
 
             <!-- シーン4: ただいま -->
-            <div onclick="openSceneFlowSheet('welcome')"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div onclick="runSceneDirectly('ただいま')"
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-all duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-400 group-hover:scale-105 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
                   <span class="material-symbols-rounded text-2xl">home</span>
                 </div>
-                <div class="text-[15px] font-semibold text-white leading-tight truncate">ただいま</div>
+                <div class="min-w-0">
+                  <div class="text-[15px] font-semibold text-white leading-tight truncate">ただいま</div>
+                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">日没判定点灯 ＋ 体感空調</div>
+                </div>
               </div>
-              <button onclick="runSceneDirectly('ただいま', event)" 
-                      class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="ただいまを実行">
-                <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
-              </button>
+              <div class="w-10 h-10 rounded-2xl bg-white/[0.04] group-hover:bg-[#2196f3]/15 group-hover:text-[#2196f3] text-neutral-400 flex items-center justify-center transition-all duration-200 shrink-0 border border-white/[0.04]">
+                <span class="material-symbols-rounded text-xl">play_arrow</span>
+              </div>
             </div>
           </div>
         </section>
@@ -1537,105 +1551,6 @@
             <div id="sheet-tile-time" class="text-xs font-bold text-white font-num truncate">--:--:--</div>
           </div>
         </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ======================================================================= -->
-  <!-- 画面9：シーンアクションフロー詳細画面 (Bottom Sheet Modal)                 -->
-  <!-- ======================================================================= -->
-  <div id="scene-flow-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
-    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(640px,calc(100dvh-48px))] sm:min-h-[480px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-y-auto shadow-2xl border-t sm:border border-white/[0.06]">
-      
-      <!-- 上部ヘッダー (他モーダルと完全統一) -->
-      <div class="flex items-center justify-between pb-2 shrink-0">
-        <div class="flex items-center space-x-3.5">
-          <button onclick="closeSheet('scene-flow-sheet')" 
-                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
-                  aria-label="閉じる">
-            <span class="material-symbols-rounded text-2xl">close</span>
-          </button>
-          <h2 id="sheet-scene-title" class="text-xl font-bold text-white tracking-tight">シーン</h2>
-        </div>
-        <div></div>
-      </div>
-
-      <!-- 中央: アクションフロー (ステップ・タイムライン表示) -->
-      <div class="flex-1 overflow-y-auto my-2 py-1 pr-1 no-scrollbar">
-        <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">フロー</div>
-        <div class="space-y-2.5" id="sheet-scene-steps-container">
-          <!-- JSで動的にステップ要素を生成 -->
-        </div>
-      </div>
-
-      <!-- 下部: シーン実行ボタン (他シートと統一された bg-[#2a2d36] スタイル) -->
-      <div class="pt-2 shrink-0">
-        <button id="sheet-scene-run-btn" 
-                onclick="runSceneFromSheet()"
-                class="w-full flex items-center justify-center space-x-2.5 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-white font-semibold text-[15px] transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-          <span class="material-symbols-rounded text-2xl text-neutral-300">play_arrow</span>
-          <span id="sheet-scene-run-btn-text">実行</span>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ======================================================================= -->
-  <!-- 画面10：オートメーション詳細画面 (Bottom Sheet Modal)                    -->
-  <!-- ======================================================================= -->
-  <div id="automation-flow-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
-    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(640px,calc(100dvh-48px))] sm:min-h-[480px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-y-auto shadow-2xl border-t sm:border border-white/[0.06]">
-      
-      <!-- 上部ヘッダー -->
-      <div class="flex items-center justify-between pb-2 shrink-0">
-        <div class="flex items-center space-x-3.5">
-          <button onclick="closeSheet('automation-flow-sheet')" 
-                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
-                  aria-label="閉じる">
-            <span class="material-symbols-rounded text-2xl">close</span>
-          </button>
-          <h2 id="sheet-automation-title" class="text-xl font-bold text-white tracking-tight">オートメーション</h2>
-        </div>
-        <div></div>
-      </div>
-
-      <!-- 中央: トリガー ＆ 条件分岐 ＆ アクション (セクション間隔をゆったり確保) -->
-      <div class="flex-1 overflow-y-auto my-2 py-1 pr-1 space-y-5 no-scrollbar">
-        <!-- 1. トリガーセクション (When) -->
-        <div>
-          <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">トリガー</div>
-          <div id="sheet-automation-trigger-container" class="space-y-2.5">
-            <!-- JSで動的生成 -->
-          </div>
-        </div>
-
-        <!-- 2. 条件分岐セクション (If / Conditions) -->
-        <div id="sheet-automation-condition-section" class="hidden">
-          <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">条件分岐</div>
-          <div id="sheet-automation-condition-container" class="space-y-2.5">
-            <!-- JSで動的生成 -->
-          </div>
-        </div>
-
-        <!-- 3. アクションセクション (Then / Actions) -->
-        <div>
-          <div class="text-[12px] font-bold text-neutral-400 px-1 uppercase tracking-wider mb-2">アクション</div>
-          <div id="sheet-automation-flow-container" class="space-y-2.5">
-            <!-- JSで動的生成 -->
-          </div>
-        </div>
-      </div>
-
-      <!-- 下部: 実行ボタン -->
-      <div class="pt-2 shrink-0">
-        <button id="sheet-automation-run-btn" 
-                onclick="runAutomationFromSheet()"
-                class="w-full flex items-center justify-center space-x-2.5 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-white font-semibold text-[15px] transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-          <span class="material-symbols-rounded text-2xl text-neutral-300">play_arrow</span>
-          <span id="sheet-automation-run-btn-text">実行</span>
-        </button>
       </div>
 
     </div>
@@ -3171,149 +3086,8 @@
       }
     }
 
-    // =======================================================================
-    // フロー駆動システム (SSOT: Single Source of Truth)
-    // =======================================================================
-
-    // デバイスメタデータ辞書（アイコン・カラーの自動解決）
-    const DEVICE_METAS = {
-      'リビング': { icon: 'lightbulb', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' },
-      'エアコン': { icon: 'ac_unit', iconColor: 'text-sky-400', bgColor: 'bg-sky-500/10' },
-      'ヒーター': { icon: 'mode_heat', iconColor: 'text-orange-400', bgColor: 'bg-orange-500/10' },
-      'クリーナー': { icon: 'smart_toy', iconColor: 'text-emerald-400', bgColor: 'bg-emerald-500/10' },
-      '気象': { icon: 'partly_cloudy_day', iconColor: 'text-sky-400', bgColor: 'bg-sky-500/10' },
-      '在宅確認': { icon: 'person_off', iconColor: 'text-rose-400', bgColor: 'bg-rose-500/10' },
-      '鍵': { icon: 'vpn_key_alert', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' },
-      '通知': { icon: 'notifications_active', iconColor: 'text-sky-400', bgColor: 'bg-sky-500/10' },
-      '時間': { icon: 'alarm', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' },
-      '分岐': { icon: 'alt_route', iconColor: 'text-violet-400', bgColor: 'bg-violet-500/10' }
-    };
-
     /**
-     * フローステップを共通DSLに基づき画一的なHTMLとして自動生成
-     */
-    function renderFlowStepHTML(step) {
-      const isIfBranch = step.type === 'if' || step.target === '分岐';
-      const meta = DEVICE_METAS[step.target] || {
-        icon: step.icon || 'bolt',
-        iconColor: step.iconColor || 'text-neutral-400',
-        bgColor: step.bgColor || 'bg-neutral-500/10'
-      };
-
-      if (isIfBranch) {
-        return `
-          <div class="flex items-center space-x-3.5">
-            <div class="w-11 h-11 rounded-2xl ${step.bgColor || meta.bgColor} ${step.iconColor || meta.iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-              <span class="material-symbols-rounded text-xl">${step.icon || meta.icon}</span>
-            </div>
-            <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-              <div class="flex items-center space-x-2 text-[15px] font-semibold text-white truncate">
-                <div class="flex items-center space-x-1.5 shrink-0">
-                  <span class="material-symbols-rounded text-lg text-amber-400">lightbulb</span>
-                  <span class="material-symbols-rounded text-lg text-sky-400">ac_unit</span>
-                  <span class="material-symbols-rounded text-lg text-orange-400">mode_heat</span>
-                </div>
-                <span class="text-white font-medium">${step.action || 'が オン'}</span>
-              </div>
-              ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
-            </div>
-          </div>
-        `;
-      }
-
-      const icon = step.icon || meta.icon;
-      const iconColor = step.iconColor || meta.iconColor;
-      const bgColor = step.bgColor || meta.bgColor;
-
-      return `
-        <div class="flex items-center space-x-3.5">
-          <div class="w-11 h-11 rounded-2xl ${bgColor} ${iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-            <span class="material-symbols-rounded text-xl">${icon}</span>
-          </div>
-          <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-            <div class="text-[15px] font-semibold text-white truncate">
-              「${step.target}」を ${step.action}
-            </div>
-            ${step.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${step.condition}</span>` : ''}
-          </div>
-        </div>
-      `;
-    }
-
-    // シーン定義 (フローAST)
-    let SCENE_FLOWS = {
-      morning: {
-        id: 'morning',
-        title: 'おはよう',
-        command: 'おはよう',
-        flow: [
-          { target: 'リビング', action: 'オン', condition: null },
-          { target: '気象', action: '取得', condition: null },
-          { target: 'エアコン', action: '冷房26℃', condition: '体感24℃以上' },
-          { target: 'ヒーター', action: 'オン', condition: '体感19℃以下' }
-        ]
-      },
-      goodnight: {
-        id: 'goodnight',
-        title: 'おやすみ',
-        command: 'おやすみ',
-        flow: [
-          { target: 'リビング', action: 'オフ', condition: null },
-          { target: '気象', action: '取得', condition: null },
-          { target: 'エアコン', action: '冷房27℃', condition: '体感24℃以上' },
-          { target: 'ヒーター', action: 'オン', condition: '体感19℃以下' }
-        ]
-      },
-      leaving: {
-        id: 'leaving',
-        title: 'いってきます',
-        command: 'いってきます',
-        flow: [
-          { target: 'リビング', action: 'オフ', condition: null },
-          { target: 'エアコン', action: 'オフ', condition: null },
-          { target: 'ヒーター', action: 'オフ', condition: null }
-        ]
-      },
-      welcome: {
-        id: 'welcome',
-        title: 'ただいま',
-        command: 'ただいま',
-        flow: [
-          { target: '気象', action: '取得', condition: null },
-          { target: 'リビング', action: 'オン', condition: '日没後のみ' },
-          { target: 'エアコン', action: '冷房26℃', condition: '体感24℃以上' },
-          { target: 'ヒーター', action: 'オン', condition: '体感19℃以下' }
-        ]
-      }
-    };
-
-    let currentActiveFlowScene = null;
-
-    /**
-     * シーンのアクションフロー詳細シートを開く
-     */
-    function openSceneFlowSheet(sceneKey) {
-      const scene = SCENE_FLOWS[sceneKey];
-      if (!scene) return;
-
-      currentActiveFlowScene = scene;
-
-      const titleEl = document.getElementById('sheet-scene-title');
-      const container = document.getElementById('sheet-scene-steps-container');
-      const btnText = document.getElementById('sheet-scene-run-btn-text');
-
-      if (titleEl) titleEl.textContent = scene.title || scene.name;
-      if (btnText) btnText.textContent = '実行';
-
-      if (container) {
-        container.innerHTML = (scene.flow || scene.steps || []).map(renderFlowStepHTML).join('');
-      }
-
-      openSheet('scene-flow-sheet');
-    }
-
-    /**
-     * シーン直接実行
+     * シーン直接実行 (ワンタップで即時スマート実行)
      */
     function runSceneDirectly(commandText, event) {
       if (event) event.stopPropagation();
@@ -3321,186 +3095,34 @@
     }
 
     /**
-     * フロー詳細モーダル内の実行ボタンから実行
-     */
-    function runSceneFromSheet() {
-      if (currentActiveFlowScene) {
-        closeSheet('scene-flow-sheet');
-        submitAssistantCommand(currentActiveFlowScene.command || currentActiveFlowScene.title);
-      }
-    }
-
-    /**
-     * 条件分岐ブロック（IF / OR / AND）を専用UIカードとして美しく生成
-     */
-    function renderConditionBlockHTML(conditions) {
-      if (!conditions) return '';
-
-      const itemsHTML = (conditions.items || []).map(item => {
-        const meta = DEVICE_METAS[item.target] || { icon: item.icon || 'bolt', iconColor: item.iconColor || 'text-neutral-400', bgColor: item.bgColor || 'bg-neutral-500/10' };
-        const icon = item.icon || meta.icon;
-        const iconColor = item.iconColor || meta.iconColor;
-        const bgColor = item.bgColor || meta.bgColor;
-        
-        return `
-          <div class="flex items-center space-x-2.5 bg-[#1e2128] rounded-xl px-3 py-2 border border-white/[0.03]">
-            <div class="w-7 h-7 rounded-lg ${bgColor} ${iconColor} flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-base">${icon}</span>
-            </div>
-            <div class="flex-1 flex items-center justify-between min-w-0">
-              <span class="text-[13.5px] font-medium text-white truncate">「${item.target}」</span>
-              <span class="text-xs text-amber-400 font-medium px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 shrink-0 ml-1.5">${item.state || 'オン'}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      return `
-        <div class="bg-[#2a2d36] rounded-2xl p-3.5 border border-violet-500/20 shadow-sm space-y-2.5">
-          <div class="flex items-center space-x-2.5 text-violet-400 font-semibold text-[14px]">
-            <div class="w-8 h-8 rounded-xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-lg">alt_route</span>
-            </div>
-            <div class="flex items-center space-x-1.5 truncate">
-              <span>もし</span>
-              <span class="text-white font-bold">${conditions.title || 'いずれかがオンなら'}</span>
-              <span class="text-[10px] text-violet-300 font-bold px-1.5 py-0.5 rounded bg-violet-500/20 border border-violet-500/30 ml-1 tracking-wider">${conditions.operator || 'OR'}</span>
-            </div>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
-            ${itemsHTML}
-          </div>
-        </div>
-      `;
-    }
-
-    // オートメーション定義 (トリガー・条件分岐・アクション構造)
-    let AUTOMATIONS_DATA = {
-      weekday_morning_light: {
-        id: 'weekday_morning_light',
-        title: '朝',
-        trigger: {
-          target: '時間',
-          value: '06:30',
-          condition: '日本の平日（土日祝除く）'
-        },
-        conditions: null,
-        actions: [
-          { target: 'リビング', action: 'オン', condition: null }
-        ],
-        flow: [
-          { target: 'リビング', action: 'オン', condition: null }
-        ],
-        commandText: 'リビングの電気をつけて'
-      },
-      away_device_warning: {
-        id: 'away_device_warning',
-        title: '外出時消し忘れ防止',
-        trigger: {
-          target: '在宅確認',
-          value: '変更',
-          condition: '在宅→不在'
-        },
-        conditions: {
-          type: 'or',
-          operator: 'OR',
-          title: 'いずれかがオンなら',
-          items: [
-            { target: 'リビング', state: 'オン' },
-            { target: 'エアコン', state: 'オン' },
-            { target: 'ヒーター', state: 'オン' }
-          ]
-        },
-        actions: [
-          { target: '通知', action: 'オン', condition: '不在確認' }
-        ],
-        flow: [
-          { target: '通知', action: 'オン', condition: '不在確認' }
-        ],
-        commandText: '消し忘れ通知テスト'
-      }
-    };
-
-    let currentActiveAutomation = null;
-
-    /**
-     * オートメーション詳細シートを開く (トリガー ➔ 条件分岐 ➔ アクション)
-     */
-    function openAutomationFlowSheet(autoId) {
-      const auto = AUTOMATIONS_DATA[autoId];
-      if (!auto) return;
-
-      currentActiveAutomation = auto;
-
-      const titleEl = document.getElementById('sheet-automation-title');
-      const trigContainer = document.getElementById('sheet-automation-trigger-container');
-      const condSection = document.getElementById('sheet-automation-condition-section');
-      const condContainer = document.getElementById('sheet-automation-condition-container');
-      const flowContainer = document.getElementById('sheet-automation-flow-container');
-
-      if (titleEl) titleEl.textContent = auto.title || auto.name;
-
-      // 1. トリガー表示
-      if (trigContainer) {
-        const trig = auto.trigger;
-        const meta = DEVICE_METAS[trig.target] || { icon: 'bolt', iconColor: 'text-amber-400', bgColor: 'bg-amber-500/10' };
-        const icon = trig.icon || meta.icon;
-        const iconColor = trig.iconColor || meta.iconColor;
-        const bgColor = trig.bgColor || meta.bgColor;
-
-        trigContainer.innerHTML = `
-          <div class="flex items-center space-x-3.5">
-            <div class="w-11 h-11 rounded-2xl ${bgColor} ${iconColor} flex items-center justify-center font-bold border border-white/[0.04] shadow-sm shrink-0">
-              <span class="material-symbols-rounded text-xl">${icon}</span>
-            </div>
-            <div class="flex-1 h-11 bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between border border-white/[0.03] shadow-sm min-w-0">
-              <div class="text-[15px] font-semibold text-white truncate">
-                「${trig.target}」が ${trig.value}
-              </div>
-              ${trig.condition ? `<span class="text-xs text-neutral-400 font-normal px-2.5 py-0.5 rounded-xl bg-white/[0.04] border border-white/[0.05] shrink-0 ml-2">${trig.condition}</span>` : ''}
-            </div>
-          </div>
-        `;
-      }
-
-      // 2. 条件分岐セクションの表示/非表示 ＆ 描画
-      if (condSection && condContainer) {
-        if (auto.conditions) {
-          condSection.classList.remove('hidden');
-          condContainer.innerHTML = renderConditionBlockHTML(auto.conditions);
-        } else {
-          condSection.classList.add('hidden');
-          condContainer.innerHTML = '';
-        }
-      }
-
-      // 3. アクション（実行フロー）表示
-      if (flowContainer) {
-        const actionsList = auto.actions || auto.flow || [];
-        flowContainer.innerHTML = actionsList.map(renderFlowStepHTML).join('');
-      }
-
-      openSheet('automation-flow-sheet');
-    }
-
-    /**
-     * オートメーション直接実行
+     * オートメーション直接テスト実行
      */
     function runAutomationDirectly(autoId, event) {
       if (event) event.stopPropagation();
-      const auto = AUTOMATIONS_DATA[autoId];
-      if (auto) {
-        submitAssistantCommand(auto.commandText || auto.title || auto.name);
-      }
+      const cmdMap = {
+        'weekday_morning_light': 'リビングの電気をつけて',
+        'away_device_warning': '消し忘れ通知テスト'
+      };
+      submitAssistantCommand(cmdMap[autoId] || 'オートメーションを実行');
     }
 
     /**
-     * フロー詳細モーダル内の実行ボタンから実行
+     * オートメーションの有効/無効トグル切り替え
      */
-    function runAutomationFromSheet() {
-      if (currentActiveAutomation) {
-        closeSheet('automation-flow-sheet');
-        submitAssistantCommand(currentActiveAutomation.commandText || currentActiveAutomation.title || currentActiveAutomation.name);
+    async function toggleAutomation(autoId, isChecked) {
+      try {
+        const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
+        const res = await fetch(`${basePath}/api/automations/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: autoId })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          showAssistantToast(`オートメーションを${isChecked ? '有効' : '無効'}にしました`, isChecked ? 'toggle_on' : 'toggle_off', false);
+        }
+      } catch (err) {
+        console.error('[Toggle Automation Error]', err);
       }
     }
 
