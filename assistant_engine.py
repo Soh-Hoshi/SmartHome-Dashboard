@@ -37,6 +37,165 @@ def get_gemini_api_key():
             pass
     return None
 
+def load_current_state():
+    """state.json から現在の機器状態を取得"""
+    default_state = {
+        "acMode": "cool",
+        "acTemp": 26,
+        "acFan": "auto",
+        "heaterMode": "off",
+        "heaterTemp": 22,
+        "heaterEco": False,
+        "heaterPower": 2,
+        "lightOn": True,
+        "lightFull": False,
+        "lightNight": False,
+        "cleanerStatus": "standby",
+        "cleanerPlay": False
+    }
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                default_state.update(data)
+        except Exception:
+            pass
+    return default_state
+
+def normalize_japanese_numbers(text: str) -> str:
+    """漢数字を半角数字に変換（例: 二度 -> 2度, 一度 -> 1度, 三度 -> 3度）"""
+    kanji_map = {
+        '一': '1', '二': '2', '三': '3', '四': '4', '五': '5',
+        '六': '6', '七': '7', '八': '8', '九': '9', '十': '10'
+    }
+    for k, v in kanji_map.items():
+        text = text.replace(f"{k}度", f"{v}度")
+        text = text.replace(f"{k}℃", f"{v}℃")
+        text = text.replace(f"{k}つ", f"{v}つ")
+        text = text.replace(f"{k}段階", f"{v}段階")
+        text = text.replace(f"{k}ステップ", f"{v}ステップ")
+    return text
+
+def parse_relative_temp_change(text: str):
+    """
+    温度の相対変更意図（上げて/下げて）と変更度数を解析する。
+    戻り値: (delta: int | None, target_device_hint: str | None)
+    """
+    text_norm = normalize_japanese_numbers(text)
+
+    # デバイスの明示ヒント
+    hint = None
+    if any(k in text_norm for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ac', 'aircon']):
+        hint = 'ac'
+    elif any(k in text_norm for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater']):
+        hint = 'heater'
+
+    # 下げる系（マイナス）
+    is_down = any(k in text_norm for k in [
+        '下げ', 'さげ', '低く', 'ひくく', 'マイナス', 'まいなす',
+        '涼しく', 'すずしく', '冷やして', 'ひやして', 'down', '弱く', 'よわく', 'ぬるく'
+    ])
+    # 上げる系（プラス）
+    is_up = any(k in text_norm for k in [
+        '上げ', 'あげ', '高く', 'たかく', 'プラス', 'ぷらす',
+        '暖かく', 'あたたかく', 'あつく', '暑く', '強く', 'つよく', 'up', 'ぬくく'
+    ])
+
+    if not is_down and not is_up:
+        # 「暑い」「寒い」単体のケース（1度調整）
+        if any(k in text_norm for k in ['暑い', 'あつい', '蒸し暑い']):
+            return -1, hint
+        if any(k in text_norm for k in ['寒い', 'さむい', '冷える', 'ひえる']):
+            return 1, hint
+        return None, None
+
+    # 数値の抽出
+    num_match = re.search(r'(\d+)\s*(度|℃|段階|ステップ)?', text_norm)
+    if num_match:
+        val = int(num_match.group(1))
+        # 2桁以上（10以上）は絶対温度指定の可能性があるため相対変更からは除外
+        if val >= 10:
+            return None, None
+        val = max(1, min(5, val))
+    else:
+        # 数値省略（例: 「温度下げて」「少し下げて」）
+        val = 1
+
+    delta = -val if is_down else val
+    return delta, hint
+
+def execute_relative_temperature_change(delta: int, device_hint: str = None, send_api_fn = None):
+    """
+    現在稼働中の空調機器（エアコン/ヒーター）の現在温度を確認し、相対温度変更を実行する
+    """
+    st = load_current_state()
+    ac_mode = st.get('acMode', 'off')
+    ac_on = ac_mode in ('cool', 'dry', 'heat')
+    heater_mode = st.get('heaterMode', 'off')
+    heater_on = heater_mode == 'heat'
+
+    # 制御対象機器の決定
+    target_device = device_hint
+    if not target_device:
+        if ac_on and not heater_on:
+            target_device = 'ac'
+        elif heater_on and not ac_on:
+            target_device = 'heater'
+        elif ac_on and heater_on:
+            # 両方稼働時は冷やすならエアコン、暖めるならヒーター
+            target_device = 'ac' if delta < 0 else 'heater'
+        else:
+            # 両方停止時は体感温度で判断
+            wdata = weather_service.get_weather_data()
+            feels_like = wdata.get('feels_like', wdata.get('temp', 24.0))
+            target_device = 'heater' if feels_like <= 19.0 else 'ac'
+
+    if target_device == 'ac':
+        current_temp = int(st.get('acTemp', 26))
+        target_temp = max(22, min(28, current_temp + delta))
+        mode = ac_mode if ac_mode in ('cool', 'dry') else 'cool'
+        fan = st.get('acFan', 'auto')
+
+        if send_api_fn:
+            send_api_fn('/api/ac', {'mode': mode, 'temp': target_temp, 'fan_mode': fan})
+
+        msg = format_standard_message('ac', 'relative', {
+            'mode': mode,
+            'temp': target_temp,
+            'diff': delta,
+            'current': current_temp
+        })
+        return {
+            "success": True,
+            "message": msg,
+            "action": f"ac_{mode}_{target_temp}"
+        }
+
+    elif target_device == 'heater':
+        current_temp = int(st.get('heaterTemp', 22))
+        count = abs(delta)
+        action = 'plus' if delta > 0 else 'minus'
+        if action == 'plus':
+            target_temp = min(28, current_temp + count)
+        else:
+            target_temp = max(22, current_temp - count)
+
+        if send_api_fn:
+            send_api_fn('/api/heater', {'action': action, 'count': count, 'temp': target_temp})
+
+        msg = format_standard_message('heater', action, {
+            'count': count,
+            'temp': target_temp,
+            'current': current_temp
+        })
+        return {
+            "success": True,
+            "message": msg,
+            "action": f"heater_{action}_{count}"
+        }
+
+    return None
+
 def format_standard_message(device, action, params=None):
     """すべての返答メッセージを画一化・統一するフォーマッター (絵文字なし)"""
     params = params or {}
@@ -53,6 +212,13 @@ def format_standard_message(device, action, params=None):
         temp = params.get('temp', 26)
         if mode == 'off': return "エアコンをオフにしました。"
         mode_label = '除湿' if mode == 'dry' else '冷房'
+        if 'diff' in params:
+            diff = params['diff']
+            direction = '上げ' if diff > 0 else '下げ'
+            current = params.get('current')
+            if current is not None:
+                return f"エアコンの温度を{abs(diff)}度{direction}て、{mode_label}{temp}℃に設定しました。（{current}℃ ➔ {temp}℃）"
+            return f"エアコンの温度を{abs(diff)}度{direction}て、{mode_label}{temp}℃に設定しました。"
         return f"エアコンを{mode_label}{temp}℃に設定しました。"
     
     elif device == 'heater':
@@ -61,10 +227,14 @@ def format_standard_message(device, action, params=None):
         if action == 'eco': return "ヒーターのエコモードを設定しました。"
         if action == 'plus':
             count = params.get('count', 1)
-            return f"ヒーターの温度を{count}度上げました。" if count > 1 else "ヒーターの温度を上げました。"
+            target = params.get('temp')
+            target_str = f"（設定温度: {target}℃）" if target else ""
+            return f"ヒーターの温度を{count}度上げました。{target_str}" if count > 1 else f"ヒーターの温度を上げました。{target_str}"
         if action == 'minus':
             count = params.get('count', 1)
-            return f"ヒーターの温度を{count}度下げました。" if count > 1 else "ヒーターの温度を下げました。"
+            target = params.get('temp')
+            target_str = f"（設定温度: {target}℃）" if target else ""
+            return f"ヒーターの温度を{count}度下げました。{target_str}" if count > 1 else f"ヒーターの温度を下げました。{target_str}"
         return "ヒーターを設定しました。"
     
     elif device == 'cleaner':
@@ -121,16 +291,22 @@ def query_gemini_api(prompt_text):
     if not api_key:
         return None
 
-    # 最新のセンサー・環境コンテキストを構築
+    # 最新のセンサー・環境コンテキストおよび機器状態を構築
     wdata = weather_service.get_weather_data()
     pdata = presence_service.get_presence_status()
     tdata = tile_service.get_tile_status()
+    cstate = load_current_state()
+
+    ac_st_str = f"冷房 {cstate.get('acTemp', 26)}℃" if cstate.get('acMode') == 'cool' else ('除湿' if cstate.get('acMode') == 'dry' else '停止中')
+    heater_st_str = f"暖房 {cstate.get('heaterTemp', 22)}℃" if cstate.get('heaterMode') == 'heat' else '停止中'
 
     system_instruction = f"""あなたはスマートホームAI「Nova」の意図解釈エンジンです。
-現在のリアルタイム環境コンテキスト:
+現在のリアルタイム環境・機器コンテキスト:
 - 木月（川崎）の天気: {wdata.get('weather', '--')}、外気温: {wdata.get('temp', '--')}℃、体感温度: {wdata.get('feels_like', '--')}℃、日の入り: {wdata.get('sunset', '--')}
 - 在宅状態: {'在宅' if pdata.get('is_home') else '外出'}
 - 鍵（Tile）: {'室内にあり' if tdata.get('in_home') else '室内になし'}
+- エアコン稼働状態: {ac_st_str} (現在設定: {cstate.get('acTemp', 26)}℃)
+- ヒーター稼働状態: {heater_st_str} (現在設定: {cstate.get('heaterTemp', 22)}℃)
 
 登録されている正式なスマートシーン（全4種・画面表示名）:
 1. 「おはよう」（morning）: リビング点灯 + 体感温度に応じた快適空調
@@ -149,11 +325,13 @@ def query_gemini_api(prompt_text):
 - heater: {{"device": "heater", "action": "on"|"off"|"eco"|"plus"|"minus", "count": 1..5}}
 - cleaner: {{"device": "cleaner", "action": "start"|"pause"|"home"|"find"}}
 - scene: {{"device": "scene", "action": "morning"|"goodnight"|"leaving"|"welcome"|"all_off"}}
+- relative_temp: 相対的な温度変更（「2度下げて」「少し暖かく」等）: {{"device": "relative_temp", "delta": -5..5, "target": "ac"|"heater"|null}}
 - question: 質問や確認、挨拶等でメッセージを回答する場合: {{"device": "question", "message": "簡潔な返答テキスト"}}
 - none: 該当なしの場合: {{"device": "none"}}
 
 重要ルール:
-- シーンやオートメーションの名称を回答する際は、必ず上記の正式な画面表示名（「おはよう」「おやすみ」「いってきます」「ただいま」「朝」）を正確に使用してください。「お出かけ」「おかえり」「モーニング」などの別名・意訳は一切使わないでください。
+- 「温度2度下げて」「少し暖かくして」などの相対温度変更指示では、現在稼働中の機器の現在設定温度を基準に delta を設定してください。
+- シーンやオートメーションの名称を回答する際は、必ず上記の正式な画面表示名（「おはよう」「おやすみ」「いってきます」「ただいま」「朝」）を正確に使用してください。
 - 鍵の所在に関する回答は「室内にあります」または「室内にはありません」のみとする。
 - 余計な説明やMarkdownコードブロックは一切含めず、純粋なJSONオブジェクト1つだけを出力してください。"""
 
@@ -300,6 +478,11 @@ def _dispatch_parsed_intent(parsed_data, send_api_fn=None):
         msg = parsed_data.get('message', 'お答えします。')
         return {"success": True, "message": msg, "action": "answer"}
 
+    if device == 'relative_temp':
+        delta = int(parsed_data.get('delta', 1))
+        target = parsed_data.get('target')
+        return execute_relative_temperature_change(delta, target, send_api_fn)
+
     if device == 'scene':
         act = parsed_data.get('action', 'all_off')
         if act in ('morning', '朝'):
@@ -320,6 +503,8 @@ def _dispatch_parsed_intent(parsed_data, send_api_fn=None):
             return {"success": True, "message": format_standard_message('light', act), "action": f"light_{act}"}
 
     elif device == 'ac':
+        if 'delta' in parsed_data:
+            return execute_relative_temperature_change(int(parsed_data['delta']), 'ac', send_api_fn)
         mode = parsed_data.get('mode', 'cool')
         temp = int(parsed_data.get('temp', 26))
         temp = max(22, min(28, temp))
@@ -328,6 +513,8 @@ def _dispatch_parsed_intent(parsed_data, send_api_fn=None):
         return {"success": True, "message": format_standard_message('ac', 'on' if mode != 'off' else 'off', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
 
     elif device == 'heater':
+        if 'delta' in parsed_data:
+            return execute_relative_temperature_change(int(parsed_data['delta']), 'heater', send_api_fn)
         act = parsed_data.get('action', 'on')
         count = int(parsed_data.get('count', 1))
         count = max(1, min(5, count))
@@ -520,7 +707,15 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/light', {'action': 'toggle'})
             return {"success": True, "message": format_standard_message('light', 'toggle'), "action": "light_toggle"}
 
-    # 8. ヒーター / 暖房 (Heater: 温度直指定不可、相対上下またはオンオフ/エコのみ)
+    # 8. 空調（エアコン/ヒーター）の相対温度変更（「温度二度下げて」「2度上げて」「少し暖かくして」「ちょっと涼しくして」等）
+    # ※現在稼働中の機器の現在設定温度を確認した上で、正確に差分を反映
+    delta, hint = parse_relative_temp_change(text)
+    if delta is not None:
+        rel_res = execute_relative_temperature_change(delta, hint, send_api_fn)
+        if rel_res:
+            return rel_res
+
+    # 9. ヒーター / 暖房 (Heater: オンオフ/エコ/モード)
     if any(k in text for k in ['ヒーター', 'ひーたー', '暖房', 'だんぼう', 'ストーブ', 'すとーぶ', 'heater']):
         # オフ
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す']):
@@ -530,20 +725,6 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         elif any(k in text for k in ['エコ', 'えこ', 'eco']):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'eco'})
             return {"success": True, "message": format_standard_message('heater', 'eco'), "action": "heater_eco"}
-        # 上げて / プラス (例: 3度上げて、温度上げて、もっと暖かく)
-        elif any(k in text for k in ['上げて', 'あげて', 'プラス', 'ぷらす', 'あつく', '暖かく', 'あたたかく', 'ぬくく', 'up', '強く', 'つよく']):
-            num_match = re.search(r'(\d+)\s*(度|℃|段階|ステップ)?', text)
-            count = int(num_match.group(1)) if num_match else 1
-            count = max(1, min(5, count))
-            if send_api_fn: send_api_fn('/api/heater', {'action': 'plus', 'count': count})
-            return {"success": True, "message": format_standard_message('heater', 'plus', {'count': count}), "action": f"heater_plus_{count}"}
-        # 下げて / マイナス (例: 2度下げて、温度下げて、ぬるく)
-        elif any(k in text for k in ['下げて', 'さげて', 'マイナス', 'まいなす', 'ぬるく', 'ひくく', '低く', 'down', '弱く', 'よわく']):
-            num_match = re.search(r'(\d+)\s*(度|℃|段階|ステップ)?', text)
-            count = int(num_match.group(1)) if num_match else 1
-            count = max(1, min(5, count))
-            if send_api_fn: send_api_fn('/api/heater', {'action': 'minus', 'count': count})
-            return {"success": True, "message": format_standard_message('heater', 'minus', {'count': count}), "action": f"heater_minus_{count}"}
         # 温度直指定に対する注意ガード
         elif re.search(r'(\d{2})\s*(度|℃)', text):
             return {
@@ -559,7 +740,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             if send_api_fn: send_api_fn('/api/heater', {'action': 'on'})
             return {"success": True, "message": format_standard_message('heater', 'on'), "action": "heater_on"}
 
-    # 9. エアコン / クーラー / 冷房 / 除湿 (AC: 温度直指定可)
+    # 10. エアコン / クーラー / 冷房 / 除湿 (AC: オンオフ/絶対温度指定)
     if any(k in text for k in ['エアコン', 'えあこん', 'クーラー', 'くーらー', '冷房', 'れいぼう', '除湿', 'じょしつ', 'ドライ', 'どらい', 'ac', 'aircon']):
         if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '止めて', 'とめて', '切って', 'きって', 'off', 'stop', '消す', 'けす']):
             if send_api_fn: send_api_fn('/api/ac', {'mode': 'off'})
@@ -572,7 +753,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         if send_api_fn: send_api_fn('/api/ac', {'mode': mode, 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': mode, 'temp': temp}), "action": f"ac_{mode}_{temp}"}
 
-    # 温度のみの指定（「24度」「24度にして」など ──▶ エアコン冷房）
+    # 温度のみの絶対指定（「24度」「24度にして」など ──▶ エアコン冷房）
     if re.search(r'^\s*(\d{2})\s*(度|℃|c)?(にして|に設定|にしてよ|設定|)?\s*$', text):
         temp = int(re.search(r'(\d{2})', text).group(1))
         temp = max(22, min(28, temp))
