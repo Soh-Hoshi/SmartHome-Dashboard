@@ -487,21 +487,17 @@
           <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- オートメーション1: 朝 -->
-            <div onclick="runAutomationDirectly('weekday_morning_light', event)"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <!-- オートメーション1: 平日 6:30 (再生ボタン押下時のみ実行) -->
+            <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 flex items-center justify-center shrink-0">
                   <span class="material-symbols-rounded text-2xl">alarm</span>
                 </div>
-                <div class="min-w-0">
-                  <div class="text-[15px] font-semibold text-white leading-tight truncate">朝</div>
-                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">平日 06:30</div>
-                </div>
+                <div class="text-[15px] font-semibold text-white leading-tight truncate">平日 6:30</div>
               </div>
               <button onclick="runAutomationDirectly('weekday_morning_light', event)" 
                       class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="朝を実行">
+                      aria-label="平日 6:30を実行">
                 <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
               </button>
             </div>
@@ -513,21 +509,17 @@
           <h2 class="text-base font-bold text-white px-1">外出</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- オートメーション2: 外出時消し忘れ防止 -->
-            <div onclick="runAutomationDirectly('away_device_warning', event)"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <!-- オートメーション2: 外出時 (再生ボタン押下時のみ実行) -->
+            <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
-                  <span class="material-symbols-rounded text-2xl">notifications_active</span>
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 flex items-center justify-center shrink-0">
+                  <span class="material-symbols-rounded text-2xl">person_off</span>
                 </div>
-                <div class="min-w-0">
-                  <div class="text-[15px] font-semibold text-white leading-tight truncate">外出時消し忘れ防止</div>
-                  <div class="text-xs text-neutral-400 font-normal mt-0.5 truncate">外出時 ➔ 消灯確認通知</div>
-                </div>
+                <div class="text-[15px] font-semibold text-white leading-tight truncate">外出時</div>
               </div>
               <button onclick="runAutomationDirectly('away_device_warning', event)" 
                       class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
-                      aria-label="外出時消し忘れ防止をテスト実行">
+                      aria-label="外出時をテスト実行">
                 <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
               </button>
             </div>
@@ -546,11 +538,10 @@
           <h2 class="text-base font-bold text-white px-1">デイリー</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- シーン1: おはよう -->
-            <div onclick="runSceneDirectly('おはよう', event)"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <!-- シーン1: おはよう (再生ボタン押下時のみ実行) -->
+            <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 flex items-center justify-center shrink-0">
                   <span class="material-symbols-rounded text-2xl">wb_sunny</span>
                 </div>
                 <div class="text-[15px] font-semibold text-white leading-tight truncate">おはよう</div>
@@ -563,10 +554,9 @@
             </div>
 
             <!-- シーン2: おやすみ -->
-            <div onclick="runSceneDirectly('おやすみ', event)"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 flex items-center justify-center shrink-0">
                   <span class="material-symbols-rounded text-2xl">bedtime</span>
                 </div>
                 <div class="text-[15px] font-semibold text-white leading-tight truncate">おやすみ</div>
@@ -579,10 +569,9 @@
             </div>
 
             <!-- シーン3: いってきます -->
-            <div onclick="runSceneDirectly('いってきます', event)"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 flex items-center justify-center shrink-0">
                   <span class="material-symbols-rounded text-2xl">logout</span>
                 </div>
                 <div class="text-[15px] font-semibold text-white leading-tight truncate">いってきます</div>
@@ -595,10 +584,9 @@
             </div>
 
             <!-- シーン4: ただいま -->
-            <div onclick="runSceneDirectly('ただいま', event)"
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center justify-between cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
               <div class="flex items-center space-x-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] group-hover:scale-105 flex items-center justify-center transition-all duration-300 shrink-0">
+                <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] flex items-center justify-center shrink-0">
                   <span class="material-symbols-rounded text-2xl">home</span>
                 </div>
                 <div class="text-[15px] font-semibold text-white leading-tight truncate">ただいま</div>

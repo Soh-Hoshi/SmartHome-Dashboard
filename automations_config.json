@@ -1,18 +1,18 @@
 [
   {
     "id": "weekday_morning_light",
-    "name": "朝",
+    "name": "平日 6:30",
     "category": "デイリー",
     "enabled": true,
-    "summary": "平日 06:30 ➔ リビング点灯",
+    "summary": "リビング点灯",
     "command": "smarthome light on"
   },
   {
     "id": "away_device_warning",
-    "name": "外出時消し忘れ防止",
+    "name": "外出時",
     "category": "外出",
     "enabled": true,
-    "summary": "外出検知 ➔ 消灯確認通知",
+    "summary": "消灯確認通知",
     "command": "notify away device warning"
   }
 ]
