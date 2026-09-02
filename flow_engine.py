@@ -7,7 +7,6 @@ and automatically generates deterministic, natural response messages from execut
 
 import os
 import json
-import time
 import threading
 import weather_service
 
@@ -45,7 +44,6 @@ def evaluate_condition(step, context):
     """
     eval_rule = step.get("eval_rule")
     if not eval_rule:
-        # eval_rule がない場合は無条件実行
         return True
 
     feels_like = context.get("feels_like", 24.0)
@@ -59,7 +57,6 @@ def evaluate_condition(step, context):
     }
 
     try:
-        # 安全な評価環境で条件式を実行
         return bool(eval(eval_rule, {"__builtins__": None}, eval_env))
     except Exception as e:
         print(f"[FlowEngine Eval Error] rule='{eval_rule}': {e}")
@@ -93,7 +90,6 @@ def execute_flow(flow_steps, send_api_fn=None):
 
         # 3. IF分岐ステップ (条件判定)
         if step_type == "if" or target == "分岐":
-            # 機器が1つでもオンか判定
             if os.path.exists(STATE_FILE):
                 try:
                     with open(STATE_FILE, "r", encoding="utf-8") as f:
@@ -144,7 +140,6 @@ def generate_scene_message(scene_id, scene_name, flow_result):
     executed = flow_result.get("executed_steps", [])
     feels_like = context.get("feels_like")
 
-    # 実行された各デバイスのアクションを抽出
     light_act = next((s["action"] for s in executed if s.get("target") == "リビング"), None)
     ac_act = next((s["action"] for s in executed if s.get("target") == "エアコン"), None)
     heater_act = next((s["action"] for s in executed if s.get("target") == "ヒーター"), None)

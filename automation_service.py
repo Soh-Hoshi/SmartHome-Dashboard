@@ -176,16 +176,14 @@ def trigger_away_check():
             print(f"[Push Trigger Error] {e}")
 
 def execute_automation(auto_id):
+    import flow_engine
+    from serve import dispatch_internal_api
     autos = load_automations()
     for a in autos:
         if a["id"] == auto_id:
-            if auto_id == "away_device_warning":
-                trigger_away_check()
-                return True
-            cmd = a.get("command")
-            if cmd:
-                print(f"[Automation Executing] {a['name']} -> {cmd}")
-                os.system(cmd)
+            flow_steps = a.get("flow", [])
+            print(f"[Automation Executing Flow] {a['name']} ({len(flow_steps)} steps)")
+            flow_engine.execute_flow(flow_steps, send_api_fn=dispatch_internal_api)
             return True
     return False
 

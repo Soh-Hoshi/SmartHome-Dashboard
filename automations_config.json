@@ -19,9 +19,8 @@
         "target": "リビング",
         "action": "オン",
         "condition": null,
-        "icon": "lightbulb",
-        "iconColor": "text-amber-400",
-        "bgColor": "bg-amber-500/10"
+        "api": "/api/light",
+        "payload": { "action": "on" }
       }
     ],
     "command": "smarthome light on"
@@ -45,28 +44,19 @@
         "type": "device",
         "target": "リビング",
         "action": "状態取得",
-        "condition": null,
-        "icon": "lightbulb",
-        "iconColor": "text-amber-400",
-        "bgColor": "bg-amber-500/10"
+        "condition": null
       },
       {
         "type": "device",
         "target": "エアコン",
         "action": "状態取得",
-        "condition": null,
-        "icon": "ac_unit",
-        "iconColor": "text-sky-400",
-        "bgColor": "bg-sky-500/10"
+        "condition": null
       },
       {
         "type": "device",
         "target": "ヒーター",
         "action": "状態取得",
-        "condition": null,
-        "icon": "mode_heat",
-        "iconColor": "text-orange-400",
-        "bgColor": "bg-orange-500/10"
+        "condition": null
       },
       {
         "type": "if",
@@ -81,10 +71,7 @@
         "type": "device",
         "target": "通知",
         "action": "オン",
-        "condition": "不在確認",
-        "icon": "notifications_active",
-        "iconColor": "text-sky-400",
-        "bgColor": "bg-sky-500/10"
+        "condition": "不在確認"
       }
     ],
     "command": "notify away device warning"
