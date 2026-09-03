@@ -1,5 +1,6 @@
 package com.smarthome.nova
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -21,7 +22,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 
+@SuppressLint("MissingPermission", "NewApi", "InlinedApi")
 class NotificationService : Service() {
+
 
     companion object {
         private const val TAG = "NovaNotificationService"

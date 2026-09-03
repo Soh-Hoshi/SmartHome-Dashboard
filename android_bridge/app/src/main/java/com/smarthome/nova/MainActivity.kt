@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
+@SuppressLint("NewApi")
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
@@ -23,6 +24,7 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
 
         window.statusBarColor = Color.parseColor("#0d0f12")

@@ -30,7 +30,12 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android_bridge
-          ./gradlew assembleDebug --no-daemon --stacktrace --info
+          ./gradlew assembleDebug --no-daemon --stacktrace || {
+            echo "::error::Gradle build failed. Printing logs and failure details:"
+            find . -name "*.log" -o -name "*error*.txt" | xargs cat 2>/dev/null || true
+            exit 1
+          }
+
 
       - name: Prepare APK Output
         run: |
