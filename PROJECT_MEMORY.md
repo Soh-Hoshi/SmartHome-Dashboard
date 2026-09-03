@@ -56,6 +56,14 @@
    - 照明: リモコンAPI（全灯、常夜灯、明るさ上下）
    - クリーナー: Eufy RoboVac G30（掃除開始、一時停止、帰還、探す）
 
+6. **Nova Assist (Android ネイティブアプリ) & 通知システム:**
+   - パス: `android_bridge/` (Kotlin 1.9, Java 17, minSdk 26, targetSdk 34)
+   - 機能: Android デフォルトデジタルアシスタント ＋ サーバープッシュ通知常駐受信
+   - 常駐方式: `NotificationService` (Foreground Service, `dataSync` 属性, 端末起動時 `BootReceiver` 自動常駐)
+   - 通信方式: 外部ライブラリ依存ゼロ (`HttpURLConnection` による `/api/notifications/stream` SSE ＋ `/api/notifications/poll` 自動フォールバック)
+   - CLI操作: `smarthome notification [タイトル] <メッセージ>` または `smarthome notify <メッセージ>`
+   - 自動ビルド: GitHub Actions (`.github/workflows/build_apk.yml`) ➔ Release `android-latest` に `NovaAssist.apk` を自動発行
+
 ---
 
 ## 3. 開発運用ルール（安全策）
@@ -64,3 +72,4 @@
 - **構文テスト:** 変更後は `HTMLParser` および JS ブラケット整合性テストを実施。
 - **Git同期:** テスト通過後、必ず Git にコミット＆プッシュ（`Soh-Hoshi/SmartHome-Dashboard`）。
 - **常駐プロセス:** `python3 serve.py`（ポート 8080）。
+
