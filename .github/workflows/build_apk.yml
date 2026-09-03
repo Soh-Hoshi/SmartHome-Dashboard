@@ -30,11 +30,23 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android_bridge
-          ./gradlew assembleDebug --no-daemon --stacktrace || {
-            echo "::error::Gradle build failed. Printing logs and failure details:"
-            find . -name "*.log" -o -name "*error*.txt" | xargs cat 2>/dev/null || true
+          ./gradlew assembleDebug --no-daemon --stacktrace > ../gradle_build.log 2>&1 || {
+            echo "::error::Gradle build failed. Showing last 60 lines of build log:"
+            tail -n 60 ../gradle_build.log
             exit 1
           }
+
+      - name: Upload Debug Log on Failure
+        if: failure()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: debug-log
+          name: "Build Failure Log"
+          body: "Gradle build log attached."
+          files: gradle_build.log
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
       - name: Prepare APK Output
