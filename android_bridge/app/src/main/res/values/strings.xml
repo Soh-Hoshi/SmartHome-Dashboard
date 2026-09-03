@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Nova Assist</string>
+    <string name="default_dashboard_url">https://server.tail52d127.ts.net/dashboard</string>
+    <string name="service_channel_name">Nova 常駐サービス</string>
+    <string name="service_channel_desc">SmartHome サーバーからの通知を受信するための常駐接続</string>
+    <string name="service_running_text">SmartHome 待機中</string>
+    <string name="alert_channel_name">SmartHome 通知</string>
+    <string name="alert_channel_desc">家電操作、消し忘れ警告、各種アラート通知</string>
+</resources>

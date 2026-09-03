@@ -50,13 +50,19 @@ jobs:
           tag_name: android-latest
           name: "Nova Assist Android Bridge"
           body: |
-            ### 🤖 Nova Assist Android Bridge (最新APK)
-            Androidの「デフォルトのデジタルアシスタントアプリ」として設定可能な超軽量ブリッジアプリです。
+            ### 🤖 Nova Assist Android Bridge (最新APK v1.1.0)
+            Androidの「デフォルトのデジタルアシスタントアプリ」＋「サーバー通知受信」対応の超軽量ブリッジアプリです。
+
+            **新機能**:
+            - 🔔 家のサーバーからのプッシュ通知受信機能（SSE ＋ ポーリング二重化、常駐 Foreground Service）
+            - 🚀 `smarthome notification <タイトル> <メッセージ>` コマンドによる即時ヘッドアップ通知
+            - 🚪 外出時の消し忘れ警告通知との自動連携
 
             **インストール手順**:
-            1. 下記の Assets から `NovaAssist.apk` をスマホでダウンロード
-            2. インストール後、Androidの **「設定 ➔ アプリ ➔ デフォルトアプリ ➔ デジタルアシスタントアプリ」** で **「Nova Assist」** を選択
-            3. 電源ボタン長押しや画面下端スワイプで即座にNovaが音声入力待機状態で起動します！
+            1. 下記の Assets から `NovaAssist.apk` をスマホでダウンロードしてインストール
+            2. 初回起動時に通知とマイクの権限を許可
+            3. Androidの **「設定 ➔ アプリ ➔ デフォルトアプリ ➔ デジタルアシスタントアプリ」** で **「Nova Assist」** を選択
+            4. 電源ボタン長押しや画面下端スワイプで即座にNovaが音声入力待機状態で起動します！
           files: build_output/NovaAssist.apk
           make_latest: true
         env:

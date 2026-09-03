@@ -9,6 +9,7 @@ import json
 import time
 import struct
 import base64
+import queue
 import threading
 import urllib.request
 import urllib.error
@@ -23,6 +24,29 @@ from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 VAPID_FILE = "/home/soh/dashboard/vapid_keys.json"
 SUBSCRIPTIONS_FILE = "/home/soh/dashboard/push_subscriptions.json"
 _lock = threading.Lock()
+
+# SSE クライアント（NovaAssist等）および通知キュー
+_sse_clients = []
+_sse_lock = threading.Lock()
+_notif_history = []
+_history_lock = threading.Lock()
+MAX_HISTORY = 50
+
+def register_sse_client():
+    q = queue.Queue()
+    with _sse_lock:
+        _sse_clients.append(q)
+    return q
+
+def unregister_sse_client(q):
+    with _sse_lock:
+        if q in _sse_clients:
+            _sse_clients.remove(q)
+
+def get_notifications_since(since_timestamp=0.0):
+    with _history_lock:
+        return [n for n in _notif_history if n.get("timestamp", 0) > since_timestamp]
+
 
 def _b64_url_encode(data):
     if isinstance(data, str):
@@ -257,6 +281,43 @@ def broadcast_notification(title, body, actions=None, tag=None, data=None):
     threading.Thread(target=_worker, daemon=True).start()
     return len(subs)
 
+def push_notification(title: str, body: str, actions=None, tag=None, data=None, priority="high"):
+    """
+    NovaAssist アプリ (SSE/Poll) および WebPush (ブラウザ) の両方に一括送信
+    """
+    notif_id = f"notif_{int(time.time() * 1000)}_{os.urandom(3).hex()}"
+    notif_obj = {
+        "id": notif_id,
+        "title": title,
+        "body": body,
+        "message": body,
+        "priority": priority,
+        "tag": tag or "smarthome-alert",
+        "timestamp": time.time(),
+        "actions": actions or [],
+        "data": data or {"url": "/dashboard"}
+    }
+
+    # 1. 履歴に追加 (ポーリング用)
+    with _history_lock:
+        _notif_history.append(notif_obj)
+        if len(_notif_history) > MAX_HISTORY:
+            _notif_history.pop(0)
+
+    # 2. SSE クライアント（NovaAssist等）へ即時配信
+    with _sse_lock:
+        for q in _sse_clients:
+            try:
+                q.put_nowait(notif_obj)
+            except Exception:
+                pass
+
+    # 3. WebPush サブスクライバーへもバックグラウンド配信
+    broadcast_notification(title, body, actions=actions, tag=tag, data=data)
+
+    print(f"[Push Service] Notification dispatched: '{title}' - '{body}' (SSE clients: {len(_sse_clients)})")
+    return notif_obj
+
 def send_away_device_warning(active_devices_str="家電"):
     """
     外出時消し忘れ防止通知（アクションボタン付き）
@@ -273,10 +334,11 @@ def send_away_device_warning(active_devices_str="家電"):
             "title": "そのまま"
         }
     ]
-    return broadcast_notification(
+    return push_notification(
         title=title,
         body=body,
         actions=actions,
         tag="away-device-warning",
         data={"url": "/dashboard", "scene": "leaving"}
     )
+

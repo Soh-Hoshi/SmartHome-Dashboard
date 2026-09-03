@@ -9,9 +9,12 @@ Usage:
   smarthome cleaner [start|pause|home|stop|speed <mode>|find]
   smarthome vacuum ... (alias for cleaner)
   smarthome eufy ...   (alias for cleaner)
+  smarthome notification [title] <message>
+  smarthome notify <message>
   smarthome status
   smarthome assistant "<natural language prompt>"
 """
+
 
 import sys
 import os
@@ -89,6 +92,12 @@ def direct_fallback(endpoint, data, original_error):
                 client.return_to_dock()
                 state['cleanerStatus'] = 'recharge'
             res = {"status": "success", "message": f"Cleaner: {action}", "state": state}
+        elif endpoint in ('/api/notify', '/api/notification'):
+            import push_service
+            title = data.get('title', 'SmartHome')
+            message = data.get('message') or data.get('body', '')
+            notif = push_service.push_notification(title, message)
+            return {"status": "success", "notification": notif}
         else:
             res = {"status": "error", "message": str(original_error)}
 
@@ -96,6 +105,7 @@ def direct_fallback(endpoint, data, original_error):
         return res
     except Exception as fallback_err:
         return {"status": "error", "message": f"API and fallback both failed: {original_error} / {fallback_err}"}
+
 
 def cmd_light(args):
     action = args[0] if args else 'toggle'
@@ -178,6 +188,25 @@ def cmd_cleaner(args):
     print(f"クリーナー: {res.get('message', res.get('status'))}")
     return True
 
+def cmd_notification(args):
+    if not args:
+        print("Usage: smarthome notification [title] <message>")
+        return False
+    if len(args) == 1:
+        title = "SmartHome"
+        message = args[0]
+    else:
+        title = args[0]
+        message = " ".join(args[1:])
+
+    res = send_api_request('/api/notify', {'title': title, 'message': message})
+    if res.get('status') == 'success':
+        print(f"通知送信: [{title}] {message}")
+        return True
+    else:
+        print(f"通知送信失敗: {res.get('message', res.get('error', 'unknown error'))}")
+        return False
+
 def cmd_status():
     if os.path.exists(STATE_FILE):
         try:
@@ -209,6 +238,8 @@ def main():
         cmd_heater(args)
     elif subcmd in ('cleaner', 'vacuum', 'eufy', 'c', 'v', '掃除機', 'ロボット掃除機'):
         cmd_cleaner(args)
+    elif subcmd in ('notification', 'notify', 'n', '通知', 'notif'):
+        cmd_notification(args)
     elif subcmd in ('status', 'stat', 's', '状態'):
         cmd_status()
     elif subcmd in ('assistant', 'ai', 'ask', 'nova', 'ノヴァ', 'ノバ'):
@@ -223,3 +254,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

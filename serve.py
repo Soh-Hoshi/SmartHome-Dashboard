@@ -9,6 +9,8 @@ import sys
 import time
 import json
 import socket
+import queue
+import urllib.parse
 import threading
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -23,6 +25,8 @@ import automation_service
 import weather_service
 import assistant_engine
 import flow_engine
+import push_service
+
 
 PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -232,7 +236,16 @@ def dispatch_internal_api(endpoint: str, payload: dict):
         return execute_heater_command(payload.get('action', 'toggle'), payload.get('count', 1), payload.get('temp'), payload.get('eco'))
     elif endpoint == '/api/cleaner':
         return execute_cleaner_command(payload.get('action', 'start'), payload.get('speed'))
+    elif endpoint in ('/api/notify', '/api/notification'):
+        notif = push_service.push_notification(
+            title=payload.get('title', 'SmartHome'),
+            body=payload.get('message') or payload.get('body', ''),
+            priority=payload.get('priority', 'high'),
+            actions=payload.get('actions', [])
+        )
+        return {"status": "success", "notification": notif}
     return {"status": "error", "message": f"Unknown internal endpoint {endpoint}"}
+
 
 
 # =======================================================================
@@ -262,9 +275,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        clean_path = self.path
+        parsed = urllib.parse.urlparse(self.path)
+        clean_path = parsed.path
         if clean_path.startswith('/dashboard'):
             clean_path = clean_path[len('/dashboard'):] or '/'
+        query_params = urllib.parse.parse_qs(parsed.query)
 
         # LiveReload SSE
         if clean_path == '/__livereload__':
@@ -275,25 +290,67 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
 
-            queue = []
+            queue_item = []
             with clients_lock:
-                clients.append(queue)
+                clients.append(queue_item)
             try:
                 self.wfile.write(b"data: connected\n\n")
                 self.wfile.flush()
                 while True:
                     time.sleep(0.2)
-                    if queue:
-                        msg = queue.pop(0)
+                    if queue_item:
+                        msg = queue_item.pop(0)
                         self.wfile.write(f"data: {msg}\n\n".encode('utf-8'))
                         self.wfile.flush()
             except (BrokenPipeError, ConnectionResetError):
                 pass
             finally:
                 with clients_lock:
-                    if queue in clients:
-                        clients.remove(queue)
+                    if queue_item in clients:
+                        clients.remove(queue_item)
             return
+
+        # NovaAssist & Notification SSE Stream
+        if clean_path == '/api/notifications/stream':
+            self.send_response(HTTPStatus.OK)
+            self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+            self.send_header('Cache-Control', 'no-cache, no-transform')
+            self.send_header('Connection', 'keep-alive')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('X-Accel-Buffering', 'no')
+            self.end_headers()
+
+            q = push_service.register_sse_client()
+            try:
+                self.wfile.write(b"event: connected\ndata: {\"status\":\"connected\"}\n\n")
+                self.wfile.flush()
+                while True:
+                    try:
+                        notif = q.get(timeout=15)
+                        payload = json.dumps(notif, ensure_ascii=False)
+                        self.wfile.write(f"event: notification\ndata: {payload}\n\n".encode('utf-8'))
+                        self.wfile.flush()
+                    except queue.Empty:
+                        self.wfile.write(b": keepalive\n\n")
+                        self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, socket.error):
+                pass
+            finally:
+                push_service.unregister_sse_client(q)
+            return
+
+        # Notification Polling Fallback
+        if clean_path == '/api/notifications/poll':
+            try:
+                since = float(query_params.get('since', [0])[0])
+            except (ValueError, TypeError):
+                since = 0.0
+            notifs = push_service.get_notifications_since(since)
+            return self.send_json_response({
+                "status": "success",
+                "notifications": notifs,
+                "server_time": time.time()
+            })
 
         # GET API ルーティング
         get_routes = {
@@ -313,7 +370,6 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
         if clean_path == '/api/push/vapid-key':
             try:
-                import push_service
                 keys = push_service.get_or_create_vapid_keys()
                 return self.send_json_response({"status": "success", "public_key": keys["public_key"]})
             except Exception as e:
@@ -337,7 +393,8 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
-        clean_path = self.path
+        parsed = urllib.parse.urlparse(self.path)
+        clean_path = parsed.path
         if clean_path.startswith('/dashboard'):
             clean_path = clean_path[len('/dashboard'):] or '/'
 
@@ -348,7 +405,17 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         except Exception:
             req_data = {}
 
+        # 0. 通知発行 API (NovaAssist & Push 通知)
+        if clean_path in ('/api/notify', '/api/notification'):
+            title = req_data.get('title', 'SmartHome')
+            message = req_data.get('message') or req_data.get('body', '')
+            priority = req_data.get('priority', 'high')
+            actions = req_data.get('actions', [])
+            notif = push_service.push_notification(title, message, priority=priority, actions=actions)
+            return self.send_json_response({"status": "success", "notification": notif})
+
         # 1. 家電操作 API
+
         if clean_path == '/api/light':
             res = execute_light_command(req_data.get('action', 'toggle'))
             return self.send_json_response(res)
@@ -399,7 +466,6 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         # 4. WebPush API
         if clean_path == '/api/push/subscribe':
             try:
-                import push_service
                 sub_data = req_data.get('subscription', req_data)
                 ok = push_service.save_subscription(sub_data)
                 return self.send_json_response({"status": "success" if ok else "error"})
@@ -408,11 +474,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
         if clean_path == '/api/push/test':
             try:
-                import push_service
                 count = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
                 return self.send_json_response({"status": "success", "subscribers": count})
             except Exception as e:
                 return self.send_json_response({"status": "error", "error": str(e)})
+
 
         # 5. 状態直接更新 API
         if clean_path == '/api/state':
