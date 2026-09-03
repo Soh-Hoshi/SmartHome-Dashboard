@@ -174,17 +174,18 @@ class NotificationService : Service() {
                     Log.w(TAG, "SSE connection error/disconnected: ${e.message}")
                     try {
                         pollFallback(baseUrl)
-                    } catch (_: Exception) {}
+                    } catch (ignored: Exception) {}
                     try {
                         Thread.sleep(5000)
-                    } catch (_: InterruptedException) {
+                    } catch (ignored: InterruptedException) {
                         break
                     }
                 } finally {
-                    try { reader?.close() } catch (_: Exception) {}
-                    try { connection?.disconnect() } catch (_: Exception) {}
+                    try { reader?.close() } catch (ignored: Exception) {}
+                    try { connection?.disconnect() } catch (ignored: Exception) {}
                 }
             }
+
             Log.i(TAG, "Notification worker thread terminated")
         }.apply {
             name = "NovaNotificationWorker"
@@ -230,8 +231,9 @@ class NotificationService : Service() {
         } catch (e: Exception) {
             Log.w(TAG, "Poll fallback failed: ${e.message}")
         } finally {
-            try { conn?.disconnect() } catch (_: Exception) {}
+            try { conn?.disconnect() } catch (ignored: Exception) {}
         }
+
     }
 
     private fun handleNotificationJson(jsonStr: String) {
