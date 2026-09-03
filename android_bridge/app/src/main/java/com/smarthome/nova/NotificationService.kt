@@ -157,10 +157,10 @@ class NotificationService : Service() {
                     if (code in 200..299) {
                         Log.i(TAG, "Connected to SSE stream successfully")
                         reader = BufferedReader(InputStreamReader(connection.inputStream, "UTF-8"))
-                        var line: String?
+                        while (isRunning.get()) {
+                            val line = reader?.readLine() ?: break
+                            val l = line.trim()
 
-                        while (isRunning.get() && reader.readLine().also { line = it } != null) {
-                            val l = line?.trim() ?: continue
                             if (l.startsWith("data:")) {
                                 val dataStr = l.substring(5).trim()
                                 if (dataStr.isNotEmpty() && dataStr.startsWith("{")) {
@@ -168,6 +168,7 @@ class NotificationService : Service() {
                                 }
                             }
                         }
+
                     } else {
                         Log.w(TAG, "SSE returned non-200 status: $code")
                         pollFallback(baseUrl)
@@ -312,4 +313,7 @@ class NotificationService : Service() {
     }
 }
 }
+
+
+
 
