@@ -61,6 +61,7 @@
    - 機能: Android デフォルトデジタルアシスタント ＋ サーバープッシュ通知常駐受信
    - 常駐方式: `NotificationService` (Foreground Service, `dataSync` 属性, 端末起動時 `BootReceiver` 自動常駐)
    - 通信方式: 外部ライブラリ依存ゼロ (`HttpURLConnection` による `/api/notifications/stream` SSE ＋ `/api/notifications/poll` 自動フォールバック)
+   - 通知方針: **PWA (WebPush/ServiceWorker) 通知は廃止・完全無効化し、Nova Assist ネイティブアプリへ一本化**（二重通知やブラウザ通知の不具合を防止）。
    - CLI操作: `smarthome notification [タイトル] <メッセージ>` または `smarthome notify <メッセージ>`
    - 自動ビルド: GitHub Actions (`.github/workflows/build_apk.yml`) ➔ Release `android-latest` に `NovaAssist.apk` を自動発行
 

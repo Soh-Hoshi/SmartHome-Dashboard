@@ -105,32 +105,8 @@ def load_subscriptions():
         return []
 
 def save_subscription(subscription_data):
-    """新しいサブスクリプションを登録・重複排除"""
-    with _lock:
-        subs = []
-        if os.path.exists(SUBSCRIPTIONS_FILE):
-            try:
-                with open(SUBSCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
-                    subs = json.load(f)
-            except Exception:
-                subs = []
-
-        endpoint = subscription_data.get('endpoint')
-        if not endpoint:
-            return False
-
-        # 既存のエンドポイントを更新、なければ追加
-        filtered = [s for s in subs if s.get('endpoint') != endpoint]
-        filtered.append(subscription_data)
-
-        try:
-            with open(SUBSCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(filtered, f, indent=2, ensure_ascii=False)
-            print(f"[Push Service] Subscribed endpoint. Total subscribers: {len(filtered)}")
-            return True
-        except Exception as e:
-            print(f"[Push Sub Save Error] {e}")
-            return False
+    """PWA WebPush は廃止されたため何もしない"""
+    return False
 
 def remove_subscription(endpoint):
     """期限切れサブスクリプションを削除"""
@@ -253,37 +229,12 @@ def send_push_to_subscriber(sub, payload_dict, vapid_keys):
     return False
 
 def broadcast_notification(title, body, actions=None, tag=None, data=None):
-    """全登録デバイスへ非同期プッシュ通知を送信"""
-    vapid_keys = get_or_create_vapid_keys()
-    subs = load_subscriptions()
-    if not subs:
-        print("[Push Service] No subscribers registered.")
-        return 0
-
-    payload = {
-        "title": title,
-        "body": body,
-        "icon": "/dashboard/icon-192.png",
-        "badge": "/dashboard/icon-192.png",
-        "tag": tag or "smarthome-alert",
-        "timestamp": int(time.time() * 1000),
-        "actions": actions or [],
-        "data": data or {"url": "/dashboard"}
-    }
-
-    def _worker():
-        success_count = 0
-        for sub in subs:
-            if send_push_to_subscriber(sub, payload, vapid_keys):
-                success_count += 1
-        print(f"[Push Service] Broadcast sent. Success: {success_count}/{len(subs)}")
-
-    threading.Thread(target=_worker, daemon=True).start()
-    return len(subs)
+    """PWA WebPush は廃止（NovaAssist ネイティブアプリへの通知に一本化）"""
+    return 0
 
 def push_notification(title: str, body: str, actions=None, tag=None, data=None, priority="high"):
     """
-    NovaAssist アプリ (SSE/Poll) および WebPush (ブラウザ) の両方に一括送信
+    NovaAssist アプリ (SSE/Poll) へ通知を配信（PWA WebPush は廃止）
     """
     notif_id = f"notif_{int(time.time() * 1000)}_{os.urandom(3).hex()}"
     notif_obj = {
@@ -312,10 +263,7 @@ def push_notification(title: str, body: str, actions=None, tag=None, data=None, 
             except Exception:
                 pass
 
-    # 3. WebPush サブスクライバーへもバックグラウンド配信
-    broadcast_notification(title, body, actions=actions, tag=tag, data=data)
-
-    print(f"[Push Service] Notification dispatched: '{title}' - '{body}' (SSE clients: {len(_sse_clients)})")
+    print(f"[Push Service] Notification dispatched to NovaAssist: '{title}' - '{body}' (SSE clients: {len(_sse_clients)})")
     return notif_obj
 
 def send_away_device_warning(active_devices_str="家電"):

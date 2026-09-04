@@ -463,19 +463,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             ok = automation_service.execute_automation(auto_id)
             return self.send_json_response({"status": "success" if ok else "error"})
 
-        # 4. WebPush API
+        # 4. 通知テスト & 互換性 API (WebPushは廃止、NovaAssistへ送信)
         if clean_path == '/api/push/subscribe':
-            try:
-                sub_data = req_data.get('subscription', req_data)
-                ok = push_service.save_subscription(sub_data)
-                return self.send_json_response({"status": "success" if ok else "error"})
-            except Exception as e:
-                return self.send_json_response({"status": "error", "error": str(e)})
+            return self.send_json_response({"status": "disabled", "message": "WebPush is disabled in favor of NovaAssist native app."})
 
         if clean_path == '/api/push/test':
             try:
-                count = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
-                return self.send_json_response({"status": "success", "subscribers": count})
+                notif = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
+                return self.send_json_response({"status": "success", "message": "Notification sent to NovaAssist", "notification": notif})
             except Exception as e:
                 return self.send_json_response({"status": "error", "error": str(e)})
 

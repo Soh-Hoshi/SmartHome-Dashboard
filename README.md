@@ -42,10 +42,11 @@
   - 「鍵ある？」 ➔ **「室内にあります」** / **「室内にはありません」**（未確定な推測を言わず、検知事実のみを即答）
 - **ミリ秒応答のルールベース ＋ Gemini 2.0 Flash（無料枠）ハイブリッドインテリジェンス**。
 
-### 5. 📱 PWA ＆ WebPush 完全対応
+### 5. 📱 PWA（ホーム画面追加）＆ Nova Assist 常駐通知
 - **スマホ・タブレットへのアプリインストール**:
-  - Safari / Chrome の「ホーム画面に追加」で、URLバーのない全画面ネイティブアプリとして起動。
-  - **WebPush 通知 ＆ アクションボタン**: アプリを閉じていても、外出検知時に消し忘れ通知が届き、通知上から直接「いってきます」を実行可能。
+  - Safari / Chrome の「ホーム画面に追加」で、URLバーのない洗練された全画面UIとして快適に操作可能。
+- **Nova Assist (Android ネイティブアプリ) による高信頼通知**:
+  - PWAの不安定なWebPush通知は廃止し、Android ネイティブアシスタントアプリ（Nova Assist）の常駐サービス（SSE/Poll）へ通知を一本化。外出検知時の消し忘れアラートなどを確実に受信可能。
 
 ---
 
@@ -55,9 +56,9 @@
 | :--- | :--- |
 | `index.html` | Tailwind CSS ＋ Material Symbols による洗練されたフロントエンド UI |
 | `manifest.json` | PWA Web App Manifest（アプリアイコン・スタンドアロン起動設定） |
-| `sw.js` | PWA サービスワーカー（Network First キャッシュ・WebPush通知アクション対応） |
-| `push_service.py` | VAPID ＆ RFC 8291/8292 準拠 WebPush 配信サービス |
-| `serve.py` | LiveReload 対応 HTTP ＆ REST API サーバー（Port: 8080） |
+| `sw.js` | PWA サービスワーカー（Network First キャッシュ） |
+| `push_service.py` | Nova Assist 向け通知キューイング ＆ 配信管理サービス |
+| `serve.py` | LiveReload 対応 HTTP ＆ REST API / SSE 通知サーバー（Port: 8080） |
 | `weather_service.py` | 川崎市中原区木月の気象データ取得・キャッシュ（Open-Meteo） |
 | `presence_service.py` | スマートフォンの高速 LAN 検知（2秒間隔プローブ ＆ 外出検知連動） |
 | `tile_service.py` | Tile Mate BLE リアルタイムスキャン判定（RPA動的追跡） |

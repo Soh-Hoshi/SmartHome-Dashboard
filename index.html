@@ -3070,33 +3070,10 @@
     }
 
     /**
-     * オートメーション直接テスト実行 (即時ローカル通知 ＋ バックエンド実行)
+     * オートメーション直接テスト実行 (アシスタント経由でバックエンド実行)
      */
     async function runAutomationDirectly(autoId, event) {
       if (event) event.stopPropagation();
-      
-      if (autoId === 'away_device_warning') {
-        if ('serviceWorker' in navigator && 'Notification' in window) {
-          if (Notification.permission === 'granted') {
-            try {
-              const reg = await navigator.serviceWorker.ready;
-              reg.showNotification('お出かけですか？', {
-                body: 'リビング照明・エアコン（冷房）が稼働したままです。消灯しますか？',
-                tag: 'away-device-warning',
-                renotify: true,
-                requireInteraction: true,
-                actions: [
-                  { action: 'run_leaving', title: '🚪 いってきます（全消灯）' },
-                  { action: 'dismiss', title: 'そのまま' }
-                ],
-                data: { url: window.location.pathname, scene: 'leaving' }
-              });
-            } catch (ne) {
-              console.warn('[Local Notification Error]', ne);
-            }
-          }
-        }
-      }
 
       const cmdMap = {
         'weekday_morning_light': 'リビングの電気をつけて',
@@ -3181,7 +3158,7 @@
           }
         }
       });
-      // PWA Service Worker 登録 (スコープを /dashboard/ に明示指定) ＆ WebPush 購読
+      // PWA Service Worker 登録 (スコープを /dashboard/ に明示指定 / 通知はNovaAssistアプリに一本化)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
@@ -3198,27 +3175,16 @@
             .then(async (reg) => {
               console.log('[PWA] Service Worker registered for scope:', reg.scope);
               
-              // WebPush 通知サブスクリプションの自動初期化
-              if ('PushManager' in window && 'Notification' in window) {
+              // 以前登録された WebPush サブスクリプションがあれば自動解除
+              if ('pushManager' in reg) {
                 try {
-                  const initPush = async () => {
-                    if (Notification.permission === 'default') {
-                      const perm = await Notification.requestPermission();
-                      if (perm === 'granted') {
-                        await subscribePush(reg, basePath);
-                      }
-                    } else if (Notification.permission === 'granted') {
-                      await subscribePush(reg, basePath);
-                    }
-                  };
-
-                  if (Notification.permission === 'granted') {
-                    initPush();
-                  } else {
-                    document.addEventListener('click', initPush, { once: true });
+                  const sub = await reg.pushManager.getSubscription();
+                  if (sub) {
+                    await sub.unsubscribe();
+                    console.log('[PWA] Unsubscribed previous push subscription successfully.');
                   }
-                } catch (pe) {
-                  console.warn('[PWA Push Error]', pe);
+                } catch (e) {
+                  // 無視
                 }
               }
             })
@@ -3226,42 +3192,6 @@
               console.warn('[PWA] Service Worker registration failed:', err);
             });
         });
-      }
-
-      // WebPush 購読ヘルパー
-      async function subscribePush(registration, basePath) {
-        try {
-          const res = await fetch((basePath || '') + '/api/push/vapid-key');
-          const data = await res.json();
-          if (!data || !data.public_key) return;
-
-          const padding = '='.repeat((4 - data.public_key.length % 4) % 4);
-          const base64 = (data.public_key + padding).replace(/\-/g, '+').replace(/_/g, '/');
-          const rawData = window.atob(base64);
-          const appServerKey = new Uint8Array(rawData.length);
-          for (let i = 0; i < rawData.length; ++i) {
-            appServerKey[i] = rawData.charCodeAt(i);
-          }
-
-          let sub = await registration.pushManager.getSubscription();
-          if (!sub) {
-            sub = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: appServerKey
-            });
-          }
-
-          if (sub) {
-            await fetch((basePath || '') + '/api/push/subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(sub)
-            });
-            console.log('[PWA Push] Registered with server successfully:', sub.endpoint);
-          }
-        } catch (e) {
-          console.warn('[PWA Subscribe Error]', e);
-        }
       }
 
       // Android アシスタントブリッジ連携: URLに ?assist=1 または ?voice=1 が付いている場合は即座に音声起動
