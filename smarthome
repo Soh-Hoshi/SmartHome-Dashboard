@@ -231,8 +231,8 @@ def cmd_notification(args):
         print("プログレスバー通知デモ開始...")
         for p in [10, 35, 60, 85, 100]:
             push_service.send_progress_notification(
-                title="ロボット掃除機",
-                body=f"リビングを清掃中... ({p}%)" if p < 100 else "清掃が完了しました！",
+                title="クリーナー",
+                body=f"清掃中... ({p}%)" if p < 100 else "清掃が完了しました！",
                 current=p,
                 max_val=100,
                 notif_id=notif_id,

@@ -18,3 +18,10 @@ __pycache__/
 *.bak
 *.tmp
 .DS_Store
+
+# Gradle / Android ビルド成果物
+.gradle/
+build/
+android_bridge/.gradle/
+android_bridge/app/build/
+android_bridge/local.properties

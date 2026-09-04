@@ -217,50 +217,48 @@ def format_standard_message(device, action, params=None):
         return "ヒーターを設定しました。"
     
     elif device == 'cleaner':
-        if action in ('start', 'run', 'clean', 'play'): return "クリーナーのお掃除を開始しました。"
-        if action in ('pause', 'stop'): return "クリーナーを一時停止しました。"
-        if action in ('home', 'dock', 'return'): return "クリーナーを充電ドックへ戻します。"
+        if action in ('start', 'run', 'clean', 'play'): return "クリーナーを開始しました。"
+        if action in ('pause', 'stop'): return "クリーナーを停止しました。"
+        if action in ('home', 'dock', 'return'): return "クリーナーをドックへ戻します。"
         if action in ('find', 'find_me', 'beep'): return "クリーナーの位置探索アラームを鳴らします。"
         return "クリーナーを設定しました。"
     
     elif device == 'scene':
-        if action == 'leaving': return "いってらっしゃい。ライトと空調をすべてオフにしました。"
-        if action == 'all_off': return "ライトと空調をすべてオフにしました。"
+        if action == 'leaving': return "いってらっしゃい！\n照明と空調を停止しました。"
+        if action == 'all_off': return "照明と空調をオフにしました。"
         
         # おはよう
         if action == 'morning':
             hvac = params.get('hvac')
-            feels_like = params.get('feels_like')
             if hvac == 'ac':
-                return f"おはようございます。ライトを点灯し、体感温度が{feels_like}℃のためエアコンを冷房{params.get('temp', 26)}℃で起動しました。"
+                return "おはようございます！\n照明を点灯し、エアコンを設定しました。"
             elif hvac == 'heater':
-                return f"おはようございます。ライトを点灯し、体感温度が{feels_like}℃で肌寒いためヒーターをオンにしました。"
+                return "おはようございます！\n照明を点灯し、ヒーターをオンにしました。"
             else:
-                return f"おはようございます。ライトを点灯しました。（体感温度 {feels_like}℃）"
+                return "おはようございます！\n照明を点灯しました。"
 
         # おやすみ
         if action == 'goodnight':
             hvac = params.get('hvac')
-            feels_like = params.get('feels_like')
             if hvac == 'ac':
-                return f"おやすみなさい。ライトを消灯し、体感温度が{feels_like}℃のためエアコンを冷房{params.get('temp', 27)}℃で起動しました。"
+                return "おやすみなさい。\n照明を消灯し、エアコンを設定しました。"
             elif hvac == 'heater':
-                return f"おやすみなさい。ライトを消灯し、体感温度が{feels_like}℃で冷え込んでいるためヒーターをオンにしました。"
+                return "おやすみなさい。\n照明を消灯し、ヒーターをオンにしました。"
             else:
-                return f"おやすみなさい。ライトを消灯しました。（体感温度 {feels_like}℃）"
+                return "おやすみなさい。\n照明と空調をオフにしました。"
 
         # ただいま
         if action == 'welcome':
-            light_note = "日没後のためライトを点灯し、" if params.get('light') else ""
+            is_light = bool(params.get('light'))
             hvac = params.get('hvac')
-            feels_like = params.get('feels_like')
-            if hvac == 'ac':
-                hvac_note = f"体感温度が{feels_like}℃のためエアコンを冷房{params.get('temp', 26)}℃で起動しました。"
-            elif hvac == 'heater':
-                hvac_note = f"体感温度が{feels_like}℃で肌寒いためヒーターをオンにしました。"
+            if is_light:
+                if hvac == 'ac': return "おかえりなさい！\n照明を点灯し、エアコンを設定しました。"
+                elif hvac == 'heater': return "おかえりなさい！\n照明を点灯し、ヒーターをオンにしました。"
+                else: return "おかえりなさい！\n照明を点灯しました。"
             else:
-                hvac_note = f"体感温度が{feels_like}℃で快適なため空調はオフのままにしました。"
-            return f"おかえりなさい。{light_note}{hvac_note}"
+                if hvac == 'ac': return "おかえりなさい！\nエアコンを設定しました。"
+                elif hvac == 'heater': return "おかえりなさい！\nヒーターをオンにしました。"
+                else: return "おかえりなさい！"
     
     return "操作を完了しました。"
 
@@ -530,7 +528,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
 
     # 2. オートメーション一覧・個数問い合わせ (全3種: 平日 6:30, 平日 9:00, 外出時)
     if re.search(r'(オートメーション|自動化).*(何|いくつ|どんな|一覧|教えて|ある|種類|名|数|リスト)', text):
-        msg = "登録されているオートメーションは「平日 6:30」（リビング照明点灯）、「平日 9:00」（ロボット掃除機）、および「外出時」（消し忘れ通知）の全3種類です。"
+        msg = "登録されているオートメーションは「平日 6:30」（リビング照明点灯）、「平日 9:00」（クリーナー起動）、および「外出時」（消し忘れ通知）の全3種類です。"
         return {"success": True, "message": msg, "action": "automations_list"}
 
     # 2.5 通知テスト・消し忘れ通知送信
@@ -547,7 +545,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
 
     # 3. 機能一覧 / ヘルプ
     if any(k in text for k in ['何ができる', 'なにができる', '使い方', 'つかいかた', 'ヘルプ', 'help', 'コマンド一覧', '操作一覧']):
-        msg = "照明・エアコン・ヒーター・クリーナーの操作、気象や在宅・鍵の確認、および4つのシーン（「おはよう」「おやすみ」「いってきます」「ただいま」）を実行できます。"
+        msg = "リビング照明・エアコン・ヒーター・クリーナーの操作、気象や在宅・鍵の確認、および4つのシーン（「おはよう」「おやすみ」「いってきます」「ただいま」）を実行できます。"
         return {"success": True, "message": msg, "action": "help"}
 
     # 4. 状態確認 (Status)
@@ -564,7 +562,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             cleaner_map = {'running': '掃除中', 'charging': '充電中', 'recharge': '充電に戻り中', 'standby': '待機中', 'completed': '掃除完了'}
             cleaner_desc = cleaner_map.get(cleaner_st, cleaner_st)
 
-            msg = f"現在の状態：ライトは{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}です。"
+            msg = f"現在の状態：リビング照明は{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}です。"
             return {"success": True, "message": msg, "action": "status"}
         except Exception:
             return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}

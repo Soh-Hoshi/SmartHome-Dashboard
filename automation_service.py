@@ -206,7 +206,7 @@ def execute_automation(auto_id):
             import push_service
             push_service.push_notification(
                 title="オートメーション実行",
-                body="平日 9:00：ロボット掃除機を開始しました。",
+                body="平日 9:00\nクリーナーを開始しました。",
                 notif_id="weekday_cleaner_alert"
             )
         except Exception as e:

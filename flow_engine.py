@@ -83,26 +83,24 @@ def execute_scene(scene_id, send_api_fn=None):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'on'})
         hvac = execute_smart_hvac(send_api_fn, sleep_mode=False)
-        fl = hvac['feels_like']
         if hvac['hvac'] == 'ac':
-            msg = f"おはようございます。照明を点灯し、体感温度{fl:.1f}℃のためエアコンを冷房26℃で運転開始しました。"
+            msg = "おはようございます！\n照明を点灯し、エアコンを設定しました。"
         elif hvac['hvac'] == 'heater':
-            msg = f"おはようございます。照明を点灯し、体感温度{fl:.1f}℃のためヒーターをオンにしました。"
+            msg = "おはようございます！\n照明を点灯し、ヒーターをオンにしました。"
         else:
-            msg = f"おはようございます。照明を点灯しました。体感温度{fl:.1f}℃で快適なため空調は停止のままです。"
+            msg = "おはようございます！\n照明を点灯しました。"
         return {"success": True, "scene_id": "morning", "name": "おはよう", "message": msg}
 
     if scene_id in ("goodnight", "おやすみ"):
         if send_api_fn:
             send_api_fn('/api/light', {'action': 'off'})
         hvac = execute_smart_hvac(send_api_fn, sleep_mode=True)
-        fl = hvac['feels_like']
         if hvac['hvac'] == 'ac':
-            msg = f"おやすみなさい。照明を消灯し、体感温度{fl:.1f}℃のため就寝用にエアコンを冷房27℃に設定しました。良い夢を。"
+            msg = "おやすみなさい。\n照明を消灯し、エアコンを設定しました。"
         elif hvac['hvac'] == 'heater':
-            msg = f"おやすみなさい。照明を消灯し、体感温度{fl:.1f}℃のためヒーターをオンにしました。良い夢を。"
+            msg = "おやすみなさい。\n照明を消灯し、ヒーターをオンにしました。"
         else:
-            msg = "おやすみなさい。照明と空調をオフにしました。良い夢を。"
+            msg = "おやすみなさい。\n照明と空調をオフにしました。"
         return {"success": True, "scene_id": "goodnight", "name": "おやすみ", "message": msg}
 
     if scene_id in ("leaving", "いってきます"):
@@ -114,7 +112,7 @@ def execute_scene(scene_id, send_api_fn=None):
             "success": True,
             "scene_id": "leaving",
             "name": "いってきます",
-            "message": "いってらっしゃい！すべての照明と空調を停止しました。お気をつけて！"
+            "message": "いってらっしゃい！\n照明と空調を停止しました。"
         }
 
     if scene_id in ("welcome", "ただいま"):
@@ -124,15 +122,20 @@ def execute_scene(scene_id, send_api_fn=None):
             send_api_fn('/api/light', {'action': 'on'})
 
         hvac = execute_smart_hvac(send_api_fn, sleep_mode=False)
-        fl = hvac['feels_like']
-        light_txt = "日没後のため照明を点灯し、" if is_night else "日没前のため照明はオフのまま、"
-        if hvac['hvac'] == 'ac':
-            hvac_txt = f"体感温度{fl:.1f}℃のためエアコンを冷房26℃で運転開始しました。"
-        elif hvac['hvac'] == 'heater':
-            hvac_txt = f"体感温度{fl:.1f}℃のためヒーターをオンにしました。"
+        if is_night:
+            if hvac['hvac'] == 'ac':
+                msg = "おかえりなさい！\n照明を点灯し、エアコンを設定しました。"
+            elif hvac['hvac'] == 'heater':
+                msg = "おかえりなさい！\n照明を点灯し、ヒーターをオンにしました。"
+            else:
+                msg = "おかえりなさい！\n照明を点灯しました。"
         else:
-            hvac_txt = "快適な室温のため空調は停止のままです。"
-        msg = f"おかえりなさい！{light_txt}{hvac_txt}"
+            if hvac['hvac'] == 'ac':
+                msg = "おかえりなさい！\nエアコンを設定しました。"
+            elif hvac['hvac'] == 'heater':
+                msg = "おかえりなさい！\nヒーターをオンにしました。"
+            else:
+                msg = "おかえりなさい！"
         return {"success": True, "scene_id": "welcome", "name": "ただいま", "message": msg}
 
     return {"success": False, "message": f"シーン '{scene_id}' が見つかりません。"}
