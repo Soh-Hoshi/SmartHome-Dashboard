@@ -26,6 +26,7 @@ import weather_service
 import assistant_engine
 import flow_engine
 import push_service
+import usb_service
 
 
 PORT = 8080
@@ -236,6 +237,14 @@ def dispatch_internal_api(endpoint: str, payload: dict):
         return execute_heater_command(payload.get('action', 'toggle'), payload.get('count', 1), payload.get('temp'), payload.get('eco'))
     elif endpoint == '/api/cleaner':
         return execute_cleaner_command(payload.get('action', 'start'), payload.get('speed'))
+    elif endpoint == '/api/usb':
+        action = payload.get('action')
+        if action == 'on':
+            return {"status": "success", "power": usb_service.set_usb_power(True)}
+        elif action == 'off':
+            return {"status": "success", "power": usb_service.set_usb_power(False)}
+        else:
+            return {"status": "success", "power": usb_service.toggle_usb_power()}
     elif endpoint in ('/api/notify', '/api/notification'):
         ongoing = payload.get('ongoing', False)
         auto_cancel = payload.get('auto_cancel', not ongoing)
@@ -374,6 +383,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             '/api/tile': lambda: {"status": "success", "tile": tile_service.get_tile_status()},
             '/api/automations': lambda: {"status": "success", "automations": automation_service.load_automations()},
             '/api/scenes': lambda: {"status": "success", "scenes": flow_engine.load_scenes()},
+            '/api/usb': lambda: {"status": "success", "power": usb_service.get_usb_power()},
         }
 
         if clean_path in get_routes:
@@ -463,6 +473,20 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if clean_path == '/api/cleaner':
             res = execute_cleaner_command(req_data.get('action', 'start'), req_data.get('speed'))
             return self.send_json_response(res)
+
+        if clean_path == '/api/usb':
+            action = req_data.get('action')
+            if action == 'on':
+                power = usb_service.set_usb_power(True)
+            elif action == 'off':
+                power = usb_service.set_usb_power(False)
+            elif action == 'toggle':
+                power = usb_service.toggle_usb_power()
+            elif 'power' in req_data:
+                power = usb_service.set_usb_power(bool(req_data['power']))
+            else:
+                power = usb_service.toggle_usb_power()
+            return self.send_json_response({"status": "success", "power": power, "state": state_manager.load_state()})
 
         # 2. アシスタント自然言語 API
         if clean_path == '/api/assistant':

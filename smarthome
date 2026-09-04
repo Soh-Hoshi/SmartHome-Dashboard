@@ -28,12 +28,15 @@ CONFIG_FILE = os.path.join(DIRECTORY, 'config.json')
 
 SERVER_URL = "http://127.0.0.1:8080"
 
-def send_api_request(endpoint, data):
-    """serve.pyのAPIにPOSTリクエストを送信して状態更新と家電操作を行う"""
+def send_api_request(endpoint, data=None):
+    """serve.pyのAPIにリクエストを送信して状態更新と家電操作を行う"""
     try:
         url = f"{SERVER_URL}{endpoint}"
-        body = json.dumps(data).encode('utf-8')
-        req = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'})
+        if data is not None:
+            body = json.dumps(data).encode('utf-8')
+            req = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'})
+        else:
+            req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=5) as res:
             return json.loads(res.read().decode('utf-8'))
     except Exception as e:
@@ -92,6 +95,16 @@ def direct_fallback(endpoint, data, original_error):
                 client.return_to_dock()
                 state['cleanerStatus'] = 'recharge'
             res = {"status": "success", "message": f"Cleaner: {action}", "state": state}
+        elif endpoint == '/api/usb':
+            import usb_service
+            if not data:
+                power = usb_service.get_usb_power()
+            else:
+                action = data.get('action')
+                if action == 'on': power = usb_service.set_usb_power(True)
+                elif action == 'off': power = usb_service.set_usb_power(False)
+                else: power = usb_service.toggle_usb_power()
+            res = {"status": "success", "power": power}
         elif endpoint in ('/api/notify', '/api/notification'):
             import push_service
             title = data.get('title', 'SmartHome')
@@ -199,6 +212,25 @@ def cmd_cleaner(args):
 
     res = send_api_request('/api/cleaner', payload)
     print(f"クリーナー: {res.get('message', res.get('status'))}")
+    return True
+
+def cmd_usb(args):
+    action = args[0] if args else 'toggle'
+    if action in ('on', '1', 'オン', '点灯', 'start'):
+        action = 'on'
+    elif action in ('off', '0', 'オフ', '消灯', 'stop'):
+        action = 'off'
+    elif action in ('toggle', 't', '切替', 'トグル'):
+        action = 'toggle'
+    elif action in ('status', 'stat', 's', '状態'):
+        res = send_api_request('/api/usb')
+        power = res.get('power', False)
+        print(f"USBスイッチ: {'ON (オン)' if power else 'OFF (オフ)'}")
+        return True
+
+    res = send_api_request('/api/usb', {'action': action})
+    power = res.get('power', False)
+    print(f"USBスイッチ: {'ON (オン)' if power else 'OFF (オフ)'} にしました")
     return True
 
 def cmd_notification(args):
@@ -320,6 +352,7 @@ def cmd_status():
             print(f"エアコン:     {state.get('acMode', 'off').upper()} / {state.get('acTemp', 26)}℃ / 風量:{state.get('acFan', 'auto')}")
             print(f"ヒーター:     {state.get('heaterMode', 'off').upper()} / {state.get('heaterTemp', 24)}℃ / ECO:{state.get('heaterEco', False)}")
             print(f"クリーナー:   {state.get('cleanerStatus', 'standby').upper()}")
+            print(f"USBスイッチ:  {'ON' if state.get('usbPower') else 'OFF'}")
             return
         except Exception:
             pass
@@ -341,6 +374,8 @@ def main():
         cmd_heater(args)
     elif subcmd in ('cleaner', 'vacuum', 'eufy', 'c', 'v', '掃除機', 'ロボット掃除機'):
         cmd_cleaner(args)
+    elif subcmd in ('usb', 'u', 'usbスイッチ', 'スイッチ'):
+        cmd_usb(args)
     elif subcmd in ('notification', 'notify', 'n', '通知', 'notif'):
         cmd_notification(args)
     elif subcmd in ('status', 'stat', 's', '状態'):

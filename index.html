@@ -417,6 +417,32 @@
           </div>
         </section>
 
+        <!-- セクション: スイッチ -->
+        <section class="break-inside-avoid mb-6 space-y-3">
+          <h2 class="text-base font-bold text-white px-1">スイッチ</h2>
+          
+          <div class="flex flex-col gap-3.5">
+            <!-- USBスイッチタイル (詳細画面は一旦なし。アイコンまたはタイルクリックでオン/オフ切り替え) -->
+            <div onclick="toggleUsbPowerFromTile(event)" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+              
+              <!-- USB固定アイコン (オン: ティール、オフ: グレー) -->
+              <button onclick="toggleUsbPowerFromTile(event)"
+                      id="tile-usb-icon-wrap" 
+                      class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
+                      aria-label="USBスイッチのオン/オフ切り替え">
+                <span id="tile-usb-icon" class="material-symbols-rounded text-2xl">usb</span>
+              </button>
+
+              <!-- テキスト -->
+              <div class="flex-1">
+                <div class="text-[15px] font-semibold text-white leading-tight">USB</div>
+                <div id="tile-usb-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">オフ</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- セクション: センサー -->
         <section class="break-inside-avoid mb-6 space-y-3">
           <h2 class="text-base font-bold text-white px-1">センサー</h2>
@@ -1573,7 +1599,8 @@
       lightBrightness: 3,                   // 明るさレベル (1〜5)
 
       cleanerStatus: 'charging',            // 'running' | 'standby' | 'charging' | 'sleeping' | 'recharge' | 'completed'
-      cleanerPlay: false
+      cleanerPlay: false,
+      usbPower: false
     };
 
     // ファンモード用の統一アイコン
@@ -2438,6 +2465,61 @@
       if (btnBrightnessPlus) btnBrightnessPlus.disabled = !isOn;
     }
 
+    // === USB スイッチ操作 & UI 同期 ===
+    function sendUsbCommand(action) {
+      fetch(`${apiBasePath}/api/usb`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success' && typeof data.power === 'boolean') {
+          state.usbPower = data.power;
+          updateUsbUi();
+        }
+      })
+      .catch(err => console.error('[USB Sync Failed]', err));
+    }
+
+    function toggleUsbPowerFromTile(event) {
+      if (event) event.stopPropagation();
+      state.usbPower = !state.usbPower;
+      updateUsbUi();
+      sendUsbCommand(state.usbPower ? 'on' : 'off');
+    }
+
+    function updateUsbUi() {
+      const isOn = state.usbPower;
+      const tileStatus = document.getElementById('tile-usb-status');
+      const tileIconWrap = document.getElementById('tile-usb-icon-wrap');
+
+      if (isOn) {
+        if (tileStatus) tileStatus.textContent = 'オン';
+        if (tileIconWrap) {
+          tileIconWrap.className = "w-11 h-11 rounded-full bg-[#1b3330] text-teal-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+        }
+      } else {
+        if (tileStatus) tileStatus.textContent = 'オフ';
+        if (tileIconWrap) {
+          tileIconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0";
+        }
+      }
+    }
+
+    async function syncUsbStatus() {
+      try {
+        const res = await fetch(`${apiBasePath}/api/usb`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'success' && typeof data.power === 'boolean') {
+            state.usbPower = data.power;
+            updateUsbUi();
+          }
+        }
+      } catch (e) {}
+    }
+
     // クリーナー操作 (タイルから起動/一時停止/停止)
     async function setCleanerModeFromTile(action, event) {
       if (event) event.stopPropagation();
@@ -2731,13 +2813,15 @@
             updateHeaterUi();
             updateLightUi();
             updateCleanerUi();
+            updateUsbUi();
           }
         }
       } catch (e) {
         console.warn('[State Load Warning]', e);
       }
-      // クリーナーの実機ステータスを取得
+      // クリーナーおよびUSBの実機ステータスを取得
       syncCleanerStatus();
+      syncUsbStatus();
     }
 
     // =========================================================================
