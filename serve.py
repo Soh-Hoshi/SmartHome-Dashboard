@@ -244,10 +244,14 @@ def dispatch_internal_api(endpoint: str, payload: dict):
             return {"status": "success", "power": usb_service.set_usb_power(True)}
         elif action == 'off':
             return {"status": "success", "power": usb_service.set_usb_power(False)}
+    elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown'):
+        action = payload.get('action')
+        if endpoint == '/api/pc/boot' or action in ('boot', 'on', 'start'):
+            return pc_service.boot_pc()
+        elif endpoint == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
+            return pc_service.shutdown_pc()
         else:
-            return {"status": "success", "power": usb_service.toggle_usb_power()}
-    elif endpoint in ('/api/pc', '/api/pc/shutdown'):
-        return pc_service.shutdown_pc()
+            return pc_service.toggle_pc()
     elif endpoint in ('/api/notify', '/api/notification'):
         ongoing = payload.get('ongoing', False)
         auto_cancel = payload.get('auto_cancel', not ongoing)
@@ -492,8 +496,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 power = usb_service.toggle_usb_power()
             return self.send_json_response({"status": "success", "power": power, "state": state_manager.load_state()})
 
-        if clean_path in ('/api/pc/shutdown', '/api/pc'):
-            res = pc_service.shutdown_pc()
+        if clean_path in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown'):
+            action = req_data.get('action')
+            if clean_path == '/api/pc/boot' or action in ('boot', 'on', 'start'):
+                res = pc_service.boot_pc()
+            elif clean_path == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
+                res = pc_service.shutdown_pc()
+            else:
+                res = pc_service.toggle_pc()
             return self.send_json_response(res)
 
         # 2. アシスタント自然言語 API

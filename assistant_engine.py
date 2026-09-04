@@ -738,10 +738,20 @@ def parse_and_execute(prompt: str, send_api_fn=None):
                 msg = res.get('message', 'PCの電源を切る指示を送信しました。')
                 return {"success": True, "message": msg, "action": "pc_shutdown"}
             return {"success": True, "message": "PCの電源を切る指示を送信しました。", "action": "pc_shutdown"}
-        elif any(k in text for k in ['状態', 'ステータス', 'ついてる', '起動', 'どっち', 'os']):
+        elif any(k in text for k in ['つけて', '点けて', '起動', 'きどう', 'オン', 'おん', 'ブート', 'ぶーと', 'boot', 'wake', 'on']):
+            if send_api_fn:
+                res = send_api_fn('/api/pc/boot', {'action': 'boot'})
+                msg = res.get('message', 'PCへ起動シグナルを送信しました。')
+                return {"success": True, "message": msg, "action": "pc_boot"}
+            return {"success": True, "message": "PCへ起動シグナルを送信しました。", "action": "pc_boot"}
+        elif any(k in text for k in ['状態', 'ステータス', 'ついてる', '起動中', 'どっち', 'os']):
             import pc_service
             st = pc_service.get_pc_status()
-            if st.get('online'):
+            if st.get('booting'):
+                return {"success": True, "message": "デスクトップPCは現在起動処理中です（WoL送信済み）。", "action": "pc_status"}
+            elif st.get('shutting_down'):
+                return {"success": True, "message": "デスクトップPCは現在終了処理中です。", "action": "pc_status"}
+            elif st.get('online'):
                 return {"success": True, "message": f"デスクトップPCは起動中です（OS: {st.get('os')}）。", "action": "pc_status"}
             else:
                 return {"success": True, "message": "デスクトップPCはオフラインです。", "action": "pc_status"}

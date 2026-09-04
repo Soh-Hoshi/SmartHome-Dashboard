@@ -440,21 +440,21 @@
               </div>
             </div>
 
-            <!-- デスクトップPCタイル (詳細画面なし。アイコンタップで電源オフ) -->
+            <!-- デスクトップPCタイル (詳細画面なし。スイッチのようにアイコンタップで起動/電源オフ) -->
             <div class="relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center space-x-3.5 shadow-md border border-white/[0.03]">
               
-              <!-- PC固定アイコン (タップでシャットダウン) -->
-              <button onclick="shutdownPcFromTile(event)"
+              <!-- PCアイコン (オン/起動中: スカイブルー、オフ: グレー。タップでオン/オフ切り替え) -->
+              <button onclick="togglePcPowerFromTile(event)"
                       id="tile-pc-icon-wrap" 
-                      class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
-                      aria-label="デスクトップPCの電源を切る">
+                      class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
+                      aria-label="デスクトップPCの電源オン/オフ切り替え">
                 <span id="tile-pc-icon" class="material-symbols-rounded text-2xl">desktop_windows</span>
               </button>
 
               <!-- テキスト -->
               <div class="flex-1 select-none">
                 <div class="text-[15px] font-semibold text-white leading-tight">デスクトップPC</div>
-                <div id="tile-pc-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">確認中...</div>
+                <div id="tile-pc-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">オフ</div>
               </div>
             </div>
           </div>
@@ -1619,6 +1619,8 @@
       cleanerPlay: false,
       usbPower: false,
       pcOnline: false,
+      pcBooting: false,
+      pcShuttingDown: false,
       pcOs: 'オフライン'
     };
 
@@ -2539,47 +2541,72 @@
       } catch (e) {}
     }
 
-    // === デスクトップPC操作 & UI同期 ===
-    function shutdownPcFromTile(event) {
+    // === デスクトップPC操作 & UI同期 (WoLブート & 楽観的トグルスイッチ) ===
+    let pcActionLockTime = 0;
+
+    function togglePcPowerFromTile(event) {
       if (event) event.stopPropagation();
+
+      // トランジェント処理中の連打防止
+      if (state.pcBooting) {
+        showAssistantToast('PCは現在起動処理中です...', 'hourglass_top');
+        return;
+      }
+      if (state.pcShuttingDown) {
+        showAssistantToast('PCは現在終了処理中です...', 'hourglass_top');
+        return;
+      }
+
       if (!state.pcOnline) {
-        showAssistantToast('PCは既にオフラインです', 'desktop_access_disabled');
-        return;
+        // === 起動アクション (WoL) ===
+        // オプティミスティックUI: 即座に起動中表示へ
+        state.pcOnline = true;
+        state.pcBooting = true;
+        state.pcShuttingDown = false;
+        state.pcOs = '起動中...';
+        updatePcUi();
+        showAssistantToast('PCへ起動シグナル(WoL)を送信しました', 'power_settings_new');
+        sendPcCommand('boot');
+      } else {
+        // === 電源オフアクション (シャットダウン) ===
+        // オプティミスティックUI: 即座に終了中表示へ
+        state.pcOnline = false;
+        state.pcBooting = false;
+        state.pcShuttingDown = true;
+        state.pcOs = '終了中...';
+        updatePcUi();
+        showAssistantToast('PCへ電源オフを指示しました', 'power_settings_new');
+        sendPcCommand('shutdown');
       }
-      const osName = state.pcOs && state.pcOs !== 'Unknown' ? state.pcOs : 'PC';
-      if (!confirm(`デスクトップPC (${osName}) の電源を切りますか？`)) {
-        return;
-      }
-      executePcShutdown();
     }
 
-    async function executePcShutdown() {
-      const statusEl = document.getElementById('tile-pc-status');
-      const iconWrap = document.getElementById('tile-pc-icon-wrap');
-      if (statusEl) statusEl.textContent = 'シャットダウン中...';
-      if (iconWrap) iconWrap.classList.add('animate-pulse');
-
+    async function sendPcCommand(action) {
+      pcActionLockTime = Date.now();
       try {
-        const res = await fetch(`${apiBasePath}/api/pc/shutdown`, {
+        const res = await fetch(`${apiBasePath}/api/pc`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'shutdown' })
+          body: JSON.stringify({ action: action })
         });
         const data = await res.json();
-        if (data.status === 'success') {
-          state.pcOnline = false;
-          state.pcOs = 'シャットダウン中...';
+        if (data.status === 'success' || data.status === 'info') {
+          if (typeof data.online === 'boolean') state.pcOnline = data.online;
+          state.pcBooting = !!data.booting;
+          state.pcShuttingDown = !!data.shutting_down;
+          if (data.os) state.pcOs = data.os;
           updatePcUi();
-          showAssistantToast(data.message || 'PCの電源を切る指示を送信しました', 'power_settings_new');
-          setTimeout(syncPcStatus, 5000);
-        } else {
-          showAssistantToast(data.message || 'シャットダウンの送信に失敗しました', 'error', true);
-          syncPcStatus();
+          // トランジェント中は2秒後にステータス確認
+          if (state.pcBooting || state.pcShuttingDown) {
+            setTimeout(syncPcStatus, 2000);
+          }
+        } else if (data.status === 'error') {
+          showAssistantToast(data.message || '操作に失敗しました', 'error', true);
+          setTimeout(syncPcStatus, 1500);
         }
       } catch (err) {
-        console.error('[PC Shutdown Error]', err);
+        console.error('[PC Command Error]', err);
         showAssistantToast('通信エラーが発生しました', 'error', true);
-        syncPcStatus();
+        setTimeout(syncPcStatus, 1500);
       }
     }
 
@@ -2588,29 +2615,49 @@
       const iconWrap = document.getElementById('tile-pc-icon-wrap');
       if (!statusEl || !iconWrap) return;
 
-      iconWrap.classList.remove('animate-pulse');
-
-      if (state.pcOnline) {
-        const osLabel = state.pcOs && state.pcOs !== 'Unknown' ? state.pcOs : '起動中';
-        statusEl.textContent = `${osLabel} (起動中)`;
+      if (state.pcBooting || state.pcOs === '起動中...') {
+        // 起動中: スカイブルー点灯 ＋ 脈動（パルス）
+        statusEl.textContent = '起動中...';
+        statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
+        iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+      } else if (state.pcShuttingDown || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中...') {
+        // 終了中: グレー ＋ 脈動（パルス）
+        statusEl.textContent = '終了中...';
+        statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
+        iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+      } else if (state.pcOnline) {
+        // 完全起動中: スカイブルー点灯（常時点灯）
+        const osLabel = state.pcOs && state.pcOs !== 'Unknown' && state.pcOs !== '起動中...' ? state.pcOs : 'オン';
+        statusEl.textContent = osLabel === 'オン' ? 'オン' : `${osLabel} (起動中)`;
         statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
         iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
       } else {
-        statusEl.textContent = state.pcOs === 'シャットダウン中...' ? 'シャットダウン中...' : 'オフライン';
+        // オフライン: グレー（常時）
+        statusEl.textContent = 'オフ';
         statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
       }
     }
 
     async function syncPcStatus() {
+      // ユーザー操作直後（5秒以内）はローカルのオプティミスティック更新を優先
+      if (Date.now() - pcActionLockTime < 5000) return;
+
       try {
         const res = await fetch(`${apiBasePath}/api/pc`);
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'success') {
             state.pcOnline = !!data.online;
-            state.pcOs = data.os || 'オフライン';
+            state.pcBooting = !!data.booting;
+            state.pcShuttingDown = !!data.shutting_down;
+            state.pcOs = data.os || (state.pcOnline ? '起動中' : 'オフライン');
             updatePcUi();
+
+            // 起動中または終了中なら、完了をいち早く検知するために2秒後に再チェック
+            if (state.pcBooting || state.pcShuttingDown) {
+              setTimeout(syncPcStatus, 2000);
+            }
           }
         }
       } catch (e) {}

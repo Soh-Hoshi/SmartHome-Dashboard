@@ -10,7 +10,7 @@ Usage:
   smarthome vacuum ... (alias for cleaner)
   smarthome eufy ...   (alias for cleaner)
   smarthome usb [on|off|toggle|status]
-  smarthome pc [status|shutdown]
+  smarthome pc [on|off|toggle|status]
   smarthome notification [title] <message>
   smarthome notify <message>
   smarthome status
@@ -125,10 +125,15 @@ def direct_fallback(endpoint, data, original_error):
                 data=data.get('data'),
                 tag=data.get('tag')
             )
-        elif endpoint in ('/api/pc', '/api/pc/shutdown'):
+        elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown'):
             import pc_service
-            if data and data.get('action') == 'shutdown':
+            act = data.get('action') if data else None
+            if endpoint == '/api/pc/boot' or act in ('boot', 'on', 'start'):
+                res = pc_service.boot_pc()
+            elif endpoint == '/api/pc/shutdown' or act in ('shutdown', 'off', 'stop'):
                 res = pc_service.shutdown_pc()
+            elif act == 'toggle':
+                res = pc_service.toggle_pc()
             else:
                 res = pc_service.get_pc_status()
         else:
@@ -245,18 +250,38 @@ def cmd_pc(args):
     if action in ('status', 'stat', 's', 'info'):
         res = send_api_request('/api/pc')
         online = res.get('online', False)
+        booting = res.get('booting', False)
+        shutting_down = res.get('shutting_down', False)
         os_name = res.get('os', 'オフライン')
         ip = res.get('ip', '192.168.0.51')
-        print(f"デスクトップPC ({ip}): {'起動中 [' + os_name + ']' if online else 'オフライン'}")
+        if booting:
+            st_text = "起動処理中 (WoL送信済み)..."
+        elif shutting_down:
+            st_text = "終了処理中..."
+        elif online:
+            st_text = f"起動中 [{os_name}]"
+        else:
+            st_text = "オフライン"
+        print(f"デスクトップPC ({ip}): {st_text}")
         return True
-    elif action in ('shutdown', 'off', 'poweroff', 'down', '切る', '電源切る'):
+    elif action in ('on', 'boot', 'wake', 'wol', 'start', '1', 'つける', '起動'):
+        print("デスクトップPCへ起動シグナル(WoL)を送信しています...")
+        res = send_api_request('/api/pc/boot', {'action': 'boot'})
+        print(f"結果: {res.get('message', res.get('status'))}")
+        return True
+    elif action in ('shutdown', 'off', 'poweroff', 'down', '0', '切る', '電源切る', '消す'):
         print("デスクトップPCへシャットダウンを要求しています...")
         res = send_api_request('/api/pc/shutdown', {'action': 'shutdown'})
         print(f"結果: {res.get('message', res.get('status'))}")
         return True
+    elif action in ('toggle', 't', '切替', 'トグル'):
+        print("デスクトップPCの電源を切り替えています...")
+        res = send_api_request('/api/pc', {'action': 'toggle'})
+        print(f"結果: {res.get('message', res.get('status'))}")
+        return True
     else:
         print(f"Unknown PC action: {action}")
-        print("Usage: smarthome pc [status|shutdown]")
+        print("Usage: smarthome pc [status|on|boot|off|shutdown|toggle]")
         return False
 
 def cmd_notification(args):

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Desktop PC Service (Windows & Bazzite Dual-Boot Control)
-Handles presence detection and remote shutdown via SSH.
+Handles Wake-on-LAN (Boot), presence detection, and remote shutdown via SSH.
+Supports optimistic transient states ('booting', 'shutting_down') with automatic background monitoring.
 """
 
 import socket
@@ -11,13 +12,44 @@ import time
 import state_manager
 
 PC_IP = "192.168.0.51"
+PC_MAC = "a8:a1:59:60:6f:c0"
 PC_PORT = 22
+PC_BROADCAST = "192.168.0.255"
 USERS = ["user", "soh"]
 PASSWORD = "Tamago1341"
+
+BOOT_TIMEOUT = 90.0        # 起動待機最大秒数
+SHUTDOWN_TIMEOUT = 60.0    # 終了待機最大秒数
 
 _lock = threading.Lock()
 _cached_status = None
 _last_check = 0
+
+# 楽観的トランジェント状態 ('booting' | 'shutting_down' | None)
+_transient_state = None
+_transient_timestamp = 0.0
+
+def send_wol(mac_address: str = PC_MAC, broadcast_ip: str = PC_BROADCAST):
+    """Wake-on-LAN Magic Packet をUDPブロードキャスト送信"""
+    clean_mac = mac_address.replace(":", "").replace("-", "").strip()
+    if len(clean_mac) != 12:
+        raise ValueError(f"Invalid MAC address: {mac_address}")
+    mac_bytes = bytes.fromhex(clean_mac)
+    magic_packet = b'\xff' * 6 + mac_bytes * 16
+
+    targets = [
+        (broadcast_ip, 9),
+        (broadcast_ip, 7),
+        ("255.255.255.255", 9),
+        ("255.255.255.255", 7)
+    ]
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        for target in targets:
+            try:
+                s.sendto(magic_packet, target)
+            except Exception as e:
+                print(f"[WoL Send Error to {target}] {e}")
 
 def detect_os_from_banner():
     """SSHバナーから稼働中OS (Windows / Bazzite) を判別"""
@@ -53,10 +85,147 @@ def is_pc_online():
     except Exception:
         return False
 
+def _monitor_boot():
+    """バックグラウンドで起動完了を監視し、完全起動時にステートを確定"""
+    global _transient_state, _cached_status
+    start = time.time()
+    while time.time() - start < BOOT_TIMEOUT:
+        time.sleep(2.0)
+        with _lock:
+            if _transient_state != 'booting':
+                return
+        if is_pc_online():
+            os_name = detect_os_from_banner()
+            if os_name != "Unknown":
+                with _lock:
+                    _transient_state = None
+                    _cached_status = {
+                        "online": True,
+                        "booting": False,
+                        "shutting_down": False,
+                        "os": os_name,
+                        "ip": PC_IP
+                    }
+                    try:
+                        state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                    except Exception:
+                        pass
+                print(f"[PC Monitor] PC booted: {os_name}")
+                return
+
+    # タイムアウト
+    with _lock:
+        if _transient_state == 'booting':
+            _transient_state = None
+            _cached_status = {
+                "online": False,
+                "booting": False,
+                "shutting_down": False,
+                "os": "オフライン",
+                "ip": PC_IP
+            }
+            try:
+                state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+            except Exception:
+                pass
+            print("[PC Monitor] PC boot timed out.")
+
+def _monitor_shutdown():
+    """バックグラウンドで電源オフを監視し、電源切断時にステートを確定"""
+    global _transient_state, _cached_status
+    start = time.time()
+    while time.time() - start < SHUTDOWN_TIMEOUT:
+        time.sleep(2.0)
+        with _lock:
+            if _transient_state != 'shutting_down':
+                return
+        if not is_pc_online():
+            with _lock:
+                _transient_state = None
+                _cached_status = {
+                    "online": False,
+                    "booting": False,
+                    "shutting_down": False,
+                    "os": "オフライン",
+                    "ip": PC_IP
+                }
+                try:
+                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+                except Exception:
+                    pass
+            print("[PC Monitor] PC shutdown confirmed.")
+            return
+
+    # タイムアウト
+    with _lock:
+        if _transient_state == 'shutting_down':
+            _transient_state = None
+
 def get_pc_status(force_refresh=False):
-    global _cached_status, _last_check
+    global _cached_status, _last_check, _transient_state, _transient_timestamp
     now = time.time()
     with _lock:
+        # 1. 起動中（booting）トランジェント期間
+        if _transient_state == 'booting':
+            if now - _transient_timestamp < BOOT_TIMEOUT:
+                # 実際に疎通が取れたか確認
+                if is_pc_online():
+                    os_name = detect_os_from_banner()
+                    if os_name != "Unknown":
+                        _transient_state = None
+                        _cached_status = {
+                            "online": True,
+                            "booting": False,
+                            "shutting_down": False,
+                            "os": os_name,
+                            "ip": PC_IP
+                        }
+                        try:
+                            state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                        except Exception:
+                            pass
+                        return _cached_status
+
+                # まだ起動中 (楽観的ON)
+                return {
+                    "online": True,
+                    "booting": True,
+                    "shutting_down": False,
+                    "os": "起動中...",
+                    "ip": PC_IP
+                }
+            else:
+                _transient_state = None
+
+        # 2. 終了中（shutting_down）トランジェント期間
+        elif _transient_state == 'shutting_down':
+            if now - _transient_timestamp < SHUTDOWN_TIMEOUT:
+                if not is_pc_online():
+                    _transient_state = None
+                    _cached_status = {
+                        "online": False,
+                        "booting": False,
+                        "shutting_down": False,
+                        "os": "オフライン",
+                        "ip": PC_IP
+                    }
+                    try:
+                        state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+                    except Exception:
+                        pass
+                    return _cached_status
+
+                # まだ終了中 (楽観的OFF)
+                return {
+                    "online": False,
+                    "booting": False,
+                    "shutting_down": True,
+                    "os": "終了中...",
+                    "ip": PC_IP
+                }
+            else:
+                _transient_state = None
+
         if not force_refresh and _cached_status is not None and (now - _last_check < 3.0):
             return _cached_status
 
@@ -65,6 +234,8 @@ def get_pc_status(force_refresh=False):
 
         _cached_status = {
             "online": online,
+            "booting": False,
+            "shutting_down": False,
             "os": os_name,
             "ip": PC_IP
         }
@@ -75,45 +246,82 @@ def get_pc_status(force_refresh=False):
             pass
         return _cached_status
 
+def boot_pc():
+    """Wake-on-LAN を送信し、楽観的起動ステートを開始"""
+    global _transient_state, _transient_timestamp, _cached_status
+    st = get_pc_status(force_refresh=True)
+    if st["online"] and not st.get("booting") and not st.get("shutting_down"):
+        return {
+            "status": "warning",
+            "message": f"PCは既に起動しています ({st.get('os')})。",
+            "online": True,
+            "os": st.get("os")
+        }
+
+    try:
+        send_wol()
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"WoLの送信に失敗しました: {e}"
+        }
+
+    with _lock:
+        _transient_state = 'booting'
+        _transient_timestamp = time.time()
+        _cached_status = {
+            "online": True,
+            "booting": True,
+            "shutting_down": False,
+            "os": "起動中...",
+            "ip": PC_IP
+        }
+        try:
+            state_manager.save_state({"pcOnline": True, "pcOs": "起動中..."})
+        except Exception:
+            pass
+
+    threading.Thread(target=_monitor_boot, daemon=True).start()
+
+    return {
+        "status": "success",
+        "message": "起動シグナル(WoL)を送信しました。起動中...",
+        "online": True,
+        "booting": True,
+        "os": "起動中..."
+    }
+
 def shutdown_pc():
     """OSを自動判別して適切なシャットダウンコマンドをSSH送信"""
+    global _transient_state, _transient_timestamp, _cached_status
+
     st = get_pc_status(force_refresh=True)
-    if not st["online"]:
+    if not st["online"] and not st.get("booting"):
         return {
             "status": "warning",
             "message": "PCはすでにオフラインです。",
+            "online": False,
             "os": "オフライン"
         }
 
-    os_type = st["os"]
+    os_type = st.get("os", "Windows")
     if os_type == "Windows":
-        # Windowsシャットダウンコマンド
         remote_cmd = 'shutdown.exe /s /t 0'
     else:
-        # Bazzite (Linux) シャットダウンコマンド (ポリシーキット、sudo、パスワード付きsudo)
         remote_cmd = f'systemctl poweroff || sudo poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
 
     last_err = None
+    sent = False
     for u in USERS:
-        # 1. 鍵認証を試行
         cmd_key = [
             "ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no",
             "-o", "ConnectTimeout=3", f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_key, capture_output=True, text=True)
         if res.returncode == 0:
-            try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "シャットダウン中..."})
-            except Exception:
-                pass
-            return {
-                "status": "success",
-                "message": f"{os_type} にシャットダウンを指示しました。",
-                "os": os_type,
-                "user": u
-            }
+            sent = True
+            break
 
-        # 2. sshpass によるパスワード認証を試行
         cmd_pass = [
             "sshpass", "-p", PASSWORD,
             "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=3",
@@ -121,24 +329,55 @@ def shutdown_pc():
         ]
         res = subprocess.run(cmd_pass, capture_output=True, text=True)
         if res.returncode == 0:
-            try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "シャットダウン中..."})
-            except Exception:
-                pass
-            return {
-                "status": "success",
-                "message": f"{os_type} にシャットダウンを指示しました。",
-                "os": os_type,
-                "user": u
-            }
+            sent = True
+            break
         else:
             last_err = res.stderr or res.stdout
+
+    if sent:
+        with _lock:
+            _transient_state = 'shutting_down'
+            _transient_timestamp = time.time()
+            _cached_status = {
+                "online": False,
+                "booting": False,
+                "shutting_down": True,
+                "os": "終了中...",
+                "ip": PC_IP
+            }
+            try:
+                state_manager.save_state({"pcOnline": False, "pcOs": "終了中..."})
+            except Exception:
+                pass
+
+        threading.Thread(target=_monitor_shutdown, daemon=True).start()
+
+        return {
+            "status": "success",
+            "message": f"{os_type} にシャットダウンを指示しました。",
+            "online": False,
+            "shutting_down": True,
+            "os": "終了中..."
+        }
 
     return {
         "status": "error",
         "message": f"シャットダウンの送信に失敗しました: {last_err}",
         "os": os_type
     }
+
+def toggle_pc():
+    """トグル動作: オンならシャットダウン、オフならWoL起動"""
+    st = get_pc_status()
+    if st.get("booting"):
+        return {"status": "info", "message": "現在起動処理中です...", **st}
+    if st.get("shutting_down"):
+        return {"status": "info", "message": "現在終了処理中です...", **st}
+
+    if st.get("online"):
+        return shutdown_pc()
+    else:
+        return boot_pc()
 
 if __name__ == '__main__':
     print("PC Status:", get_pc_status(force_refresh=True))
