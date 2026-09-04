@@ -287,7 +287,6 @@ class NotificationService : Service() {
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle(title)
             .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setPriority(priorityVal)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setOngoing(ongoing)
@@ -295,13 +294,15 @@ class NotificationService : Service() {
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        // 1. プログレスバー機能
+        // 1. プログレスバー機能 (プログレスバー設定時は BigTextStyle を適用しない)
         val progressObj = obj.optJSONObject("progress")
         if (progressObj != null) {
             val max = progressObj.optInt("max", 100)
             val current = progressObj.optInt("current", 0)
             val indeterminate = progressObj.optBoolean("indeterminate", false)
             builder.setProgress(max, current, indeterminate)
+        } else {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(message))
         }
 
         // 2. アクションボタン ＆ インライン返信 (Direct Reply) 機能
@@ -338,10 +339,10 @@ class NotificationService : Service() {
                 )
 
                 val actionBuilder = NotificationCompat.Action.Builder(
-                    0,
+                    R.drawable.ic_nova_foreground,
                     actionTitle,
                     actionPendingIntent
-                )
+                ).setAllowGeneratedReplies(true)
 
                 if (isReply) {
                     val remoteInput = RemoteInput.Builder(NotificationActionReceiver.KEY_TEXT_REPLY)
