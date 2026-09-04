@@ -303,7 +303,7 @@ def send_away_device_warning(active_devices_str=None):
         return None
 
     title = "お出かけですか？"
-    body = dev_str
+    body = ""
     actions = [
         {
             "id": "run_leaving",
@@ -312,7 +312,7 @@ def send_away_device_warning(active_devices_str=None):
         },
         {
             "id": "reply_nova",
-            "title": "novaへ指示",
+            "title": "Novaへ指示",
             "reply": True,
             "reply_placeholder": "Novaに指示..."
         }

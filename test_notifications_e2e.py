@@ -63,11 +63,11 @@ def test_3_action_buttons_and_direct_reply():
     res = post_json("/api/notify", {
         "id": "away_test",
         "title": "お出かけですか？",
-        "message": "照明が点灯中です",
+        "message": "",
         "actions": [
-            {"id": "act_leave", "title": "🚪 いってきます", "command": "いってきます"},
-            {"id": "act_reply", "title": "💬 指示", "reply": True, "reply_placeholder": "Novaに指示..."},
-            {"id": "act_dismiss", "title": "そのまま", "dismiss": True}
+            {"id": "act_leave", "title": "いってきます", "command": "いってきます"},
+            {"id": "act_reply", "title": "Novaへ指示", "reply": True, "reply_placeholder": "Novaに指示..."},
+            {"id": "act_dismiss", "title": "閉じる", "dismiss": True}
         ]
     })
     actions = res["notification"]["actions"]

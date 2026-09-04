@@ -85,7 +85,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, NotificationService.CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle(title)
-            .setContentText("⏳ 実行中: $command")
+            .setContentText("実行中: $command")
             .setProgress(0, 0, true)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -115,7 +115,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, NotificationService.CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
-            .setContentTitle("✅ 実行完了")
+            .setContentTitle("実行完了")
             .setContentText(responseMsg)
             .setStyle(NotificationCompat.BigTextStyle().bigText(responseMsg))
             .setProgress(0, 0, false)
@@ -148,7 +148,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, NotificationService.CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
-            .setContentTitle("⚠️ エラー")
+            .setContentTitle("エラー")
             .setContentText(errorMsg)
             .setProgress(0, 0, false)
             .setOngoing(false)

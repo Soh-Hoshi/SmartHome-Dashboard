@@ -208,7 +208,7 @@ def cmd_notification(args):
         print("Options:")
         print("  --title <title>          通知タイトルを指定")
         print("  --progress <val>         プログレスバー (0-100)")
-        print("  --action <title:command> アクションボタンを追加 (例: --action '🚪 全消灯:いってきます')")
+        print("  --action <title:command> アクションボタンを追加 (例: --action '全消灯:いってきます')")
         print("  --reply                  Novaへのインライン返信ボタンを追加")
         print("  --id <notif_id>          通知ID（インプレース更新用）")
         print("  --test-away              外出時消し忘れ通知（全アクション付き）をテスト送信")
@@ -219,7 +219,7 @@ def cmd_notification(args):
         import push_service
         notif = push_service.send_away_device_warning()
         if notif:
-            print(f"外出時消し忘れ通知を送信しました: [{notif.get('title')}] {notif.get('body')}")
+            print(f"外出時消し忘れ通知を送信しました: [{notif.get('title')}] (タイトル・ボタン類のみ)")
         else:
             print("電気等の稼働機器がないため、外出時通知は送信されませんでした。")
         return True
@@ -231,7 +231,7 @@ def cmd_notification(args):
         print("プログレスバー通知デモ開始...")
         for p in [10, 35, 60, 85, 100]:
             push_service.send_progress_notification(
-                title="🤖 ロボット掃除機",
+                title="ロボット掃除機",
                 body=f"リビングを清掃中... ({p}%)" if p < 100 else "清掃が完了しました！",
                 current=p,
                 max_val=100,

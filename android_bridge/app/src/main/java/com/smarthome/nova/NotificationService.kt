@@ -314,7 +314,6 @@ class NotificationService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle(title)
-            .setContentText(message)
             .setPriority(priorityVal)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setOnlyAlertOnce(true)
@@ -323,6 +322,10 @@ class NotificationService : Service() {
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
+        if (!message.isNullOrBlank()) {
+            builder.setContentText(message)
+        }
+
         // 1. プログレスバー機能 (プログレスバー設定時は BigTextStyle を適用しない)
         val progressObj = obj.optJSONObject("progress")
         if (progressObj != null) {
@@ -330,7 +333,7 @@ class NotificationService : Service() {
             val current = progressObj.optInt("current", 0)
             val indeterminate = progressObj.optBoolean("indeterminate", false)
             builder.setProgress(max, current, indeterminate)
-        } else {
+        } else if (!message.isNullOrBlank()) {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(message))
         }
 
@@ -367,9 +370,8 @@ class NotificationService : Service() {
                     flagMutable
                 )
 
-                val actionIcon = actionObj.optInt("icon", 0)
                 val actionBuilder = NotificationCompat.Action.Builder(
-                    actionIcon,
+                    0,
                     actionTitle,
                     actionPendingIntent
                 ).setAllowGeneratedReplies(true)
