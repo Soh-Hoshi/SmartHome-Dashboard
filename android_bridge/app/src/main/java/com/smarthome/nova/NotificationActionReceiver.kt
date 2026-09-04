@@ -1,6 +1,7 @@
 package com.smarthome.nova
 
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -71,19 +72,47 @@ class NotificationActionReceiver : BroadcastReceiver() {
     }
 
     private fun updateNotificationInProgress(context: Context, notifId: Int, title: String, command: String) {
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notifId,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, NotificationService.CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle(title)
             .setContentText("⏳ 実行中: $command")
             .setProgress(0, 0, true)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
-        NotificationManagerCompat.from(context).notify(notifId, notification)
+        try {
+            NotificationManagerCompat.from(context).notify(notifId, notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission POST_NOTIFICATIONS missing or denied", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to update notification in progress", e)
+        }
     }
 
     private fun updateNotificationCompleted(context: Context, notifId: Int, title: String, responseMsg: String) {
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notifId,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, NotificationService.CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle("✅ 実行完了")
@@ -92,13 +121,31 @@ class NotificationActionReceiver : BroadcastReceiver() {
             .setProgress(0, 0, false)
             .setOngoing(false)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
-        NotificationManagerCompat.from(context).notify(notifId, notification)
+        try {
+            NotificationManagerCompat.from(context).notify(notifId, notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission POST_NOTIFICATIONS missing or denied", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to update notification completed", e)
+        }
     }
 
     private fun updateNotificationError(context: Context, notifId: Int, title: String, errorMsg: String) {
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notifId,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, NotificationService.CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle("⚠️ エラー")
@@ -106,10 +153,18 @@ class NotificationActionReceiver : BroadcastReceiver() {
             .setProgress(0, 0, false)
             .setOngoing(false)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
-        NotificationManagerCompat.from(context).notify(notifId, notification)
+        try {
+            NotificationManagerCompat.from(context).notify(notifId, notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission POST_NOTIFICATIONS missing or denied", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to update notification error", e)
+        }
     }
 
     private fun executeAssistantCommand(baseUrl: String, prompt: String): String {
@@ -150,9 +205,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
         return try {
             val u = URL(fullUrl)
             val portStr = if (u.port != -1) ":${u.port}" else ""
-            "${u.protocol}://${u.host}$portStr"
+            val path = u.path.trimEnd('/')
+            "${u.protocol}://${u.host}$portStr$path"
         } catch (e: Exception) {
-            "https://server.tail52d127.ts.net"
+            "https://server.tail52d127.ts.net/dashboard"
         }
     }
 }

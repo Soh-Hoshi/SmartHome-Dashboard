@@ -33,7 +33,7 @@ _history_lock = threading.Lock()
 MAX_HISTORY = 50
 
 def register_sse_client():
-    q = queue.Queue()
+    q = queue.Queue(maxsize=100)
     with _sse_lock:
         _sse_clients.append(q)
     return q
@@ -260,15 +260,14 @@ def push_notification(title: str, body: str, actions=None, tag=None, data=None, 
     if progress:
         notif_obj["progress"] = progress
 
-    # 1. 履歴に追加 (ポーリング用)
+    # 1. 履歴に追加 (ポーリング用: 既存通知の更新時は末尾に再追加して時系列順を維持)
     with _history_lock:
         existing_idx = next((i for i, n in enumerate(_notif_history) if n.get("id") == notif_id), None)
         if existing_idx is not None:
-            _notif_history[existing_idx] = notif_obj
-        else:
-            _notif_history.append(notif_obj)
-            if len(_notif_history) > MAX_HISTORY:
-                _notif_history.pop(0)
+            _notif_history.pop(existing_idx)
+        _notif_history.append(notif_obj)
+        if len(_notif_history) > MAX_HISTORY:
+            _notif_history.pop(0)
 
     # 2. SSE クライアント（NovaAssist等）へ即時配信
     with _sse_lock:

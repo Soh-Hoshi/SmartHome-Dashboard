@@ -237,11 +237,19 @@ def dispatch_internal_api(endpoint: str, payload: dict):
     elif endpoint == '/api/cleaner':
         return execute_cleaner_command(payload.get('action', 'start'), payload.get('speed'))
     elif endpoint in ('/api/notify', '/api/notification'):
+        ongoing = payload.get('ongoing', False)
+        auto_cancel = payload.get('auto_cancel', not ongoing)
         notif = push_service.push_notification(
             title=payload.get('title', 'SmartHome'),
             body=payload.get('message') or payload.get('body', ''),
             priority=payload.get('priority', 'high'),
-            actions=payload.get('actions', [])
+            actions=payload.get('actions', []),
+            notif_id=payload.get('id'),
+            progress=payload.get('progress'),
+            ongoing=ongoing,
+            auto_cancel=auto_cancel,
+            data=payload.get('data'),
+            tag=payload.get('tag')
         )
         return {"status": "success", "notification": notif}
     return {"status": "error", "message": f"Unknown internal endpoint {endpoint}"}
@@ -296,12 +304,17 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             try:
                 self.wfile.write(b"data: connected\n\n")
                 self.wfile.flush()
+                last_ping = time.time()
                 while True:
                     time.sleep(0.2)
                     if queue_item:
                         msg = queue_item.pop(0)
                         self.wfile.write(f"data: {msg}\n\n".encode('utf-8'))
                         self.wfile.flush()
+                    elif time.time() - last_ping > 20:
+                        self.wfile.write(b": keepalive\n\n")
+                        self.wfile.flush()
+                        last_ping = time.time()
             except (BrokenPipeError, ConnectionResetError):
                 pass
             finally:
@@ -322,7 +335,8 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
             q = push_service.register_sse_client()
             try:
-                self.wfile.write(b"event: connected\ndata: {\"status\":\"connected\"}\n\n")
+                conn_payload = json.dumps({"status": "connected", "server_time": time.time()})
+                self.wfile.write(f"event: connected\ndata: {conn_payload}\n\n".encode('utf-8'))
                 self.wfile.flush()
                 while True:
                     try:
@@ -528,6 +542,7 @@ if __name__ == '__main__':
     watcher_thread.start()
 
     server = ThreadingHTTPServer(('0.0.0.0', PORT), LiveReloadHandler)
+    server.daemon_threads = True
 
     print(f"🚀 Live Reload HTTP サーバーが起動しました (Port: {PORT})")
     print(f"  - ローカル:     http://localhost:{PORT}")

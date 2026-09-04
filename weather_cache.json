@@ -1,105 +1,105 @@
 {
-  "cached_at": 1788426648.2144837,
+  "cached_at": 1788522220.763105,
   "data": {
     "location": "川崎市中原区木月",
-    "temp": 25.9,
-    "feels_like": 31.0,
-    "humidity": 88,
-    "wind_speed": 5.5,
-    "is_day": true,
-    "weather": "一部曇り",
-    "weather_icon": "partly_cloudy_day",
-    "weather_code": 2,
-    "temp_max": 30.2,
-    "temp_min": 24.2,
+    "temp": 22.2,
+    "feels_like": 26.7,
+    "humidity": 97,
+    "wind_speed": 2.2,
+    "is_day": false,
+    "weather": "弱い雨",
+    "weather_icon": "rainy",
+    "weather_code": 61,
+    "temp_max": 24.4,
+    "temp_min": 21.9,
     "sunrise": "05:15",
-    "sunset": "18:07",
+    "sunset": "18:05",
     "hourly": [
       {
-        "time": "09:00",
-        "temp": 28.4,
-        "weather": "一部曇り",
-        "icon": "partly_cloudy_day",
-        "pop": 6
-      },
-      {
-        "time": "10:00",
-        "temp": 26.8,
-        "weather": "霧雨",
-        "icon": "grain",
-        "pop": 5
-      },
-      {
         "time": "11:00",
-        "temp": 28.3,
-        "weather": "曇り",
-        "icon": "cloud",
-        "pop": 5
+        "temp": 23.0,
+        "weather": "小雨",
+        "icon": "rainy",
+        "pop": 93
       },
       {
         "time": "12:00",
-        "temp": 30.0,
-        "weather": "曇り",
-        "icon": "cloud",
-        "pop": 6
+        "temp": 23.1,
+        "weather": "小雨",
+        "icon": "rainy",
+        "pop": 98
       },
       {
         "time": "13:00",
-        "temp": 30.2,
-        "weather": "一部曇り",
-        "icon": "partly_cloudy_day",
-        "pop": 8
+        "temp": 23.3,
+        "weather": "小雨",
+        "icon": "rainy",
+        "pop": 98
       },
       {
         "time": "14:00",
-        "temp": 28.9,
+        "temp": 23.8,
         "weather": "霧雨",
         "icon": "grain",
-        "pop": 10
+        "pop": 96
       },
       {
         "time": "15:00",
-        "temp": 27.9,
-        "weather": "曇り",
-        "icon": "cloud",
-        "pop": 12
+        "temp": 24.1,
+        "weather": "霧雨",
+        "icon": "grain",
+        "pop": 94
       },
       {
         "time": "16:00",
-        "temp": 27.2,
+        "temp": 24.4,
         "weather": "曇り",
         "icon": "cloud",
-        "pop": 13
+        "pop": 94
       },
       {
         "time": "17:00",
-        "temp": 26.6,
-        "weather": "曇り",
-        "icon": "cloud",
-        "pop": 13
+        "temp": 23.8,
+        "weather": "霧雨",
+        "icon": "grain",
+        "pop": 95
       },
       {
         "time": "18:00",
-        "temp": 25.9,
-        "weather": "一部曇り",
-        "icon": "partly_cloudy_night",
-        "pop": 14
+        "temp": 23.0,
+        "weather": "弱い雨",
+        "icon": "rainy",
+        "pop": 96
       },
       {
         "time": "19:00",
-        "temp": 25.5,
-        "weather": "一部曇り",
-        "icon": "partly_cloudy_night",
-        "pop": 16
+        "temp": 22.6,
+        "weather": "弱い雨",
+        "icon": "rainy",
+        "pop": 97
       },
       {
         "time": "20:00",
-        "temp": 25.1,
-        "weather": "晴れ",
-        "icon": "clear_night",
-        "pop": 19
+        "temp": 22.3,
+        "weather": "弱い雨",
+        "icon": "rainy",
+        "pop": 97
+      },
+      {
+        "time": "21:00",
+        "temp": 22.2,
+        "weather": "雨",
+        "icon": "rainy",
+        "pop": 98
+      },
+      {
+        "time": "22:00",
+        "temp": 22.0,
+        "weather": "雨",
+        "icon": "rainy",
+        "pop": 99
       }
     ],
-    "updated_at": "2026-09-03T18:00"
+    "updated_at": "2026-09-04T20:30"
   }
 }

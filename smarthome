@@ -96,7 +96,20 @@ def direct_fallback(endpoint, data, original_error):
             import push_service
             title = data.get('title', 'SmartHome')
             message = data.get('message') or data.get('body', '')
-            notif = push_service.push_notification(title, message)
+            ongoing = data.get('ongoing', False)
+            auto_cancel = data.get('auto_cancel', not ongoing)
+            notif = push_service.push_notification(
+                title=title,
+                body=message,
+                priority=data.get('priority', 'high'),
+                actions=data.get('actions', []),
+                notif_id=data.get('id'),
+                progress=data.get('progress'),
+                ongoing=ongoing,
+                auto_cancel=auto_cancel,
+                data=data.get('data'),
+                tag=data.get('tag')
+            )
             return {"status": "success", "notification": notif}
         else:
             res = {"status": "error", "message": str(original_error)}

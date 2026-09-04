@@ -67,7 +67,17 @@
      - 💬 **インライン返信 (`RemoteInput`)**: 通知内の入力欄から直接テキスト入力して Nova アシスタントに指示。
      - 📊 **プログレスバー (`progress`)**: 掃除機の進捗やタイマーなどの進行状況バー表示。
      - 🔄 **インプレース動的更新 (`id`)**: 同一 ID の通知を上書き更新（「⏳ 実行中...」➔「✅ 完了」へその場更新）。
+   - 堅牢化・Hardening 済み仕様 (2026-09):
+     - 🛡️ **二重/空通知抑止**: SSE `connected` ハンドシェイク時の `server_time` 同期と空メッセージ通知防止。
+     - ⏱️ **タイムアウト・切断検知**: `readTimeout = 45000`（15秒keepalive×3回で無音切断を早期検知し再接続）。
+     - 🕒 **時計ズレ耐性**: `last_poll_ts` の `SharedPreferences` 永続化と接続時キャッチアップポーリング。
+     - 🔕 **過剰チャイム防止**: インプレース更新・プログレス進行時の `setOnlyAlertOnce(true)` 適用。
+     - 🔗 **ディープリンク & 起動復元**: `onNewIntent` 実装および通知タップ時 `TARGET_URL` 伝達。
+     - 🔒 **安全なID生成 & 例外保護**: ID 1001（常駐通知）との衝突防止マスク、Android 13+ の `SecurityException` 捕捉。
+     - 🌐 **Tailscale Funnel サブパス保護**: `getBaseUrl()` で `/dashboard` を保持し、404 エラーを防止。
+     - ⚡ **サーバー安定化**: LiveReload SSE keepalive、`push_service` キューサイズ上限 (100)、`daemon_threads = True`。
    - CLI操作: `smarthome notification [タイトル] <メッセージ>` または `smarthome notify <メッセージ> [オプション: --title, --progress, --action, --reply, --test-away, --test-progress]`
+   - テストスイート: `python3 test_notifications_e2e.py`（全7項目: 通常通知、インプレース更新/プログレス、アクション/返信、アシスタント実行、ポーリング、並行リアルタイムSSE、Tailscale互換性）
    - 自動ビルド: GitHub Actions (`.github/workflows/build_apk.yml`) ➔ Release `android-latest` に `NovaAssist.apk` を自動発行
 
 ---
@@ -76,6 +86,6 @@
 
 - **バックアップの維持:** `index.html` 編集時は必ず `cp index.html index.html.bak` を実行。
 - **構文テスト:** 変更後は `HTMLParser` および JS ブラケット整合性テストを実施。
+- **統合テスト:** 通知システム・バックエンド変更後は `python3 test_notifications_e2e.py` を実行。
 - **Git同期:** テスト通過後、必ず Git にコミット＆プッシュ（`Soh-Hoshi/SmartHome-Dashboard`）。
-- **常駐プロセス:** `python3 serve.py`（ポート 8080）。
-
+- **常駐プロセス:** `python3 serve.py`（ポート 8080、`systemctl --user restart dashboard.service`）。

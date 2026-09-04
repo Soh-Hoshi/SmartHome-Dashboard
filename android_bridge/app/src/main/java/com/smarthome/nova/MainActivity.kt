@@ -3,6 +3,7 @@ package com.smarthome.nova
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -64,6 +65,15 @@ class MainActivity : AppCompatActivity() {
 
         val targetUrl = intent?.getStringExtra("TARGET_URL") ?: url
         webView.loadUrl(targetUrl)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val targetUrl = intent?.getStringExtra("TARGET_URL")
+        if (!targetUrl.isNullOrEmpty()) {
+            webView.loadUrl(targetUrl)
+        }
     }
 
     private fun checkRequiredPermissions() {

@@ -135,7 +135,9 @@ class NotificationService : Service() {
     private fun startWorker() {
         workerThread = Thread {
             Log.i(TAG, "Notification worker thread started")
-            lastPollTimestamp = System.currentTimeMillis() / 1000.0 - 5.0
+            val prefs = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+            val savedTs = prefs.getFloat("last_poll_ts", 0f).toDouble()
+            lastPollTimestamp = if (savedTs > 0) savedTs else (System.currentTimeMillis() / 1000.0 - 5.0)
 
             while (isRunning.get()) {
                 val baseUrl = getBaseUrl()
@@ -151,13 +153,14 @@ class NotificationService : Service() {
                         setRequestProperty("Accept", "text/event-stream")
                         setRequestProperty("Cache-Control", "no-cache")
                         connectTimeout = 15000
-                        readTimeout = 0 // 無限タイムアウトでSSE待機
+                        readTimeout = 45000 // 45秒タイムアウト（サーバー側15秒keepaliveで切断を早期検知）
                         instanceFollowRedirects = true
                     }
 
                     val code = connection.responseCode
                     if (code in 200..299) {
                         Log.i(TAG, "Connected to SSE stream successfully")
+                        try { pollFallback(baseUrl) } catch (e: Exception) { Log.w(TAG, "Catch-up poll failed: ${e.message}") }
                         reader = BufferedReader(InputStreamReader(connection.inputStream, "UTF-8"))
                         while (isRunning.get()) {
                             val line = reader?.readLine() ?: break
@@ -229,6 +232,8 @@ class NotificationService : Service() {
                     if (serverTime > lastPollTimestamp) {
                         lastPollTimestamp = serverTime
                     }
+                    getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+                        .edit().putFloat("last_poll_ts", lastPollTimestamp.toFloat()).apply()
                 }
             }
         } catch (e: Exception) {
@@ -236,15 +241,33 @@ class NotificationService : Service() {
         } finally {
             try { conn?.disconnect() } catch (ignored: Exception) {}
         }
-
     }
 
     private fun handleNotificationJson(jsonStr: String) {
         try {
             val obj = JSONObject(jsonStr)
+            if (obj.optString("status") == "connected") {
+                val serverTime = obj.optDouble("server_time", 0.0)
+                if (serverTime > 0) {
+                    if (lastPollTimestamp <= 0) {
+                        lastPollTimestamp = serverTime - 5.0
+                    }
+                    getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+                        .edit().putFloat("last_poll_ts", lastPollTimestamp.toFloat()).apply()
+                }
+                return
+            }
+
+            val message = obj.optString("message", obj.optString("body", "")).trim()
+            if (message.isEmpty() && !obj.has("progress")) {
+                return
+            }
+
             val ts = obj.optDouble("timestamp", 0.0)
             if (ts > lastPollTimestamp) {
                 lastPollTimestamp = ts
+                getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+                    .edit().putFloat("last_poll_ts", ts.toFloat()).apply()
             }
             showNotification(obj)
         } catch (e: Exception) {
@@ -256,16 +279,21 @@ class NotificationService : Service() {
         val title = obj.optString("title", "SmartHome")
         val message = obj.optString("message", obj.optString("body", ""))
 
-        // notifId: 指定があれば数値またはハッシュから安定したIDを生成（インプレース更新に対応）
+        // notifId: 指定があれば数値またはハッシュから安定した正の安全なIDを生成（インプレース更新に対応、ID 1001の前景サービスとの衝突を回避）
         val rawId = obj.opt("id")
         val notifId = when (rawId) {
-            is Number -> rawId.toInt()
-            is String -> if (rawId.isNotEmpty()) abs(rawId.hashCode()) % 100000 + 2000 else (System.currentTimeMillis() % 100000).toInt() + 2000
+            is Number -> ((rawId.toLong() and 0x7fffffffL) % 100000 + 2000).toInt()
+            is String -> if (rawId.isNotEmpty()) (rawId.hashCode() and 0x7fffffff) % 100000 + 2000 else (System.currentTimeMillis() % 100000).toInt() + 2000
             else -> (System.currentTimeMillis() % 100000).toInt() + 2000
         }
 
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            val targetPath = obj.optJSONObject("data")?.optString("url", "") ?: ""
+            if (targetPath.isNotEmpty()) {
+                val fullTarget = if (targetPath.startsWith("http")) targetPath else "${getBaseUrl()}$targetPath"
+                putExtra("TARGET_URL", fullTarget)
+            }
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -289,6 +317,7 @@ class NotificationService : Service() {
             .setContentText(message)
             .setPriority(priorityVal)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setOnlyAlertOnce(true)
             .setOngoing(ongoing)
             .setAutoCancel(autoCancel)
             .setContentIntent(pendingIntent)
@@ -373,9 +402,10 @@ class NotificationService : Service() {
         return try {
             val u = URL(fullUrl)
             val portStr = if (u.port != -1) ":${u.port}" else ""
-            "${u.protocol}://${u.host}$portStr"
+            val path = u.path.trimEnd('/')
+            "${u.protocol}://${u.host}$portStr$path"
         } catch (e: Exception) {
-            "https://server.tail52d127.ts.net"
+            "https://server.tail52d127.ts.net/dashboard"
         }
     }
 
