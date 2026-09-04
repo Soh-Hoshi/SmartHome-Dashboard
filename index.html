@@ -422,11 +422,10 @@
           <h2 class="text-base font-bold text-white px-1">スイッチ</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- USBスイッチタイル (詳細画面は一旦なし。アイコンまたはタイルクリックでオン/オフ切り替え) -->
-            <div onclick="toggleUsbPowerFromTile(event)" 
-                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]">
+            <!-- USBスイッチタイル (詳細画面なし。アイコンタップでのみトグル) -->
+            <div class="relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center space-x-3.5 shadow-md border border-white/[0.03]">
               
-              <!-- USB固定アイコン (オン: ティール、オフ: グレー) -->
+              <!-- USB固定アイコン (オン: ティール、オフ: グレー。タップでオン/オフ切り替え) -->
               <button onclick="toggleUsbPowerFromTile(event)"
                       id="tile-usb-icon-wrap" 
                       class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
@@ -435,7 +434,7 @@
               </button>
 
               <!-- テキスト -->
-              <div class="flex-1">
+              <div class="flex-1 select-none">
                 <div class="text-[15px] font-semibold text-white leading-tight">USB</div>
                 <div id="tile-usb-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">オフ</div>
               </div>
