@@ -9,6 +9,8 @@ Usage:
   smarthome cleaner [start|pause|home|stop|speed <mode>|find]
   smarthome vacuum ... (alias for cleaner)
   smarthome eufy ...   (alias for cleaner)
+  smarthome usb [on|off|toggle|status]
+  smarthome pc [status|shutdown]
   smarthome notification [title] <message>
   smarthome notify <message>
   smarthome status
@@ -123,7 +125,12 @@ def direct_fallback(endpoint, data, original_error):
                 data=data.get('data'),
                 tag=data.get('tag')
             )
-            return {"status": "success", "notification": notif}
+        elif endpoint in ('/api/pc', '/api/pc/shutdown'):
+            import pc_service
+            if data and data.get('action') == 'shutdown':
+                res = pc_service.shutdown_pc()
+            else:
+                res = pc_service.get_pc_status()
         else:
             res = {"status": "error", "message": str(original_error)}
 
@@ -232,6 +239,25 @@ def cmd_usb(args):
     power = res.get('power', False)
     print(f"USBスイッチ: {'ON (オン)' if power else 'OFF (オフ)'} にしました")
     return True
+
+def cmd_pc(args):
+    action = args[0].lower() if args else 'status'
+    if action in ('status', 'stat', 's', 'info'):
+        res = send_api_request('/api/pc')
+        online = res.get('online', False)
+        os_name = res.get('os', 'オフライン')
+        ip = res.get('ip', '192.168.0.51')
+        print(f"デスクトップPC ({ip}): {'起動中 [' + os_name + ']' if online else 'オフライン'}")
+        return True
+    elif action in ('shutdown', 'off', 'poweroff', 'down', '切る', '電源切る'):
+        print("デスクトップPCへシャットダウンを要求しています...")
+        res = send_api_request('/api/pc/shutdown', {'action': 'shutdown'})
+        print(f"結果: {res.get('message', res.get('status'))}")
+        return True
+    else:
+        print(f"Unknown PC action: {action}")
+        print("Usage: smarthome pc [status|shutdown]")
+        return False
 
 def cmd_notification(args):
     if not args or args[0] in ('--help', '-h'):
@@ -353,6 +379,7 @@ def cmd_status():
             print(f"ヒーター:     {state.get('heaterMode', 'off').upper()} / {state.get('heaterTemp', 24)}℃ / ECO:{state.get('heaterEco', False)}")
             print(f"クリーナー:   {state.get('cleanerStatus', 'standby').upper()}")
             print(f"USBスイッチ:  {'ON' if state.get('usbPower') else 'OFF'}")
+            print(f"デスクトップPC: {'起動中 (' + state.get('pcOs', '不明') + ')' if state.get('pcOnline') else 'OFF'}")
             return
         except Exception:
             pass
@@ -376,6 +403,8 @@ def main():
         cmd_cleaner(args)
     elif subcmd in ('usb', 'u', 'usbスイッチ', 'スイッチ'):
         cmd_usb(args)
+    elif subcmd in ('pc', 'desktop', 'パソコン', 'デスクトップ'):
+        cmd_pc(args)
     elif subcmd in ('notification', 'notify', 'n', '通知', 'notif'):
         cmd_notification(args)
     elif subcmd in ('status', 'stat', 's', '状態'):

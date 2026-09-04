@@ -27,6 +27,7 @@ import assistant_engine
 import flow_engine
 import push_service
 import usb_service
+import pc_service
 
 
 PORT = 8080
@@ -245,6 +246,8 @@ def dispatch_internal_api(endpoint: str, payload: dict):
             return {"status": "success", "power": usb_service.set_usb_power(False)}
         else:
             return {"status": "success", "power": usb_service.toggle_usb_power()}
+    elif endpoint in ('/api/pc', '/api/pc/shutdown'):
+        return pc_service.shutdown_pc()
     elif endpoint in ('/api/notify', '/api/notification'):
         ongoing = payload.get('ongoing', False)
         auto_cancel = payload.get('auto_cancel', not ongoing)
@@ -384,6 +387,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             '/api/automations': lambda: {"status": "success", "automations": automation_service.load_automations()},
             '/api/scenes': lambda: {"status": "success", "scenes": flow_engine.load_scenes()},
             '/api/usb': lambda: {"status": "success", "power": usb_service.get_usb_power()},
+            '/api/pc': lambda: {"status": "success", **pc_service.get_pc_status()},
         }
 
         if clean_path in get_routes:
@@ -487,6 +491,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             else:
                 power = usb_service.toggle_usb_power()
             return self.send_json_response({"status": "success", "power": power, "state": state_manager.load_state()})
+
+        if clean_path in ('/api/pc/shutdown', '/api/pc'):
+            res = pc_service.shutdown_pc()
+            return self.send_json_response(res)
 
         # 2. アシスタント自然言語 API
         if clean_path == '/api/assistant':

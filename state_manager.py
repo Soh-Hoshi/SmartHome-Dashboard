@@ -26,7 +26,9 @@ DEFAULT_STATE = {
     "lightNight": False,
     "cleanerStatus": "standby",
     "cleanerPlay": False,
-    "usbPower": False
+    "usbPower": False,
+    "pcOnline": False,
+    "pcOs": "オフライン"
 }
 
 def load_state() -> dict:

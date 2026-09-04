@@ -548,6 +548,15 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = "リビング照明・エアコン・ヒーター・クリーナーの操作、気象や在宅・鍵の確認、および4つのシーン（「おはよう」「おやすみ」「いってきます」「ただいま」）を実行できます。"
         return {"success": True, "message": msg, "action": "help"}
 
+    # PC個別の状態確認
+    if any(k in text for k in ['pc', 'パソコン', 'ぱそこん', 'デスクトップ']) and any(k in text for k in ['状態', 'ステータス', 'ついてる', '起動', 'どっち', 'os', 'どう']):
+        import pc_service
+        st = pc_service.get_pc_status()
+        if st.get('online'):
+            return {"success": True, "message": f"デスクトップPCは起動中です（OS: {st.get('os')}）。", "action": "pc_status"}
+        else:
+            return {"success": True, "message": "デスクトップPCはオフラインです。", "action": "pc_status"}
+
     # 4. 状態確認 (Status)
     if any(k in text for k in ['状態', 'ステータス', 'どうなってる', '今の設定', '確認', 'status', 'じょうたい']):
         try:
@@ -561,8 +570,10 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             cleaner_st = st.get('cleanerStatus', 'standby')
             cleaner_map = {'running': '掃除中', 'charging': '充電中', 'recharge': '充電に戻り中', 'standby': '待機中', 'completed': '掃除完了'}
             cleaner_desc = cleaner_map.get(cleaner_st, cleaner_st)
+            usb_st = 'ON' if st.get('usbPower') else 'OFF'
+            pc_st = f"起動中 ({st.get('pcOs', 'Windows')})" if st.get('pcOnline') else 'OFF'
 
-            msg = f"現在の状態：リビング照明は{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}です。"
+            msg = f"現在の状態：リビング照明は{light_st}、エアコンは{ac_st}、ヒーターは{heater_st}、クリーナーは{cleaner_desc}、USBは{usb_st}、PCは{pc_st}です。"
             return {"success": True, "message": msg, "action": "status"}
         except Exception:
             return {"success": True, "message": "機器の状態を確認しました。", "action": "status"}
@@ -706,6 +717,34 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         temp = max(22, min(28, temp))
         if send_api_fn: send_api_fn('/api/ac', {'mode': 'cool', 'temp': temp, 'fan_mode': 'auto'})
         return {"success": True, "message": format_standard_message('ac', 'on', {'mode': 'cool', 'temp': temp}), "action": f"ac_cool_{temp}"}
+
+    # 11. USBスイッチ
+    if any(k in text for k in ['usb', 'ユーエスビー']):
+        if any(k in text for k in ['消して', 'けして', 'オフ', 'おふ', '切って', 'きって', 'off']):
+            if send_api_fn: send_api_fn('/api/usb', {'action': 'off'})
+            return {"success": True, "message": "USBスイッチをオフにしました。", "action": "usb_off"}
+        elif any(k in text for k in ['つけて', '点けて', 'オン', 'おん', 'on']):
+            if send_api_fn: send_api_fn('/api/usb', {'action': 'on'})
+            return {"success": True, "message": "USBスイッチをオンにしました。", "action": "usb_on"}
+        elif any(k in text for k in ['トグル', '切り替え', 'toggle']):
+            if send_api_fn: send_api_fn('/api/usb', {'action': 'toggle'})
+            return {"success": True, "message": "USBスイッチを切り替えました。", "action": "usb_toggle"}
+
+    # 12. デスクトップPC (Windows / Bazzite)
+    if any(k in text for k in ['pc', 'パソコン', 'ぱそこん', 'デスクトップ']):
+        if any(k in text for k in ['消して', 'けして', '切って', 'きって', 'シャットダウン', '電源切って', '落として', 'オフ', 'off', 'down']):
+            if send_api_fn:
+                res = send_api_fn('/api/pc/shutdown', {'action': 'shutdown'})
+                msg = res.get('message', 'PCの電源を切る指示を送信しました。')
+                return {"success": True, "message": msg, "action": "pc_shutdown"}
+            return {"success": True, "message": "PCの電源を切る指示を送信しました。", "action": "pc_shutdown"}
+        elif any(k in text for k in ['状態', 'ステータス', 'ついてる', '起動', 'どっち', 'os']):
+            import pc_service
+            st = pc_service.get_pc_status()
+            if st.get('online'):
+                return {"success": True, "message": f"デスクトップPCは起動中です（OS: {st.get('os')}）。", "action": "pc_status"}
+            else:
+                return {"success": True, "message": "デスクトップPCはオフラインです。", "action": "pc_status"}
 
     # -------------------------------------------------------------
     # 第2段階：Gemini 2.0 Flash API (無料枠) によるインテリジェント推論
