@@ -62,7 +62,12 @@
    - 常駐方式: `NotificationService` (Foreground Service, `dataSync` 属性, 端末起動時 `BootReceiver` 自動常駐)
    - 通信方式: 外部ライブラリ依存ゼロ (`HttpURLConnection` による `/api/notifications/stream` SSE ＋ `/api/notifications/poll` 自動フォールバック)
    - 通知方針: **PWA (WebPush/ServiceWorker) 通知は廃止・完全無効化し、Nova Assist ネイティブアプリへ一本化**（二重通知やブラウザ通知の不具合を防止）。
-   - CLI操作: `smarthome notification [タイトル] <メッセージ>` または `smarthome notify <メッセージ>`
+   - 高機能ネイティブ通知対応:
+     - 🔘 **アクションボタン (`actions`)**: 通知タップでアプリを開かず裏で家電操作をバックグラウンド実行（`NotificationActionReceiver` 経由）。
+     - 💬 **インライン返信 (`RemoteInput`)**: 通知内の入力欄から直接テキスト入力して Nova アシスタントに指示。
+     - 📊 **プログレスバー (`progress`)**: 掃除機の進捗やタイマーなどの進行状況バー表示。
+     - 🔄 **インプレース動的更新 (`id`)**: 同一 ID の通知を上書き更新（「⏳ 実行中...」➔「✅ 完了」へその場更新）。
+   - CLI操作: `smarthome notification [タイトル] <メッセージ>` または `smarthome notify <メッセージ> [オプション: --title, --progress, --action, --reply, --test-away, --test-progress]`
    - 自動ビルド: GitHub Actions (`.github/workflows/build_apk.yml`) ➔ Release `android-latest` に `NovaAssist.apk` を自動発行
 
 ---

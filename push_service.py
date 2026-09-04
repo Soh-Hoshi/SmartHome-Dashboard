@@ -232,11 +232,18 @@ def broadcast_notification(title, body, actions=None, tag=None, data=None):
     """PWA WebPush は廃止（NovaAssist ネイティブアプリへの通知に一本化）"""
     return 0
 
-def push_notification(title: str, body: str, actions=None, tag=None, data=None, priority="high"):
+def push_notification(title: str, body: str, actions=None, tag=None, data=None, priority="high",
+                      notif_id=None, progress=None, ongoing=False, auto_cancel=True):
     """
-    NovaAssist アプリ (SSE/Poll) へ通知を配信（PWA WebPush は廃止）
+    NovaAssist アプリ (SSE/Poll) へ高機能ネイティブ通知を配信
+    - actions: タップで即時コマンド実行するボタン配列 (例: [{"id":"leaving", "title":"🚪 いってきます", "command":"いってきます"}])
+    - reply (Direct Reply): {"id":"reply", "title":"💬 指示", "reply": True, "reply_placeholder":"Novaへ..."}
+    - progress: {"current": 65, "max": 100, "indeterminate": False}
+    - notif_id: 固定IDを指定するとインプレース更新（同じ通知の上書き）が可能
     """
-    notif_id = f"notif_{int(time.time() * 1000)}_{os.urandom(3).hex()}"
+    if not notif_id:
+        notif_id = f"notif_{int(time.time() * 1000)}_{os.urandom(3).hex()}"
+
     notif_obj = {
         "id": notif_id,
         "title": title,
@@ -246,14 +253,22 @@ def push_notification(title: str, body: str, actions=None, tag=None, data=None, 
         "tag": tag or "smarthome-alert",
         "timestamp": time.time(),
         "actions": actions or [],
-        "data": data or {"url": "/dashboard"}
+        "data": data or {"url": "/dashboard"},
+        "ongoing": ongoing,
+        "auto_cancel": auto_cancel
     }
+    if progress:
+        notif_obj["progress"] = progress
 
     # 1. 履歴に追加 (ポーリング用)
     with _history_lock:
-        _notif_history.append(notif_obj)
-        if len(_notif_history) > MAX_HISTORY:
-            _notif_history.pop(0)
+        existing_idx = next((i for i, n in enumerate(_notif_history) if n.get("id") == notif_id), None)
+        if existing_idx is not None:
+            _notif_history[existing_idx] = notif_obj
+        else:
+            _notif_history.append(notif_obj)
+            if len(_notif_history) > MAX_HISTORY:
+                _notif_history.pop(0)
 
     # 2. SSE クライアント（NovaAssist等）へ即時配信
     with _sse_lock:
@@ -263,30 +278,62 @@ def push_notification(title: str, body: str, actions=None, tag=None, data=None, 
             except Exception:
                 pass
 
-    print(f"[Push Service] Notification dispatched to NovaAssist: '{title}' - '{body}' (SSE clients: {len(_sse_clients)})")
+    print(f"[Push Service] Notification dispatched to NovaAssist: id={notif_id} '{title}' - '{body}' (SSE clients: {len(_sse_clients)})")
     return notif_obj
 
 def send_away_device_warning(active_devices_str="家電"):
     """
-    外出時消し忘れ防止通知（アクションボタン付き）
+    外出時消し忘れ防止通知（アクションボタン ＆ Direct Reply 付き）
     """
     title = "お出かけですか？"
     body = f"{active_devices_str}が稼働したままです。消灯しますか？"
     actions = [
         {
-            "action": "run_leaving",
-            "title": "🚪 いってきます（全消灯）"
+            "id": "run_leaving",
+            "title": "🚪 いってきます",
+            "command": "いってきます"
         },
         {
-            "action": "dismiss",
-            "title": "そのまま"
+            "id": "reply_nova",
+            "title": "💬 Novaに指示",
+            "reply": True,
+            "reply_placeholder": "例: エアコンだけ消して"
+        },
+        {
+            "id": "dismiss",
+            "title": "そのまま",
+            "dismiss": True
         }
     ]
     return push_notification(
         title=title,
         body=body,
         actions=actions,
+        notif_id="away-device-warning",
         tag="away-device-warning",
         data={"url": "/dashboard", "scene": "leaving"}
+    )
+
+def send_progress_notification(title: str, body: str, current: int, max_val: int = 100,
+                               indeterminate: bool = False, notif_id: str = "nova_progress_bar", ongoing: bool = True):
+    """
+    プログレスバー付き通知を発行・更新（同一notif_idでプログレスバーが滑らかに進む）
+    """
+    progress = {
+        "current": current,
+        "max": max_val,
+        "indeterminate": indeterminate
+    }
+    actions = [
+        {"id": "dismiss", "title": "閉じる", "dismiss": True}
+    ] if not ongoing else []
+    return push_notification(
+        title=title,
+        body=body,
+        notif_id=notif_id,
+        progress=progress,
+        ongoing=ongoing,
+        auto_cancel=not ongoing,
+        actions=actions
     )
 

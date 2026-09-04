@@ -15,12 +15,14 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 
 @SuppressLint("MissingPermission", "NewApi", "InlinedApi")
 class NotificationService : Service() {
@@ -220,10 +222,7 @@ class NotificationService : Service() {
                             if (ts > lastPollTimestamp) {
                                 lastPollTimestamp = ts
                             }
-                            showHeadsUpNotification(
-                                notifObj.optString("title", "SmartHome"),
-                                notifObj.optString("message", notifObj.optString("body", ""))
-                            )
+                            showNotification(notifObj)
                         }
                     }
                     val serverTime = json.optDouble("server_time", 0.0)
@@ -243,22 +242,27 @@ class NotificationService : Service() {
     private fun handleNotificationJson(jsonStr: String) {
         try {
             val obj = JSONObject(jsonStr)
-            val title = obj.optString("title", "SmartHome")
-            val message = obj.optString("message", obj.optString("body", ""))
             val ts = obj.optDouble("timestamp", 0.0)
             if (ts > lastPollTimestamp) {
                 lastPollTimestamp = ts
             }
-            if (message.isNotEmpty() || title.isNotEmpty()) {
-                showHeadsUpNotification(title, message)
-            }
+            showNotification(obj)
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing notification JSON: $jsonStr", e)
         }
     }
 
-    private fun showHeadsUpNotification(title: String, message: String) {
-        val notifId = (System.currentTimeMillis() % 100000).toInt() + 2000
+    private fun showNotification(obj: JSONObject) {
+        val title = obj.optString("title", "SmartHome")
+        val message = obj.optString("message", obj.optString("body", ""))
+
+        // notifId: 指定があれば数値またはハッシュから安定したIDを生成（インプレース更新に対応）
+        val rawId = obj.opt("id")
+        val notifId = when (rawId) {
+            is Number -> rawId.toInt()
+            is String -> if (rawId.isNotEmpty()) abs(rawId.hashCode()) % 100000 + 2000 else (System.currentTimeMillis() % 100000).toInt() + 2000
+            else -> (System.currentTimeMillis() % 100000).toInt() + 2000
+        }
 
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -270,21 +274,89 @@ class NotificationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ALERT_ID)
+        val ongoing = obj.optBoolean("ongoing", false)
+        val autoCancel = obj.optBoolean("auto_cancel", !ongoing)
+        val priorityStr = obj.optString("priority", "high")
+        val priorityVal = when (priorityStr.lowercase()) {
+            "low" -> NotificationCompat.PRIORITY_LOW
+            "default" -> NotificationCompat.PRIORITY_DEFAULT
+            else -> NotificationCompat.PRIORITY_HIGH
+        }
+
+        val builder = NotificationCompat.Builder(this, CHANNEL_ALERT_ID)
             .setSmallIcon(R.drawable.ic_nova_foreground)
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(priorityVal)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setAutoCancel(true)
+            .setOngoing(ongoing)
+            .setAutoCancel(autoCancel)
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
+
+        // 1. プログレスバー機能
+        val progressObj = obj.optJSONObject("progress")
+        if (progressObj != null) {
+            val max = progressObj.optInt("max", 100)
+            val current = progressObj.optInt("current", 0)
+            val indeterminate = progressObj.optBoolean("indeterminate", false)
+            builder.setProgress(max, current, indeterminate)
+        }
+
+        // 2. アクションボタン ＆ インライン返信 (Direct Reply) 機能
+        val actionsArray = obj.optJSONArray("actions")
+        if (actionsArray != null && actionsArray.length() > 0) {
+            val flagMutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+
+            for (i in 0 until actionsArray.length()) {
+                val actionObj = actionsArray.getJSONObject(i)
+                val actionTitle = actionObj.optString("title", "")
+                val command = actionObj.optString("command", "")
+                val isDismiss = actionObj.optBoolean("dismiss", false)
+                val isReply = actionObj.optBoolean("reply", false)
+                val replyPlaceholder = actionObj.optString("reply_placeholder", "Novaに指示...")
+
+                val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+                    action = NotificationActionReceiver.ACTION_NOTIFICATION_CLICK
+                    putExtra(NotificationActionReceiver.EXTRA_NOTIF_ID, notifId)
+                    putExtra(NotificationActionReceiver.EXTRA_COMMAND, command)
+                    putExtra(NotificationActionReceiver.EXTRA_DISMISS, isDismiss)
+                    putExtra(NotificationActionReceiver.EXTRA_TITLE, title)
+                }
+
+                val requestCode = notifId * 10 + i
+                val actionPendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    requestCode,
+                    actionIntent,
+                    flagMutable
+                )
+
+                val actionBuilder = NotificationCompat.Action.Builder(
+                    0,
+                    actionTitle,
+                    actionPendingIntent
+                )
+
+                if (isReply) {
+                    val remoteInput = RemoteInput.Builder(NotificationActionReceiver.KEY_TEXT_REPLY)
+                        .setLabel(replyPlaceholder)
+                        .build()
+                    actionBuilder.addRemoteInput(remoteInput)
+                }
+
+                builder.addAction(actionBuilder.build())
+            }
+        }
 
         try {
-            NotificationManagerCompat.from(this).notify(notifId, notification)
-            Log.i(TAG, "Heads-up notification posted: $title - $message")
+            NotificationManagerCompat.from(this).notify(notifId, builder.build())
+            Log.i(TAG, "Notification posted: id=$notifId, title='$title', message='$message'")
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission POST_NOTIFICATIONS missing or denied", e)
         } catch (e: Exception) {

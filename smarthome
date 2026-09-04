@@ -189,19 +189,106 @@ def cmd_cleaner(args):
     return True
 
 def cmd_notification(args):
-    if not args:
-        print("Usage: smarthome notification [title] <message>")
+    if not args or args[0] in ('--help', '-h'):
+        print("Usage: smarthome notification [title] <message> [options]")
+        print("       smarthome notify <message>")
+        print("Options:")
+        print("  --title <title>          通知タイトルを指定")
+        print("  --progress <val>         プログレスバー (0-100)")
+        print("  --action <title:command> アクションボタンを追加 (例: --action '🚪 全消灯:いってきます')")
+        print("  --reply                  Novaへのインライン返信ボタンを追加")
+        print("  --id <notif_id>          通知ID（インプレース更新用）")
+        print("  --test-away              外出時消し忘れ通知（全アクション付き）をテスト送信")
+        print("  --test-progress          プログレスバーが進行するデモ通知を送信")
         return False
-    if len(args) == 1:
-        title = "SmartHome"
-        message = args[0]
-    else:
-        title = args[0]
-        message = " ".join(args[1:])
 
-    res = send_api_request('/api/notify', {'title': title, 'message': message})
+    if '--test-away' in args:
+        import push_service
+        notif = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
+        print(f"外出時消し忘れ通知を送信しました: {notif.get('title')}")
+        return True
+
+    if '--test-progress' in args:
+        import time
+        import push_service
+        notif_id = "demo_progress"
+        print("プログレスバー通知デモ開始...")
+        for p in [10, 35, 60, 85, 100]:
+            push_service.send_progress_notification(
+                title="🤖 ロボット掃除機",
+                body=f"リビングを清掃中... ({p}%)" if p < 100 else "清掃が完了しました！",
+                current=p,
+                max_val=100,
+                notif_id=notif_id,
+                ongoing=(p < 100)
+            )
+            time.sleep(1)
+        print("プログレスバー通知デモ完了！")
+        return True
+
+    title = "SmartHome"
+    message_parts = []
+    actions = []
+    progress = None
+    notif_id = None
+    ongoing = False
+
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == '--title' and i + 1 < len(args):
+            title = args[i+1]
+            i += 2
+        elif arg == '--id' and i + 1 < len(args):
+            notif_id = args[i+1]
+            i += 2
+        elif arg == '--progress' and i + 1 < len(args):
+            try:
+                pval = int(args[i+1])
+                progress = {"current": pval, "max": 100, "indeterminate": False}
+            except ValueError:
+                pass
+            i += 2
+        elif arg == '--action' and i + 1 < len(args):
+            act_str = args[i+1]
+            if ':' in act_str:
+                act_title, act_cmd = act_str.split(':', 1)
+            else:
+                act_title, act_cmd = act_str, act_str
+            actions.append({"id": f"act_{len(actions)}", "title": act_title, "command": act_cmd})
+            i += 2
+        elif arg == '--reply':
+            actions.append({"id": "reply_nova", "title": "💬 Novaに指示", "reply": True, "reply_placeholder": "Novaへの指示を入力..."})
+            i += 1
+        elif arg == '--ongoing':
+            ongoing = True
+            i += 1
+        else:
+            message_parts.append(arg)
+            i += 1
+
+    if not message_parts:
+        message = "通知テスト"
+    elif len(message_parts) == 1 and title == "SmartHome":
+        message = message_parts[0]
+    elif len(message_parts) >= 2 and title == "SmartHome":
+        title = message_parts[0]
+        message = " ".join(message_parts[1:])
+    else:
+        message = " ".join(message_parts)
+
+    payload = {
+        'title': title,
+        'message': message,
+        'actions': actions,
+        'ongoing': ongoing
+    }
+    if progress: payload['progress'] = progress
+    if notif_id: payload['id'] = notif_id
+
+    res = send_api_request('/api/notify', payload)
     if res.get('status') == 'success':
-        print(f"通知送信: [{title}] {message}")
+        print(f"通知送信: [{title}] {message} (Actions: {len(actions)}, Progress: {bool(progress)})")
         return True
     else:
         print(f"通知送信失敗: {res.get('message', res.get('error', 'unknown error'))}")

@@ -405,13 +405,26 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         except Exception:
             req_data = {}
 
-        # 0. 通知発行 API (NovaAssist & Push 通知)
+        # 0. 通知発行 API (NovaAssist ネイティブ通知)
         if clean_path in ('/api/notify', '/api/notification'):
             title = req_data.get('title', 'SmartHome')
             message = req_data.get('message') or req_data.get('body', '')
             priority = req_data.get('priority', 'high')
             actions = req_data.get('actions', [])
-            notif = push_service.push_notification(title, message, priority=priority, actions=actions)
+            notif_id = req_data.get('id')
+            progress = req_data.get('progress')
+            ongoing = req_data.get('ongoing', False)
+            auto_cancel = req_data.get('auto_cancel', not ongoing)
+            notif = push_service.push_notification(
+                title=title,
+                body=message,
+                priority=priority,
+                actions=actions,
+                notif_id=notif_id,
+                progress=progress,
+                ongoing=ongoing,
+                auto_cancel=auto_cancel
+            )
             return self.send_json_response({"status": "success", "notification": notif})
 
         # 1. 家電操作 API
