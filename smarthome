@@ -217,8 +217,11 @@ def cmd_notification(args):
 
     if '--test-away' in args:
         import push_service
-        notif = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
-        print(f"外出時消し忘れ通知を送信しました: {notif.get('title')}")
+        notif = push_service.send_away_device_warning()
+        if notif:
+            print(f"外出時消し忘れ通知を送信しました: [{notif.get('title')}] {notif.get('body')}")
+        else:
+            print("電気等の稼働機器がないため、外出時通知は送信されませんでした。")
         return True
 
     if '--test-progress' in args:

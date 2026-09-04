@@ -496,8 +496,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
         if clean_path == '/api/push/test':
             try:
-                notif = push_service.send_away_device_warning("リビング照明・エアコン（冷房）")
-                return self.send_json_response({"status": "success", "message": "Notification sent to NovaAssist", "notification": notif})
+                notif = push_service.send_away_device_warning()
+                if notif:
+                    return self.send_json_response({"status": "success", "message": "Notification sent to NovaAssist", "notification": notif})
+                else:
+                    return self.send_json_response({"status": "skipped", "message": "No active devices, notification skipped"})
             except Exception as e:
                 return self.send_json_response({"status": "error", "error": str(e)})
 

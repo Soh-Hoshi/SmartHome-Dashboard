@@ -367,8 +367,9 @@ class NotificationService : Service() {
                     flagMutable
                 )
 
+                val actionIcon = actionObj.optInt("icon", 0)
                 val actionBuilder = NotificationCompat.Action.Builder(
-                    R.drawable.ic_nova_foreground,
+                    actionIcon,
                     actionTitle,
                     actionPendingIntent
                 ).setAllowGeneratedReplies(true)

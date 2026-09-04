@@ -280,28 +280,41 @@ def push_notification(title: str, body: str, actions=None, tag=None, data=None, 
     print(f"[Push Service] Notification dispatched to NovaAssist: id={notif_id} '{title}' - '{body}' (SSE clients: {len(_sse_clients)})")
     return notif_obj
 
-def send_away_device_warning(active_devices_str="家電"):
+def send_away_device_warning(active_devices_str=None):
     """
-    外出時消し忘れ防止通知（アクションボタン ＆ Direct Reply 付き）
+    外出時消し忘れ防止通知（電気等の稼働機器がある場合のみ送信）
+    説明文・不要ボタン・アイコンを排除し、「いってきます」「novaへ指示」の2つのみ提供。
     """
+    import state_manager
+    st = state_manager.load_state()
+
+    active_devices = []
+    if st.get('lightOn', False):
+        active_devices.append('リビング照明')
+    if st.get('acMode', 'off') != 'off':
+        mode_str = 'エアコン（冷房）' if st.get('acMode') == 'cool' else ('エアコン（除湿）' if st.get('acMode') == 'dry' else 'エアコン')
+        active_devices.append(mode_str)
+    if st.get('heaterMode', 'off') != 'off':
+        active_devices.append('ヒーター')
+
+    dev_str = active_devices_str or ('・'.join(active_devices) if active_devices else None)
+    if not dev_str:
+        print("[Push Service] 外出検知: 電気等の稼働機器がないため、通知を送信しませんでした。")
+        return None
+
     title = "お出かけですか？"
-    body = f"{active_devices_str}が稼働したままです。消灯しますか？"
+    body = dev_str
     actions = [
         {
             "id": "run_leaving",
-            "title": "🚪 いってきます",
+            "title": "いってきます",
             "command": "いってきます"
         },
         {
             "id": "reply_nova",
-            "title": "💬 Novaに指示",
+            "title": "novaへ指示",
             "reply": True,
-            "reply_placeholder": "例: エアコンだけ消して"
-        },
-        {
-            "id": "dismiss",
-            "title": "そのまま",
-            "dismiss": True
+            "reply_placeholder": "Novaに指示..."
         }
     ]
     return push_notification(

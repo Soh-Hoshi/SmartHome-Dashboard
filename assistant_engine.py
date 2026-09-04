@@ -528,17 +528,20 @@ def parse_and_execute(prompt: str, send_api_fn=None):
         msg = "登録されているシーンは「おはよう」「おやすみ」「いってきます」「ただいま」の全4種類です。"
         return {"success": True, "message": msg, "action": "scenes_list"}
 
-    # 2. オートメーション一覧・個数問い合わせ (全2種: 朝, 外出時消し忘れ防止)
+    # 2. オートメーション一覧・個数問い合わせ (全3種: 平日 6:30, 平日 9:00, 外出時)
     if re.search(r'(オートメーション|自動化).*(何|いくつ|どんな|一覧|教えて|ある|種類|名|数|リスト)', text):
-        msg = "登録されているオートメーションは「朝」（平日 06:30）と「外出時消し忘れ防止」（外出時に消灯確認通知）の全2種類です。"
+        msg = "登録されているオートメーションは「平日 6:30」（リビング照明点灯）、「平日 9:00」（ロボット掃除機）、および「外出時」（消し忘れ通知）の全3種類です。"
         return {"success": True, "message": msg, "action": "automations_list"}
 
     # 2.5 通知テスト・消し忘れ通知送信
     if any(k in text for k in ['通知テスト', 'プッシュテスト', '消し忘れ通知テスト', '通知送って', '通知を送って', '通知テストして', '通知確認']):
         try:
             import push_service
-            push_service.send_away_device_warning('照明・エアコン（冷房）')
-            return {"success": True, "message": "消し忘れ確認のテスト通知を送信しました。", "action": "push_test"}
+            notif = push_service.send_away_device_warning()
+            if notif:
+                return {"success": True, "message": "消し忘れ確認通知を送信しました。", "action": "push_test"}
+            else:
+                return {"success": True, "message": "稼働中の機器がないため、通知は送信されませんでした。", "action": "push_test"}
         except Exception as e:
             return {"success": False, "message": f"通知送信でエラーが発生しました: {e}", "action": "push_error"}
 

@@ -189,6 +189,8 @@ def trigger_away_check():
             push_service.send_away_device_warning(devices_str)
         except Exception as e:
             print(f"[Push Trigger Error] {e}")
+    else:
+        print("[Automation Alert] 外出検知: 電気等の稼働機器がないため、消し忘れ通知をスキップしました。")
 
 def execute_automation(auto_id):
     from serve import dispatch_internal_api
