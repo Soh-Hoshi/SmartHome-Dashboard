@@ -259,7 +259,11 @@ class NotificationService : Service() {
             }
 
             val message = obj.optString("message", obj.optString("body", "")).trim()
-            if (message.isEmpty() && !obj.has("progress")) {
+            val title = obj.optString("title", "").trim()
+            val hasActions = obj.optJSONArray("actions")?.let { it.length() > 0 } ?: false
+            val hasProgress = obj.has("progress")
+
+            if (message.isEmpty() && title.isEmpty() && !hasProgress && !hasActions) {
                 return
             }
 

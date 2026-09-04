@@ -303,7 +303,7 @@ def send_away_device_warning(active_devices_str=None):
         return None
 
     title = "お出かけですか？"
-    body = ""
+    body = "\u200b"
     actions = [
         {
             "id": "run_leaving",
@@ -317,11 +317,12 @@ def send_away_device_warning(active_devices_str=None):
             "reply_placeholder": "Novaに指示..."
         }
     ]
+    now_ts = int(time.time())
     return push_notification(
         title=title,
         body=body,
         actions=actions,
-        notif_id="away-device-warning",
+        notif_id=f"away_{now_ts}",
         tag="away-device-warning",
         data={"url": "/dashboard", "scene": "leaving"}
     )
