@@ -86,9 +86,9 @@ def is_japanese_business_day(dt: datetime.date) -> bool:
 DEFAULT_AUTOMATIONS = [
     {
         "id": "weekday_morning_light",
-        "name": "朝",
+        "name": "平日 6:30",
         "category": "デイリー",
-        "enabled": True,
+        "enabled": False,
         "trigger": {
             "type": "time",
             "time": "06:30",
@@ -105,6 +105,28 @@ DEFAULT_AUTOMATIONS = [
             }
         ],
         "command": "smarthome light on"
+    },
+    {
+        "id": "weekday_morning_cleaner",
+        "name": "平日 9:00",
+        "category": "デイリー",
+        "enabled": True,
+        "trigger": {
+            "type": "time",
+            "time": "09:00",
+            "condition": "日本の平日（土日祝除く）"
+        },
+        "flow": [
+            {
+                "target": "クリーナー",
+                "action": "開始",
+                "condition": None,
+                "icon": "cleaning_services",
+                "iconColor": "text-sky-400",
+                "bgColor": "bg-sky-500/10"
+            }
+        ],
+        "command": "smarthome cleaner start"
     }
 ]
 
@@ -173,8 +195,20 @@ def execute_automation(auto_id):
     if auto_id == "away_device_warning":
         trigger_away_check()
         return True
-    elif auto_id == "weekday_morning_light":
+    elif auto_id in ("weekday_morning_light", "平日 6:30"):
         dispatch_internal_api('/api/light', {'action': 'on'})
+        return True
+    elif auto_id in ("weekday_morning_cleaner", "平日 9:00", "weekday_cleaner"):
+        dispatch_internal_api('/api/cleaner', {'action': 'start'})
+        try:
+            import push_service
+            push_service.push_notification(
+                title="オートメーション実行",
+                body="平日 9:00：ロボット掃除機を開始しました。",
+                notif_id="weekday_cleaner_alert"
+            )
+        except Exception as e:
+            print(f"[Automation Notification Error] {e}")
         return True
     return False
 

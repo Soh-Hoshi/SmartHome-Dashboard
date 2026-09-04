@@ -5,7 +5,25 @@
     "category": "デイリー",
     "enabled": false,
     "summary": "リビング点灯",
-    "command": "smarthome light on"
+    "command": "smarthome light on",
+    "trigger": {
+      "type": "time",
+      "time": "06:30",
+      "condition": "日本の平日（土日祝除く）"
+    }
+  },
+  {
+    "id": "weekday_morning_cleaner",
+    "name": "平日 9:00",
+    "category": "デイリー",
+    "enabled": true,
+    "summary": "クリーナー起動",
+    "command": "smarthome cleaner start",
+    "trigger": {
+      "type": "time",
+      "time": "09:00",
+      "condition": "日本の平日（土日祝除く）"
+    }
   },
   {
     "id": "away_device_warning",
