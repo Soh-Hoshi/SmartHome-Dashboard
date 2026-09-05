@@ -135,7 +135,20 @@
 - **名称統一**: ロボット掃除機・掃除機表記をダッシュボード上の呼称である「クリーナー」に統一（`automation_service.py`, `assistant_engine.py`, `smarthome` CLI）。ライト表記も「リビング照明」に統一。
 - **シーン応答文の短縮・改行**: 通知カードやアシスタント応答で冗長な長文（理由説明等）を排除。挨拶 ＋ 改行 ＋ 簡潔な実行結果（例：「いってらっしゃい！\n照明と空調を停止しました。」「おはようございます！\n照明を点灯し、エアコンを設定しました。」）に整理。
 
-### 4.5 現在の稼働状態
-- **systemd サービス**: `dashboard.service`（Active: running, port 8080）。
-- **Android APK**: `android_bridge/app/build/outputs/apk/debug/app-debug.apk` ローカルビルド完了 ＆ GitHub Actions CIによる自動リリース連携。
-- **Git リポジトリ**: すべての変更をコミットし、`origin/main` にプッシュ可能状態。
+### 4.5 クローラー遮断 ＆ シークレットキー（合言葉）永続Cookieホワイトリスト (2026-09-05)
+- **課題と経緯**: Tailscale Funnel（全世界公開）を経由して巡回クローラー・ボットがアクセスし、HTML内のボタンをクリック走査したことで照明・エアコン等の家電が勝手に動作する被害が発生。アカウント制/パスワード入力画面は個人用途で利便性を損なうため撤廃し、ログイン不要で快適に扱えるホワイトリスト方式を採用。
+- **アーキテクチャ**:
+  1. **初回キーアクセス**: `https://.../dashboard/?key=<合言葉>` をブラウザで一度開くと、サーバーが HMAC 署名付きの永続Cookie（`sh_auth`、有効期限10年、HttpOnly, Secure）を発行し、URLパラメータ無しの `/dashboard/` へ 302 リダイレクト。アドレスバーが綺麗になりキーの漏洩も防止。
+  2. **クローラー遮断**: Cookieもキーも持たない外部インターネット（Funnel）からのアクセスは、HTMLやAPIを一切渡さず即座に `403 Forbidden` で切断。ボタン自体が存在しないため走査・誤作動は100%防止。
+  3. **スマートバイパス**:
+     - **宅内LAN直接アクセス**: `X-Forwarded-For` が無くプライベートIPからの直接通信は無条件パス。
+     - **Tailscale VPN接続端末**: `Tailscale-User-Login` ヘッダー付きのリクエストは無条件パス。
+  4. **Nova Assist (Android Bridge) 連携**:
+     - `NetworkUtils.kt`: WebView の CookieManager から Cookie を継承して `HttpURLConnection`（SSE / Polling / ActionReceiver）に自動付与。
+     - 設定 URL に `?key=...` が含まれる場合は `X-Access-Key` ヘッダーとしてもフォールバック送信。
+  5. **テストスイート**: `test_notifications_e2e.py` に `test_8_crawler_blocking_and_auth` を追加（全8項目 PASS）。
+
+### 4.6 現在の稼働状態
+- **systemd サービス**: `dashboard.service`（Active: running, port 8080、合言葉認証＆クローラー遮断有効）。
+- **Android APK**: `android_bridge/app/build/outputs/apk/debug/app-debug.apk` ビルド完了。
+- **Git リポジトリ**: `origin/main` にプッシュ可能状態。

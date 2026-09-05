@@ -25,3 +25,4 @@ build/
 android_bridge/.gradle/
 android_bridge/app/build/
 android_bridge/local.properties
+weather_cache.json

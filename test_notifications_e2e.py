@@ -146,6 +146,55 @@ def test_7_subpath_routing_compatibility():
     assert poll_res.get("status") == "success"
     print("  -> Passed.")
 
+def test_8_crawler_blocking_and_auth():
+    print("[8/8] Testing crawler blocking & key/cookie authentication...")
+    import auth_service
+    key = auth_service.get_access_key()
+
+    # 1. クローラー模倣 (外部IP、キー・Cookieなし) -> 403 遮断
+    req_crawler = urllib.request.Request(f"{BASE_URL}/dashboard/", headers={"X-Forwarded-For": "198.51.100.22"})
+    try:
+        with urllib.request.urlopen(req_crawler, timeout=5) as res:
+            assert False, f"Crawler was not blocked! Status: {res.status}"
+    except urllib.error.HTTPError as e:
+        assert e.code == 403, f"Expected 403 for crawler, got {e.code}"
+
+    # 2. クローラーによる API 操作リクエスト -> 403 遮断
+    req_crawler_post = urllib.request.Request(
+        f"{BASE_URL}/api/light",
+        data=b'{"action":"toggle"}',
+        headers={"X-Forwarded-For": "198.51.100.22", "Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req_crawler_post, timeout=5) as res:
+            assert False, f"Crawler POST was not blocked! Status: {res.status}"
+    except urllib.error.HTTPError as e:
+        assert e.code == 403, f"Expected 403 for crawler POST, got {e.code}"
+
+    # 3. 正しい合言葉による初回アクセス -> 302 リダイレクト & Set-Cookie
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, hdrs, newurl):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect)
+    try:
+        res = opener.open(urllib.request.Request(f"{BASE_URL}/dashboard/?key={key}", headers={"X-Forwarded-For": "198.51.100.22"}))
+        status, hdrs = res.status, res.headers
+    except urllib.error.HTTPError as e:
+        status, hdrs = e.code, e.headers
+
+    assert status == 302, f"Expected 302 on ?key=, got {status}"
+    cookie_hdr = hdrs.get("Set-Cookie", "")
+    assert "sh_auth=" in cookie_hdr, "Set-Cookie missing sh_auth"
+
+    # 4. Cookie 付きでの継続アクセス -> 200 OK
+    cookie_val = [p.split(';')[0] for p in cookie_hdr.split(', ') if 'sh_auth=' in p][0]
+    req_cookie = urllib.request.Request(f"{BASE_URL}/dashboard/", headers={"X-Forwarded-For": "198.51.100.22", "Cookie": cookie_val})
+    with urllib.request.urlopen(req_cookie, timeout=5) as res:
+        assert res.status == 200, f"Expected 200 with Cookie, got {res.status}"
+
+    print("  -> Passed.")
+
 if __name__ == "__main__":
     print("=== SmartHome Notification & SSE Verification Test Suite ===")
     test_1_standard_notification()
@@ -155,4 +204,5 @@ if __name__ == "__main__":
     test_5_fallback_polling()
     test_6_sse_concurrent_realtime_stream()
     test_7_subpath_routing_compatibility()
+    test_8_crawler_blocking_and_auth()
     print("=== ALL TESTS PASSED SUCCESSFULLY ===")

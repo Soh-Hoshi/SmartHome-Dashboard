@@ -28,6 +28,7 @@ import flow_engine
 import push_service
 import usb_service
 import pc_service
+import auth_service
 
 
 PORT = 8080
@@ -45,7 +46,7 @@ def get_latest_mtime():
     max_m = 0
     for root, _, files in os.walk(DIRECTORY):
         for f in files:
-            if f.endswith(('.html', '.css', '.js', '.png', '.jpg', '.svg', '.json')) and not f.endswith(('weather_cache.json', 'server.log')):
+            if f.endswith(('.html', '.css', '.js', '.png', '.jpg', '.svg', '.json')) and not f.endswith(('weather_cache.json', 'server.log', 'state.json')):
                 try:
                     p = os.path.join(root, f)
                     m = os.path.getmtime(p)
@@ -291,14 +292,43 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_unauthorized(self, reason: str = ""):
+        msg = b"403 Forbidden: Access denied. Valid access key or session cookie required.\n"
+        self.send_response(HTTPStatus.FORBIDDEN)
+        self.send_header('Content-Type', 'text/plain; charset=utf-8')
+        self.send_header('Content-Length', str(len(msg)))
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.end_headers()
+        self.wfile.write(msg)
+
+    def send_auth_redirect(self, clean_url: str, cookie_val: str):
+        self.send_response(HTTPStatus.FOUND)
+        self.send_header('Location', clean_url or '/dashboard/')
+        self.send_header('Set-Cookie', auth_service.build_cookie_header(cookie_val, secure=True))
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+
     def do_OPTIONS(self):
         self.send_response(HTTPStatus.NO_CONTENT)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Access-Key')
         self.end_headers()
 
     def do_GET(self):
+        # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
+        auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
+        if not auth['authenticated']:
+            print(f"[AUTH DENIED] path={self.path} client={self.client_address} reason={auth.get('reason')} xff={self.headers.get('X-Forwarded-For')}")
+            return self.send_unauthorized(auth.get('reason'))
+
+        print(f"[AUTH OK] path={self.path} client={self.client_address} reason={auth.get('reason')}")
+
+        # ?key=合言葉 による初回アクセス時は、永続Cookieを発行して綺麗なURLへリダイレクト
+        if auth.get('set_cookie') and auth.get('clean_url') is not None:
+            return self.send_auth_redirect(auth['clean_url'], auth['cookie_value'])
+
         parsed = urllib.parse.urlparse(self.path)
         clean_path = parsed.path
         if clean_path.startswith('/dashboard'):
@@ -425,6 +455,11 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
+        auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
+        if not auth['authenticated']:
+            return self.send_unauthorized(auth.get('reason'))
+
         parsed = urllib.parse.urlparse(self.path)
         clean_path = parsed.path
         if clean_path.startswith('/dashboard'):

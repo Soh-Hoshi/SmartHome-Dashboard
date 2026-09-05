@@ -58,7 +58,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         thread {
             try {
                 val baseUrl = getBaseUrl(context)
-                val responseMsg = executeAssistantCommand(baseUrl, command)
+                val responseMsg = executeAssistantCommand(context, baseUrl, command)
 
                 // 3. インプレース完了更新: サーバー応答を既存通知にその場で反映
                 updateNotificationCompleted(context, notifId, notifTitle, responseMsg)
@@ -167,7 +167,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun executeAssistantCommand(baseUrl: String, prompt: String): String {
+    private fun executeAssistantCommand(context: Context, baseUrl: String, prompt: String): String {
         val url = URL("$baseUrl/api/assistant")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
@@ -175,6 +175,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             connectTimeout = 10000
             readTimeout = 15000
             doOutput = true
+            NetworkUtils.applyAuthHeaders(this, baseUrl, context)
         }
 
         val jsonBody = JSONObject().apply {

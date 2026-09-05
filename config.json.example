@@ -1,4 +1,5 @@
 {
+  "access_key": "YOUR_SECRET_ACCESS_KEY",
   "switchbot": {
     "token": "YOUR_SWITCHBOT_TOKEN",
     "secret": "YOUR_SWITCHBOT_SECRET",

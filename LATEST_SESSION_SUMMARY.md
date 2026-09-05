@@ -85,6 +85,26 @@
      - **おやすみ**: `おやすみなさい。\n照明を消灯し、エアコンを設定しました。`
      - **ただいま**: `おかえりなさい！\n照明を点灯し、エアコンを設定しました。`
 
+### ④ クローラー遮断 ＆ シークレットキー（合言葉）永続Cookieホワイトリスト (2026-09-05)
+Tailscale Funnel（外部公開）経由で巡回ボットがアクセスし、HTML内のボタンをクリック走査して家電が誤動作した問題に対し、**「ログイン画面を出さずにクローラーを100%遮断する」**ホワイトリスト方式を実装・検証完了しました。
+
+1. **アーキテクチャ**:
+   - **`auth_service.py`**:
+     - `config.json` の `access_key` を合言葉として管理。
+     - HMAC-SHA256 署名付きの永続 Cookie（`sh_auth`、有効期限10年、HttpOnly, Secure）を発行・検証。
+   - **`serve.py` の多層認証判定**:
+     - **宅内LAN直接アクセス**: `X-Forwarded-For` が無くプライベートIPからの直接通信は無条件パス。
+     - **Tailscale VPN接続端末**: `Tailscale-User-Login` ヘッダー付きのリクエストは無条件パス。
+     - **ブラウザ日常アクセス**: Cookie（`sh_auth`）があれば無条件パス。
+     - **初回アクセス**: `https://server.tail52d127.ts.net/dashboard/?key=<合言葉>` でアクセスすると、Cookieを発行しURLから `?key=...` を消去した `/dashboard/` へ 302 リダイレクト。
+     - **外部クローラー/ボット**: Cookieもキーも無いため、HTMLやAPIを一切返さず即座に `403 Forbidden` で切断。
+2. **Nova Assist (Android Bridge) 連携**:
+   - `NetworkUtils.kt` を新設。WebView の CookieManager からセッション Cookie を取得して `HttpURLConnection`（SSE / Polling / ActionReceiver）に自動付与。
+   - 設定 URL に `?key=...` が含まれる場合は `X-Access-Key` ヘッダーとしてもフォールバック送信。
+   - Android APK を再ビルド（3.2MB、ビルド成功）。
+3. **テスト検証**:
+   - `test_notifications_e2e.py` に `test_8_crawler_blocking_and_auth` を追加し、全8項目 PASS を確認。
+
 ---
 
 ## 2. 現在の稼働状態 ＆ Git 状況

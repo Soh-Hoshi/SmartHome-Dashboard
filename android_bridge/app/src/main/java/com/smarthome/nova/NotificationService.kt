@@ -155,6 +155,7 @@ class NotificationService : Service() {
                         connectTimeout = 15000
                         readTimeout = 45000 // 45秒タイムアウト（サーバー側15秒keepaliveで切断を早期検知）
                         instanceFollowRedirects = true
+                        NetworkUtils.applyAuthHeaders(this, baseUrl, this@NotificationService)
                     }
 
                     val code = connection.responseCode
@@ -212,6 +213,7 @@ class NotificationService : Service() {
                 requestMethod = "GET"
                 connectTimeout = 8000
                 readTimeout = 8000
+                NetworkUtils.applyAuthHeaders(this, baseUrl, this@NotificationService)
             }
             if (conn.responseCode == 200) {
                 val response = conn.inputStream.bufferedReader().readText()
