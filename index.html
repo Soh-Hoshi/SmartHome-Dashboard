@@ -1619,7 +1619,7 @@
       <!-- 中央: オン/オフ/OS表示 ＆ 縦型スイッチスライダー (画面サイズ非依存・完全固定グループ) -->
       <div class="flex-1 flex flex-col items-center justify-center my-auto py-2 shrink-0">
         <!-- ステータステキスト: オフ / Windows / Bazzite (または起動中...) -->
-        <div id="detail-pc-title" class="text-3xl font-bold tracking-tight text-neutral-400 mb-4 transition-all duration-300">オフ</div>
+        <div id="detail-pc-title" class="text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300">オフ</div>
         
         <!-- 縦型Apple Home風 スイッチスライダー (タップでオン/オフ切り替え) -->
         <div id="pc-slider-container"
@@ -2744,7 +2744,7 @@
         isSwitchActive = true;
         if (statusEl) {
           statusEl.textContent = '起動中...';
-          statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
+          statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
@@ -2767,7 +2767,7 @@
         isSwitchActive = true;
         if (statusEl) {
           statusEl.textContent = osLabel === 'オン' ? 'オン' : `${osLabel} (起動中)`;
-          statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
+          statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
@@ -2808,15 +2808,7 @@
 
       if (detailTitle) {
         detailTitle.textContent = currentStatusText;
-        if (state.pcBooting || state.pcOs === '起動中...') {
-          detailTitle.className = "text-3xl font-bold tracking-tight text-sky-400 mb-4 transition-all duration-300";
-        } else if (state.pcShuttingDown || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中...') {
-          detailTitle.className = "text-3xl font-bold tracking-tight text-neutral-400 mb-4 transition-all duration-300";
-        } else if (state.pcOnline) {
-          detailTitle.className = "text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300";
-        } else {
-          detailTitle.className = "text-3xl font-bold tracking-tight text-neutral-400 mb-4 transition-all duration-300";
-        }
+        detailTitle.className = "text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300";
       }
 
       if (detailBlock) {
