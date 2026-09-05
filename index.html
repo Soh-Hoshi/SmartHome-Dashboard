@@ -2938,6 +2938,11 @@
         iconSpan.textContent = (os === 'Windows') ? 'desktop_windows' : 'sports_esports';
       }
 
+      // 電源オフ時または起動中なら次回起動OSの切り替えをタイルおよび詳細アイコンへ即座に反映
+      if (!state.pcOnline || state.pcBooting) {
+        updatePcUi();
+      }
+
       if (sendCommand) {
         const isBazzite = (os === 'Bazzite');
         fetch(`${apiBasePath}/api/pc`, {
@@ -2958,19 +2963,26 @@
     function updatePcUi() {
       const statusEl = document.getElementById('tile-pc-status');
       const iconWrap = document.getElementById('tile-pc-icon-wrap');
+      const tileIconEl = document.getElementById('tile-pc-icon');
       
       // 詳細シート要素
       const detailTitle = document.getElementById('detail-pc-title');
       const detailBlock = document.getElementById('pc-detail-block');
       const detailIcon = document.getElementById('pc-detail-icon');
 
+      // ターゲットOS（次回起動OS / USBスイッチの状態）
+      const targetOs = state.pcTargetOs || (state.usbPower ? 'Bazzite' : 'Windows');
+      const targetIcon = (targetOs === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
+
       let currentStatusText = 'オフ';
       let isSwitchActive = false;
+      let activeTileIcon = targetIcon;
 
       if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
-        // 起動中: スカイブルー点灯 ＋ 脈動（パルス）
+        // 起動中: スカイブルー点灯 ＋ 脈動（パルス）、アイコンは次回起動OS
         currentStatusText = '起動中';
         isSwitchActive = true;
+        activeTileIcon = targetIcon;
         if (statusEl) {
           statusEl.textContent = '起動中';
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
@@ -2979,9 +2991,10 @@
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
         }
       } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
-        // 終了中: グレー ＋ 脈動（パルス）
+        // 終了中: グレー ＋ 脈動（パルス）、アイコンは終了処理中OS
         currentStatusText = '終了中';
         isSwitchActive = false;
+        activeTileIcon = (state.pcOs === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
         if (statusEl) {
           statusEl.textContent = '終了中';
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
@@ -2990,10 +3003,11 @@
           iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
         }
       } else if (state.pcOnline) {
-        // 完全起動中: スカイブルー点灯（常時点灯）
+        // 完全起動中: スカイブルー点灯（常時点灯）、アイコンは実際のステータス (稼働OS)
         const osLabel = state.pcOs && state.pcOs !== 'Unknown' && state.pcOs !== '起動中' && state.pcOs !== '起動中...' ? state.pcOs : 'オン';
         currentStatusText = osLabel;
         isSwitchActive = true;
+        activeTileIcon = (osLabel === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
         if (statusEl) {
           statusEl.textContent = osLabel === 'オン' ? 'オン' : `${osLabel} (起動中)`;
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
@@ -3002,9 +3016,10 @@
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
         }
       } else {
-        // オフライン: グレー（常時）
+        // オフライン: グレー（常時）、アイコンはusbswitchの状況 (次回起動OS)
         currentStatusText = 'オフ';
         isSwitchActive = false;
+        activeTileIcon = targetIcon;
         if (statusEl) {
           statusEl.textContent = 'オフ';
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
@@ -3014,9 +3029,13 @@
         }
       }
 
+      // タイルアイコンの更新 (オフ時は次回起動OS、オン時は実稼働OS)
+      if (tileIconEl) {
+        tileIconEl.textContent = activeTileIcon;
+      }
+
       // 詳細シートのUI更新 (オフ / Windows / Bazzite)
       const containerEl = document.getElementById('pc-slider-container');
-      const activeIcon = (currentStatusText === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
 
       if (detailTitle) {
         detailTitle.textContent = currentStatusText;
@@ -3048,7 +3067,7 @@
       }
 
       if (detailIcon) {
-        detailIcon.textContent = activeIcon;
+        detailIcon.textContent = activeTileIcon;
         detailIcon.className = isSwitchActive 
           ? "material-symbols-rounded text-[26px] text-white"
           : "material-symbols-rounded text-[26px] text-neutral-400";
@@ -3380,6 +3399,9 @@
             updateLightUi();
             updateCleanerUi();
             updateUsbUi();
+            if (state.pcTargetOs) {
+              applyPcOsSelection(state.pcTargetOs, false);
+            }
             updatePcUi();
           }
         }
@@ -3784,6 +3806,7 @@
       updateLightUi();
       updateCleanerUi();
       updateUsbUi();
+      applyPcOsSelection(state.pcTargetOs || 'Windows', false);
       updatePcUi();
       loadInitialState();
       fetchWeatherData();
