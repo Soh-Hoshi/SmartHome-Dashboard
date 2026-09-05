@@ -415,17 +415,19 @@ def shutdown_pc():
             "os": "オフライン"
         }
 
-    os_type = st.get("os", "Windows")
     if os_type == "Windows":
         remote_cmd = 'shutdown.exe /s /t 0'
+        users_to_try = ["user", "Soh", "soh"]
     else:
         remote_cmd = f'sudo /usr/bin/systemctl poweroff || sudo systemctl poweroff || systemctl poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
+        users_to_try = ["Soh", "soh", "user"]
 
     last_err = None
     sent = False
-    for u in USERS:
+    for u in users_to_try:
         cmd_key = [
             "ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR",
             "-o", "ConnectTimeout=3", f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_key, capture_output=True, text=True)
@@ -435,7 +437,9 @@ def shutdown_pc():
 
         cmd_pass = [
             "sshpass", "-p", PASSWORD,
-            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=3",
+            "ssh", "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR",
+            "-o", "ConnectTimeout=3",
             f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_pass, capture_output=True, text=True)
