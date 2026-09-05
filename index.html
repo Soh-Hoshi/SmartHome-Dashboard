@@ -1709,11 +1709,11 @@
               <span id="check-pc-os-windows" class="text-[#4a88e8] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
             </button>
             <button onclick="selectPcOs('Bazzite')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-[#a79cf5]">
+              <div class="flex items-center space-x-3 text-[#c084fc]">
                 <span class="material-symbols-rounded text-xl">sports_esports</span>
                 <span class="text-white">Bazzite</span>
               </div>
-              <span id="check-pc-os-bazzite" class="hidden text-[#a79cf5] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-pc-os-bazzite" class="hidden text-[#c084fc] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
             </button>
           </div>
         </div>
@@ -2920,11 +2920,11 @@
       state.pcTargetOs = os;
       state.usbPower = (os === 'Bazzite');
 
-      // チェックマークの切り替え (Windows: #4a88e8, Bazzite: #a79cf5)
+      // チェックマークの切り替え (Windows: #4a88e8, Bazzite: #c084fc)
       const checkWin = document.getElementById('check-pc-os-windows');
       const checkBaz = document.getElementById('check-pc-os-bazzite');
       if (checkWin) checkWin.className = (os === 'Windows') ? "text-[#4a88e8] flex items-center" : "hidden text-[#4a88e8] flex items-center";
-      if (checkBaz) checkBaz.className = (os === 'Bazzite') ? "text-[#a79cf5] flex items-center" : "hidden text-[#a79cf5] flex items-center";
+      if (checkBaz) checkBaz.className = (os === 'Bazzite') ? "text-[#c084fc] flex items-center" : "hidden text-[#c084fc] flex items-center";
 
       // トリガーボタンの表示切り替え (次回起動OSドロップダウンのみ更新)
       const labelEl = document.getElementById('detail-pc-os-label');
@@ -2932,7 +2932,7 @@
       const iconSpan = document.getElementById('detail-pc-os-icon-span');
       if (labelEl) labelEl.textContent = os;
       if (iconWrap) {
-        iconWrap.className = (os === 'Windows') ? "text-[#4a88e8] shrink-0 flex items-center justify-center" : "text-[#a79cf5] shrink-0 flex items-center justify-center";
+        iconWrap.className = (os === 'Windows') ? "text-[#4a88e8] shrink-0 flex items-center justify-center" : "text-[#c084fc] shrink-0 flex items-center justify-center";
       }
       if (iconSpan) {
         iconSpan.textContent = (os === 'Windows') ? 'desktop_windows' : 'sports_esports';
@@ -2990,8 +2990,8 @@
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
-          // Bazziteなら優しいソフトパープル、Windowsなら優しいブルー
-          const bootColor = isTargetBazzite ? "bg-[#221c33] text-[#a79cf5]" : "bg-[#1e293b] text-[#4a88e8]";
+          // Bazziteなら明るく鮮やかなパープル背景、Windowsなら優しいブルー
+          const bootColor = isTargetBazzite ? "bg-[#52338d] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
           iconWrap.className = `w-11 h-11 rounded-full ${bootColor} flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse`;
         }
       } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
@@ -3018,8 +3018,8 @@
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
-          // Bazziteは優しいソフトパープル、Windowsは優しいブルー
-          const onlineColor = isBazziteActual ? "bg-[#221c33] text-[#a79cf5]" : "bg-[#1e293b] text-[#4a88e8]";
+          // Bazziteは明るく鮮やかなパープル背景、Windowsは優しいブルー
+          const onlineColor = isBazziteActual ? "bg-[#52338d] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
           iconWrap.className = `w-11 h-11 rounded-full ${onlineColor} flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer`;
         }
       } else {
@@ -3049,14 +3049,14 @@
         detailTitle.className = "text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300";
       }
 
-      // シート背景のアクセント微細グロー (Bazziteのときは上品で柔らかい紫グロー)
+      // シート背景のアクセント微細グロー (Bazziteのときは上品な紫グロー)
       if (sheetContent) {
         if (state.pcOnline && currentStatusText === 'Bazzite') {
-          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(128, 117, 230, 0.07) 0%, rgba(30, 32, 37, 1) 75%)';
+          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.12) 0%, rgba(30, 32, 37, 1) 75%)';
         } else if (state.pcOnline) {
           sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(74, 136, 232, 0.08) 0%, rgba(30, 32, 37, 1) 75%)';
         } else if (isTargetBazzite) {
-          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(128, 117, 230, 0.04) 0%, rgba(30, 32, 37, 1) 75%)';
+          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.06) 0%, rgba(30, 32, 37, 1) 75%)';
         } else {
           sheetContent.style.backgroundImage = 'none';
         }
@@ -3066,10 +3066,10 @@
         detailBlock.style.transform = isSwitchActive ? "translateY(-112px)" : "translateY(0)";
 
         if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
-          // 起動中: スイッチはオン位置へ移動し、準備中を示す落ち着いた深いトーン ＋ 穏やかなパルス
-          const bootThumbClass = isTargetBazzite ? "bg-[#28213d] border border-[#a79cf5]/25" : "bg-[#223348] border border-blue-400/20";
+          // 起動中: スイッチはオン位置へ移動し、準備中を示す深いトーン ＋ 穏やかなパルス
+          const bootThumbClass = isTargetBazzite ? "bg-[#2f1f48] border border-purple-400/30" : "bg-[#223348] border border-blue-400/20";
           detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${bootThumbClass} flex items-center justify-center text-white shadow-md animate-pulse`;
-          if (containerEl) containerEl.style.backgroundColor = isTargetBazzite ? '#1e1a2b' : '#1c2432';
+          if (containerEl) containerEl.style.backgroundColor = isTargetBazzite ? '#211735' : '#1c2432';
           if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white animate-pulse">power_settings_new</span>`;
         } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
           // 終了中: スイッチはオフ位置へ移動し、控えめなパルス
@@ -3077,12 +3077,12 @@
           if (containerEl) containerEl.style.backgroundColor = '#282b32';
           if (iconWrapEl) iconWrapEl.innerHTML = `<div class="w-5 h-5 rounded-full border-2 border-neutral-300 animate-pulse"></div>`;
         } else if (state.pcOnline) {
-          // 完全起動中: Bazziteは柔らかく落ち着いたソフトパープル (#8075e6)、Windowsは優しいブルー (#4a88e8)
+          // 完全起動中: Bazziteは上質で鮮やかなパープル (#8b5cf6)、Windowsは優しいブルー (#4a88e8)
           const isBazziteActual = (currentStatusText === 'Bazzite');
-          const osBg = isBazziteActual ? 'bg-[#8075e6]' : 'bg-[#4a88e8]';
-          const osShadow = isBazziteActual ? 'shadow-lg shadow-indigo-900/30' : 'shadow-lg shadow-blue-500/25';
+          const osBg = isBazziteActual ? 'bg-[#8b5cf6]' : 'bg-[#4a88e8]';
+          const osShadow = isBazziteActual ? 'shadow-lg shadow-purple-900/40' : 'shadow-lg shadow-blue-500/25';
           detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${osBg} flex items-center justify-center text-white ${osShadow}`;
-          if (containerEl) containerEl.style.backgroundColor = isBazziteActual ? '#1e1a2b' : '#182332';
+          if (containerEl) containerEl.style.backgroundColor = isBazziteActual ? '#221634' : '#182332';
           if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white">power_settings_new</span>`;
         } else {
           // オフライン: 静止グレー ＆ ライトと同様のオフリング
