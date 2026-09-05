@@ -1686,10 +1686,10 @@
           
           <div id="pc-detail-block" 
                style="transform: translateY(0);"
-               class="slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-white shadow-md transition-all duration-300">
+               class="slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-white shadow-md">
             
             <div id="pc-detail-icon-wrap" class="transition-transform duration-300 flex items-center justify-center">
-              <span id="pc-detail-icon" class="material-symbols-rounded text-[26px] text-neutral-300">desktop_windows</span>
+              <div class="w-5 h-5 rounded-full border-2 border-neutral-300"></div>
             </div>
           </div>
         </div>
@@ -2969,7 +2969,7 @@
       const sheetContent = document.getElementById('pc-sheet-content');
       const detailTitle = document.getElementById('detail-pc-title');
       const detailBlock = document.getElementById('pc-detail-block');
-      const detailIcon = document.getElementById('pc-detail-icon');
+      const iconWrapEl = document.getElementById('pc-detail-icon-wrap');
 
       // ターゲットOS（次回起動OS / USBスイッチの状態）
       const targetOs = state.pcTargetOs || (state.usbPower ? 'Bazzite' : 'Windows');
@@ -3063,36 +3063,33 @@
       }
 
       if (detailBlock) {
-        detailBlock.style.transform = isSwitchActive ? "translateY(-118px)" : "translateY(0)";
+        detailBlock.style.transform = isSwitchActive ? "translateY(-112px)" : "translateY(0)";
 
         if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
           // 起動中: スイッチはオン位置へ移動し、準備中を示す深いトーン ＋ 穏やかなパルス
           const bootThumbClass = isTargetBazzite ? "bg-[#2f1f48] border border-purple-400/30" : "bg-[#223348] border border-blue-400/20";
-          detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${bootThumbClass} flex items-center justify-center text-white shadow-md animate-pulse transition-all duration-300`;
+          detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${bootThumbClass} flex items-center justify-center text-white shadow-md animate-pulse`;
           if (containerEl) containerEl.style.backgroundColor = isTargetBazzite ? '#211735' : '#1c2432';
+          if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white animate-pulse">power_settings_new</span>`;
         } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
           // 終了中: スイッチはオフ位置へ移動し、控えめなパルス
-          detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#3a3d46] flex items-center justify-center text-neutral-300 shadow-md animate-pulse transition-all duration-300";
+          detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#3a3d46] flex items-center justify-center text-neutral-300 shadow-md animate-pulse";
           if (containerEl) containerEl.style.backgroundColor = '#282b32';
+          if (iconWrapEl) iconWrapEl.innerHTML = `<div class="w-5 h-5 rounded-full border-2 border-neutral-300 animate-pulse"></div>`;
         } else if (state.pcOnline) {
           // 完全起動中: Bazziteは上質で鮮やかなパープル (#8b5cf6)、Windowsは優しいブルー (#4a88e8)
           const isBazziteActual = (currentStatusText === 'Bazzite');
           const osBg = isBazziteActual ? 'bg-[#8b5cf6]' : 'bg-[#4a88e8]';
           const osShadow = isBazziteActual ? 'shadow-lg shadow-purple-900/40' : 'shadow-lg shadow-blue-500/25';
-          detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${osBg} flex items-center justify-center text-white ${osShadow} transition-all duration-300`;
+          detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${osBg} flex items-center justify-center text-white ${osShadow}`;
           if (containerEl) containerEl.style.backgroundColor = isBazziteActual ? '#221634' : '#182332';
+          if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white">power_settings_new</span>`;
         } else {
-          // オフライン: 静止グレー
-          detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-neutral-300 shadow-md transition-all duration-300";
+          // オフライン: 静止グレー ＆ ライトと同様のオフリング
+          detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-neutral-300 shadow-md";
           if (containerEl) containerEl.style.backgroundColor = '#282b32';
+          if (iconWrapEl) iconWrapEl.innerHTML = `<div class="w-5 h-5 rounded-full border-2 border-neutral-300"></div>`;
         }
-      }
-
-      if (detailIcon) {
-        detailIcon.textContent = activeTileIcon;
-        detailIcon.className = isSwitchActive 
-          ? "material-symbols-rounded text-[26px] text-white"
-          : "material-symbols-rounded text-[26px] text-neutral-400";
       }
     }
 
