@@ -441,8 +441,9 @@
               </div>
             </div>
 
-            <!-- デスクトップPCタイル (詳細画面なし。スイッチのようにアイコンタップで起動/電源オフ) -->
-            <div class="relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center space-x-3.5 shadow-md border border-white/[0.03]">
+            <!-- デスクトップPCタイル (アイコンタップでオン/オフ、それ以外の部分で詳細シートへ) -->
+            <div onclick="openSheet('pc-sheet')" 
+                 class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]">
               
               <!-- PCアイコン (オン/起動中: スカイブルー、オフ: グレー。タップでオン/オフ切り替え) -->
               <button onclick="togglePcPowerFromTile(event)"
@@ -1595,6 +1596,82 @@
     </div>
   </div>
 
+  <!-- ======================================================================= -->
+  <!-- 画面8：デスクトップPC詳細操作画面 (Bottom Sheet Modal)                    -->
+  <!-- ======================================================================= -->
+  <div id="pc-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
+    
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-hidden shadow-2xl border-t sm:border border-white/[0.06]">
+      
+      <!-- 上部ヘッダー -->
+      <div class="flex items-center justify-between pb-1 shrink-0">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="closeSheet('pc-sheet')" 
+                  class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
+                  aria-label="閉じる">
+            <span class="material-symbols-rounded text-2xl">close</span>
+          </button>
+          <h2 class="text-xl font-bold text-white tracking-tight leading-tight">デスクトップPC</h2>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- 中央: オン/オフ/OS表示 ＆ 縦型スイッチスライダー (画面サイズ非依存・完全固定グループ) -->
+      <div class="flex-1 flex flex-col items-center justify-center my-auto py-2 shrink-0">
+        <!-- ステータステキスト: オフ / Windows / Bazzite -->
+        <div id="detail-pc-title" class="text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300">オフ</div>
+        
+        <!-- 縦型Apple Home風 スイッチスライダー (タップでオン/オフ切り替え) -->
+        <div id="pc-slider-container"
+             onclick="togglePcPowerFromTile(event)" 
+             class="slider-track relative w-[120px] h-[240px] bg-[#282b32] rounded-[34px] overflow-hidden p-2 cursor-pointer shadow-inner shrink-0"
+             aria-label="PC電源トグルスイッチ">
+          
+          <div id="pc-detail-block" 
+               style="transform: translateY(0);"
+               class="slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-white shadow-md transition-all duration-300">
+            
+            <div id="pc-detail-icon-wrap" class="transition-transform duration-300 flex items-center justify-center">
+              <span id="pc-detail-icon" class="material-symbols-rounded text-4xl text-neutral-300">desktop_windows</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 接続情報 -->
+        <div class="mt-4 flex items-center space-x-2 text-xs text-neutral-400 font-num">
+          <span class="inline-block w-2 h-2 rounded-full bg-neutral-500 transition-colors" id="detail-pc-badge"></span>
+          <span id="detail-pc-ip">192.168.0.51</span>
+        </div>
+      </div>
+
+      <!-- 最下部コントロールエリア: OS選択ドロップダウン (UIのみ) -->
+      <div class="relative space-y-3 pt-1 shrink-0">
+        <div class="bg-[#2a2d36] rounded-2xl p-4 shadow-sm border border-white/[0.04] space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <span class="material-symbols-rounded text-xl text-sky-400">tune</span>
+              <span class="text-sm font-semibold text-white">OS</span>
+            </div>
+            <span class="text-[11px] text-neutral-400 font-normal">選択</span>
+          </div>
+
+          <!-- ドロップダウン (Windows / Bazzite) -->
+          <div class="relative">
+            <select id="pc-os-selector" 
+                    class="w-full appearance-none bg-[#1e2025] hover:bg-[#252830] text-white text-sm font-medium rounded-xl px-3.5 py-3 pr-10 border border-white/[0.06] focus:outline-none focus:border-sky-500/50 transition-colors cursor-pointer">
+              <option value="Windows" selected>Windows</option>
+              <option value="Bazzite">Bazzite</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400">
+              <span class="material-symbols-rounded text-xl">expand_more</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- JavaScript: アニメーション、ドラッグ操作、状態管理、スムーズな戻るアニメーション -->
   <!-- SmartHome Core Logic -->
   <script>
@@ -2614,29 +2691,90 @@
     function updatePcUi() {
       const statusEl = document.getElementById('tile-pc-status');
       const iconWrap = document.getElementById('tile-pc-icon-wrap');
-      if (!statusEl || !iconWrap) return;
+      
+      // 詳細シート要素
+      const detailTitle = document.getElementById('detail-pc-title');
+      const detailBlock = document.getElementById('pc-detail-block');
+      const detailIcon = document.getElementById('pc-detail-icon');
+      const detailBadge = document.getElementById('detail-pc-badge');
+      const osSelector = document.getElementById('pc-os-selector');
+
+      let currentStatusText = 'オフ';
+      let isSwitchActive = false;
 
       if (state.pcBooting || state.pcOs === '起動中...') {
         // 起動中: スカイブルー点灯 ＋ 脈動（パルス）
-        statusEl.textContent = '起動中...';
-        statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
-        iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+        currentStatusText = '起動中...';
+        isSwitchActive = true;
+        if (statusEl) {
+          statusEl.textContent = '起動中...';
+          statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
+        }
+        if (iconWrap) {
+          iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+        }
+        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-sky-400 animate-pulse";
       } else if (state.pcShuttingDown || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中...') {
         // 終了中: グレー ＋ 脈動（パルス）
-        statusEl.textContent = '終了中...';
-        statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
-        iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+        currentStatusText = '終了中...';
+        isSwitchActive = false;
+        if (statusEl) {
+          statusEl.textContent = '終了中...';
+          statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
+        }
+        if (iconWrap) {
+          iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+        }
+        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse";
       } else if (state.pcOnline) {
         // 完全起動中: スカイブルー点灯（常時点灯）
         const osLabel = state.pcOs && state.pcOs !== 'Unknown' && state.pcOs !== '起動中...' ? state.pcOs : 'オン';
-        statusEl.textContent = osLabel === 'オン' ? 'オン' : `${osLabel} (起動中)`;
-        statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
-        iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
+        currentStatusText = osLabel;
+        isSwitchActive = true;
+        if (statusEl) {
+          statusEl.textContent = osLabel === 'オン' ? 'オン' : `${osLabel} (起動中)`;
+          statusEl.className = "text-xs text-sky-400 font-medium mt-0.5 transition-colors";
+        }
+        if (iconWrap) {
+          iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
+        }
+        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]";
+        
+        // ドロップダウンの選択値を起動中OSに同期
+        if (osSelector && (osLabel === 'Windows' || osLabel === 'Bazzite')) {
+          osSelector.value = osLabel;
+        }
       } else {
         // オフライン: グレー（常時）
-        statusEl.textContent = 'オフ';
-        statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
-        iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
+        currentStatusText = 'オフ';
+        isSwitchActive = false;
+        if (statusEl) {
+          statusEl.textContent = 'オフ';
+          statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
+        }
+        if (iconWrap) {
+          iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
+        }
+        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-neutral-500";
+      }
+
+      // 詳細シートのUI更新
+      if (detailTitle) {
+        detailTitle.textContent = currentStatusText;
+        detailTitle.className = isSwitchActive 
+          ? "text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300"
+          : "text-3xl font-bold tracking-tight text-neutral-400 mb-4 transition-all duration-300";
+      }
+      if (detailBlock) {
+        detailBlock.style.transform = isSwitchActive ? "translateY(-118px)" : "translateY(0)";
+        detailBlock.className = isSwitchActive
+          ? "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#2196f3] flex items-center justify-center text-white shadow-lg shadow-sky-500/30 transition-all duration-300"
+          : "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-neutral-300 shadow-md transition-all duration-300";
+      }
+      if (detailIcon) {
+        detailIcon.className = isSwitchActive 
+          ? "material-symbols-rounded text-4xl text-white"
+          : "material-symbols-rounded text-4xl text-neutral-400";
       }
     }
 
