@@ -16,7 +16,7 @@ PC_IP = "192.168.0.20"
 PC_MAC = "a8:a1:59:60:6f:c0"
 PC_PORT = 22
 PC_BROADCAST = "192.168.0.255"
-USERS = ["user", "soh"]
+USERS = ["Soh", "soh", "user"]
 PASSWORD = "Tamago1341"
 
 BOOT_TIMEOUT = 90.0        # 起動待機最大秒数
@@ -419,7 +419,7 @@ def shutdown_pc():
     if os_type == "Windows":
         remote_cmd = 'shutdown.exe /s /t 0'
     else:
-        remote_cmd = f'systemctl poweroff || sudo poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
+        remote_cmd = f'sudo /usr/bin/systemctl poweroff || sudo systemctl poweroff || systemctl poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
 
     last_err = None
     sent = False
