@@ -252,7 +252,7 @@ def get_pc_status(force_refresh=False):
                     "online": True,
                     "booting": True,
                     "shutting_down": False,
-                    "os": "起動中...",
+                    "os": "起動中",
                     "ip": PC_IP
                 }
             else:
@@ -281,7 +281,7 @@ def get_pc_status(force_refresh=False):
                     "online": False,
                     "booting": False,
                     "shutting_down": True,
-                    "os": "終了中...",
+                    "os": "終了中",
                     "ip": PC_IP
                 }
             else:
@@ -334,11 +334,11 @@ def boot_pc():
             "online": True,
             "booting": True,
             "shutting_down": False,
-            "os": "起動中...",
+            "os": "起動中",
             "ip": PC_IP
         }
         try:
-            state_manager.save_state({"pcOnline": True, "pcOs": "起動中..."})
+            state_manager.save_state({"pcOnline": True, "pcOs": "起動中"})
         except Exception:
             pass
 
@@ -346,10 +346,10 @@ def boot_pc():
 
     return {
         "status": "success",
-        "message": "起動シグナル(WoL)を送信しました。起動中...",
+        "message": "起動シグナル(WoL)を送信しました。起動中",
         "online": True,
         "booting": True,
-        "os": "起動中..."
+        "os": "起動中"
     }
 
 def shutdown_pc():
@@ -403,11 +403,11 @@ def shutdown_pc():
                 "online": False,
                 "booting": False,
                 "shutting_down": True,
-                "os": "終了中...",
+                "os": "終了中",
                 "ip": PC_IP
             }
             try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "終了中..."})
+                state_manager.save_state({"pcOnline": False, "pcOs": "終了中"})
             except Exception:
                 pass
 
@@ -418,7 +418,7 @@ def shutdown_pc():
             "message": f"{os_type} にシャットダウンを指示しました。",
             "online": False,
             "shutting_down": True,
-            "os": "終了中..."
+            "os": "終了中"
         }
 
     return {

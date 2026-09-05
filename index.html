@@ -1796,6 +1796,90 @@
     }
 
     /**
+     * タブ切り替えのスワイプジェスチャー管理 (ダッシュボード ⇄ オートメーション ⇄ シーン)
+     * タイル操作、縦スクロール、モーダル、ドロップアップとの干渉を完全に防止
+     */
+    (function initTabSwipeGesture() {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+      let isHorizontalSwipe = false;
+      let isVerticalScroll = false;
+
+      window.addEventListener('touchstart', (e) => {
+        // 1本指タッチのみ対象
+        if (e.touches.length !== 1) return;
+
+        // モーダルシートが開いている場合は無効
+        if (document.querySelector('.sheet-backdrop:not(.hidden-sheet)')) return;
+        // ドロップアップが開いている場合は無効
+        if (document.querySelector('.dropup-menu.open')) return;
+        // 入力フォーム・テキストエリアにフォーカスまたはタッチしている場合は無効
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = Date.now();
+        isHorizontalSwipe = false;
+        isVerticalScroll = false;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (isVerticalScroll || e.touches.length !== 1) return;
+
+        const touch = e.touches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+
+        // 初期移動で縦方向の動きが勝っている場合は縦スクロールと判定し、スワイプを無効化
+        if (!isHorizontalSwipe && Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+          isVerticalScroll = true;
+          return;
+        }
+
+        // 横方向への明確な移動が検知されたら横スワイプ確定
+        if (!isVerticalScroll && Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          isHorizontalSwipe = true;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        if (!isHorizontalSwipe || isVerticalScroll) return;
+
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        const duration = Date.now() - touchStartTime;
+
+        // 50px以上の水平移動かつ縦移動の1.5倍以上、500ms以内の自然なスワイプ/フリック
+        if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && duration < 500) {
+          const tabs = ['dashboard', 'automations', 'scenes'];
+          let currentTab = 'dashboard';
+          tabs.forEach(t => {
+            const el = document.getElementById(`view-${t}`);
+            if (el && !el.classList.contains('hidden')) {
+              currentTab = t;
+            }
+          });
+
+          const currentIndex = tabs.indexOf(currentTab);
+          if (dx < 0) {
+            // 左スワイプ (右から左へ指を動かす) -> 次のタブへ
+            if (currentIndex < tabs.length - 1) {
+              switchTab(tabs[currentIndex + 1]);
+            }
+          } else {
+            // 右スワイプ (左から右へ指を動かす) -> 前のタブへ
+            if (currentIndex > 0) {
+              switchTab(tabs[currentIndex - 1]);
+            }
+          }
+        }
+      }, { passive: true });
+    })();
+
+    /**
      * ボトムシート開閉
      */
     function openSheet(sheetId) {
@@ -2634,11 +2718,11 @@
 
       // トランジェント処理中の連打防止
       if (state.pcBooting) {
-        showAssistantToast('PCは現在起動処理中です...', 'hourglass_top');
+        showAssistantToast('PCは現在起動処理中です', 'hourglass_top');
         return;
       }
       if (state.pcShuttingDown) {
-        showAssistantToast('PCは現在終了処理中です...', 'hourglass_top');
+        showAssistantToast('PCは現在終了処理中です', 'hourglass_top');
         return;
       }
 
@@ -2648,7 +2732,7 @@
         state.pcOnline = true;
         state.pcBooting = true;
         state.pcShuttingDown = false;
-        state.pcOs = '起動中...';
+        state.pcOs = '起動中';
         updatePcUi();
         showAssistantToast('PCへ起動シグナル(WoL)を送信しました', 'power_settings_new');
         sendPcCommand('boot');
@@ -2658,7 +2742,7 @@
         state.pcOnline = false;
         state.pcBooting = false;
         state.pcShuttingDown = true;
-        state.pcOs = '終了中...';
+        state.pcOs = '終了中';
         updatePcUi();
         showAssistantToast('PCへ電源オフを指示しました', 'power_settings_new');
         sendPcCommand('shutdown');
@@ -2738,23 +2822,23 @@
       let currentStatusText = 'オフ';
       let isSwitchActive = false;
 
-      if (state.pcBooting || state.pcOs === '起動中...') {
+      if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
         // 起動中: スカイブルー点灯 ＋ 脈動（パルス）
-        currentStatusText = '起動中...';
+        currentStatusText = '起動中';
         isSwitchActive = true;
         if (statusEl) {
-          statusEl.textContent = '起動中...';
+          statusEl.textContent = '起動中';
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
         }
-      } else if (state.pcShuttingDown || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中...') {
+      } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
         // 終了中: グレー ＋ 脈動（パルス）
-        currentStatusText = '終了中...';
+        currentStatusText = '終了中';
         isSwitchActive = false;
         if (statusEl) {
-          statusEl.textContent = '終了中...';
+          statusEl.textContent = '終了中';
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
@@ -2762,7 +2846,7 @@
         }
       } else if (state.pcOnline) {
         // 完全起動中: スカイブルー点灯（常時点灯）
-        const osLabel = state.pcOs && state.pcOs !== 'Unknown' && state.pcOs !== '起動中...' ? state.pcOs : 'オン';
+        const osLabel = state.pcOs && state.pcOs !== 'Unknown' && state.pcOs !== '起動中' && state.pcOs !== '起動中...' ? state.pcOs : 'オン';
         currentStatusText = osLabel;
         isSwitchActive = true;
         if (statusEl) {
@@ -2814,11 +2898,11 @@
       if (detailBlock) {
         detailBlock.style.transform = isSwitchActive ? "translateY(-118px)" : "translateY(0)";
 
-        if (state.pcBooting || state.pcOs === '起動中...') {
+        if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
           // 起動中: スイッチはオン位置へ移動し、準備中を示す深みのあるスレートブルー ＋ 穏やかなパルス
           detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#223348] border border-sky-400/20 flex items-center justify-center text-white shadow-md animate-pulse transition-all duration-300";
           if (containerEl) containerEl.style.backgroundColor = '#1c2432';
-        } else if (state.pcShuttingDown || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中...') {
+        } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
           // 終了中: スイッチはオフ位置へ移動し、控えめなパルス
           detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#3a3d46] flex items-center justify-center text-neutral-300 shadow-md animate-pulse transition-all duration-300";
           if (containerEl) containerEl.style.backgroundColor = '#282b32';
