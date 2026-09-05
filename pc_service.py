@@ -12,7 +12,7 @@ import time
 import state_manager
 import usb_service
 
-PC_IP = "192.168.0.51"
+PC_IP = "192.168.0.20"
 PC_MAC = "a8:a1:59:60:6f:c0"
 PC_PORT = 22
 PC_BROADCAST = "192.168.0.255"
@@ -109,7 +109,7 @@ def send_wol(mac_address: str = PC_MAC, broadcast_ip: str = PC_BROADCAST):
     print(f"[WoL Sent] Multi-path magic packet dispatched to {formatted_mac} (broadcast: {broadcast_ip}, unicast: {PC_IP})")
 
 def is_pc_online():
-    """シンプルなIPアドレス(192.168.0.51) Ping方式で稼働を確認 (ポート22も予備確認)"""
+    """シンプルなIPアドレス(192.168.0.20) Ping方式で稼働を確認 (ポート22も予備確認)"""
     # 1. 高速 Ping
     try:
         r = subprocess.run(["ping", "-c", "1", "-W", "1", PC_IP], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

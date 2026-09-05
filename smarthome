@@ -253,7 +253,7 @@ def cmd_pc(args):
         booting = res.get('booting', False)
         shutting_down = res.get('shutting_down', False)
         os_name = res.get('os', 'オフライン')
-        ip = res.get('ip', '192.168.0.51')
+        ip = res.get('ip', '192.168.0.20')
         if booting:
             st_text = "起動処理中 (WoL送信済み)..."
         elif shutting_down:
