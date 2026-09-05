@@ -111,7 +111,7 @@ def is_pc_online():
     return False
 
 def detect_os_from_banner():
-    """SSHバナーから稼働中OS (Windows / Bazzite) を判別"""
+    """SSHバナーから稼働中OS (Windows / Bazzite) を判別。未応答時は Unknown を返す"""
     try:
         s = socket.socket()
         s.settimeout(1.0)
@@ -125,11 +125,10 @@ def detect_os_from_banner():
     except Exception:
         pass
 
-    # オンラインであればデフォルトで Bazzite と判定
-    return "Bazzite"
+    return "Unknown"
 
 def _monitor_boot():
-    """バックグラウンドで起動完了を監視し、完全起動時にステートを確定"""
+    """バックグラウンドで起動完了を監視し、SSH応答を待ってOSを正確に確定"""
     global _transient_state, _cached_status
     start = time.time()
     while time.time() - start < BOOT_TIMEOUT:
@@ -140,38 +139,58 @@ def _monitor_boot():
 
         if is_pc_online():
             os_name = detect_os_from_banner()
-            with _lock:
-                _transient_state = None
+            if os_name != "Unknown":
+                # SSHの応答が確認できた！OS確定
+                with _lock:
+                    _transient_state = None
+                    _cached_status = {
+                        "online": True,
+                        "booting": False,
+                        "shutting_down": False,
+                        "os": os_name,
+                        "ip": PC_IP
+                    }
+                    try:
+                        state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                    except Exception:
+                        pass
+                print(f"[PC Monitor] PC booted with verified SSH: {os_name}")
+                return
+            else:
+                print("[PC Monitor] PC network responding, waiting for SSH service...")
+
+    # タイムアウト時の判定
+    with _lock:
+        if _transient_state == 'booting':
+            _transient_state = None
+            if is_pc_online():
+                # Pingは通っているのでPC自体は稼働中
+                final_os = "Bazzite"
                 _cached_status = {
                     "online": True,
                     "booting": False,
                     "shutting_down": False,
-                    "os": os_name,
+                    "os": final_os,
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                    state_manager.save_state({"pcOnline": True, "pcOs": final_os})
                 except Exception:
                     pass
-            print(f"[PC Monitor] PC booted: {os_name}")
-            return
-
-    # タイムアウト
-    with _lock:
-        if _transient_state == 'booting':
-            _transient_state = None
-            _cached_status = {
-                "online": False,
-                "booting": False,
-                "shutting_down": False,
-                "os": "オフライン",
-                "ip": PC_IP
-            }
-            try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
-            except Exception:
-                pass
-            print("[PC Monitor] PC boot timed out.")
+                print(f"[PC Monitor] PC is online via ping, defaulted to {final_os}")
+            else:
+                _cached_status = {
+                    "online": False,
+                    "booting": False,
+                    "shutting_down": False,
+                    "os": "オフライン",
+                    "ip": PC_IP
+                }
+                try:
+                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+                except Exception:
+                    pass
+                print("[PC Monitor] PC boot timed out.")
 
 def _monitor_shutdown():
     """バックグラウンドで電源オフを監視し、電源切断時にステートを確定"""
@@ -213,19 +232,20 @@ def get_pc_status(force_refresh=False):
             if now - _transient_timestamp < BOOT_TIMEOUT:
                 if is_pc_online():
                     os_name = detect_os_from_banner()
-                    _transient_state = None
-                    _cached_status = {
-                        "online": True,
-                        "booting": False,
-                        "shutting_down": False,
-                        "os": os_name,
-                        "ip": PC_IP
-                    }
-                    try:
-                        state_manager.save_state({"pcOnline": True, "pcOs": os_name})
-                    except Exception:
-                        pass
-                    return _cached_status
+                    if os_name != "Unknown":
+                        _transient_state = None
+                        _cached_status = {
+                            "online": True,
+                            "booting": False,
+                            "shutting_down": False,
+                            "os": os_name,
+                            "ip": PC_IP
+                        }
+                        try:
+                            state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                        except Exception:
+                            pass
+                        return _cached_status
 
                 # まだ起動中 (楽観的ON)
                 return {
