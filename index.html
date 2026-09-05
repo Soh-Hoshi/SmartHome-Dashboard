@@ -1601,7 +1601,7 @@
   <!-- ======================================================================= -->
   <div id="pc-sheet" class="sheet-backdrop hidden-sheet fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-sm">
     
-    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-hidden shadow-2xl border-t sm:border border-white/[0.06]">
+    <div class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 overflow-visible shadow-2xl border-t sm:border border-white/[0.06]">
       
       <!-- 上部ヘッダー -->
       <div class="flex items-center justify-between pb-1 shrink-0">
@@ -1618,12 +1618,12 @@
 
       <!-- 中央: オン/オフ/OS表示 ＆ 縦型スイッチスライダー (画面サイズ非依存・完全固定グループ) -->
       <div class="flex-1 flex flex-col items-center justify-center my-auto py-2 shrink-0">
-        <!-- ステータステキスト: オフ / Windows / Bazzite -->
+        <!-- ステータステキスト: オフ / Windows / Bazzite (または起動中...) -->
         <div id="detail-pc-title" class="text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300">オフ</div>
         
         <!-- 縦型Apple Home風 スイッチスライダー (タップでオン/オフ切り替え) -->
         <div id="pc-slider-container"
-             onclick="togglePcPowerFromTile(event)" 
+             onclick="togglePcDetail(event)" 
              class="slider-track relative w-[120px] h-[240px] bg-[#282b32] rounded-[34px] overflow-hidden p-2 cursor-pointer shadow-inner shrink-0"
              aria-label="PC電源トグルスイッチ">
           
@@ -1636,37 +1636,43 @@
             </div>
           </div>
         </div>
-
-        <!-- 接続情報 -->
-        <div class="mt-4 flex items-center space-x-2 text-xs text-neutral-400 font-num">
-          <span class="inline-block w-2 h-2 rounded-full bg-neutral-500 transition-colors" id="detail-pc-badge"></span>
-          <span id="detail-pc-ip">192.168.0.51</span>
-        </div>
       </div>
 
-      <!-- 最下部コントロールエリア: OS選択ドロップダウン (UIのみ) -->
-      <div class="relative space-y-3 pt-1 shrink-0">
-        <div class="bg-[#2a2d36] rounded-2xl p-4 shadow-sm border border-white/[0.04] space-y-2.5">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-              <span class="material-symbols-rounded text-xl text-sky-400">tune</span>
-              <span class="text-sm font-semibold text-white">OS</span>
-            </div>
-            <span class="text-[11px] text-neutral-400 font-normal">選択</span>
-          </div>
-
-          <!-- ドロップダウン (Windows / Bazzite) -->
-          <div class="relative">
-            <select id="pc-os-selector" 
-                    class="w-full appearance-none bg-[#1e2025] hover:bg-[#252830] text-white text-sm font-medium rounded-xl px-3.5 py-3 pr-10 border border-white/[0.06] focus:outline-none focus:border-sky-500/50 transition-colors cursor-pointer">
-              <option value="Windows" selected>Windows</option>
-              <option value="Bazzite">Bazzite</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400">
-              <span class="material-symbols-rounded text-xl">expand_more</span>
-            </div>
+      <!-- 最下部コントロールエリア: 他シートと完全統一されたドロップアップメニュー -->
+      <div class="relative pt-2 shrink-0">
+        <!-- OS選択 ドロップアップ ポップオーバー -->
+        <div id="pc-os-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-64 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">OS</div>
+          <div class="space-y-0.5">
+            <button onclick="selectPcOs('Windows')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-[#2196f3]">
+                <span class="material-symbols-rounded text-xl">desktop_windows</span>
+                <span class="text-white">Windows</span>
+              </div>
+              <span id="check-pc-os-windows" class="text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
+            <button onclick="selectPcOs('Bazzite')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <div class="flex items-center space-x-3 text-sky-400">
+                <span class="material-symbols-rounded text-xl">sports_esports</span>
+                <span class="text-white">Bazzite</span>
+              </div>
+              <span id="check-pc-os-bazzite" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+            </button>
           </div>
         </div>
+
+        <!-- OS選択 トリガーボタン -->
+        <button id="btn-trigger-pc-os" onclick="toggleDropup('pc-os-dropup-menu', event)" 
+                class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+          <div id="detail-pc-os-icon" class="text-[#2196f3] shrink-0 flex items-center justify-center">
+            <span id="detail-pc-os-icon-span" class="material-symbols-rounded text-2xl">desktop_windows</span>
+          </div>
+          <div class="overflow-hidden leading-tight flex-1">
+            <div class="text-xs text-neutral-400 font-normal">OS</div>
+            <div id="detail-pc-os-label" class="text-[14px] font-semibold text-white truncate mt-0.5">Windows</div>
+          </div>
+          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+        </button>
       </div>
 
     </div>
@@ -1875,7 +1881,8 @@
           !e.target.closest('#btn-trigger-mode') && 
           !e.target.closest('#btn-trigger-fan') &&
           !e.target.closest('#btn-trigger-heater-mode') &&
-          !e.target.closest('#btn-trigger-cleaner-speed')) {
+          !e.target.closest('#btn-trigger-cleaner-speed') &&
+          !e.target.closest('#btn-trigger-pc-os')) {
         closeAllDropups();
       }
     });
@@ -2688,6 +2695,30 @@
       }
     }
 
+    function togglePcDetail(event) {
+      if (event) event.stopPropagation();
+      togglePcPowerFromTile(event);
+    }
+
+    function selectPcOs(os) {
+      closeAllDropups();
+      state.pcTargetOs = os;
+
+      // チェックマークの切り替え
+      const checkWin = document.getElementById('check-pc-os-windows');
+      const checkBaz = document.getElementById('check-pc-os-bazzite');
+      if (checkWin) checkWin.className = (os === 'Windows') ? "text-[#2196f3] flex items-center" : "hidden text-[#2196f3] flex items-center";
+      if (checkBaz) checkBaz.className = (os === 'Bazzite') ? "text-sky-400 flex items-center" : "hidden text-sky-400 flex items-center";
+
+      // トリガーボタンの表示切り替え
+      const labelEl = document.getElementById('detail-pc-os-label');
+      const iconSpan = document.getElementById('detail-pc-os-icon-span');
+      if (labelEl) labelEl.textContent = os;
+      if (iconSpan) {
+        iconSpan.textContent = (os === 'Windows') ? 'desktop_windows' : 'sports_esports';
+      }
+    }
+
     function updatePcUi() {
       const statusEl = document.getElementById('tile-pc-status');
       const iconWrap = document.getElementById('tile-pc-icon-wrap');
@@ -2696,8 +2727,6 @@
       const detailTitle = document.getElementById('detail-pc-title');
       const detailBlock = document.getElementById('pc-detail-block');
       const detailIcon = document.getElementById('pc-detail-icon');
-      const detailBadge = document.getElementById('detail-pc-badge');
-      const osSelector = document.getElementById('pc-os-selector');
 
       let currentStatusText = 'オフ';
       let isSwitchActive = false;
@@ -2713,7 +2742,6 @@
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
         }
-        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-sky-400 animate-pulse";
       } else if (state.pcShuttingDown || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中...') {
         // 終了中: グレー ＋ 脈動（パルス）
         currentStatusText = '終了中...';
@@ -2725,7 +2753,6 @@
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
         }
-        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse";
       } else if (state.pcOnline) {
         // 完全起動中: スカイブルー点灯（常時点灯）
         const osLabel = state.pcOs && state.pcOs !== 'Unknown' && state.pcOs !== '起動中...' ? state.pcOs : 'オン';
@@ -2738,11 +2765,17 @@
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
         }
-        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]";
         
-        // ドロップダウンの選択値を起動中OSに同期
-        if (osSelector && (osLabel === 'Windows' || osLabel === 'Bazzite')) {
-          osSelector.value = osLabel;
+        // 起動中のOSをドロップアップの選択状態に反映
+        if (osLabel === 'Windows' || osLabel === 'Bazzite') {
+          const checkWin = document.getElementById('check-pc-os-windows');
+          const checkBaz = document.getElementById('check-pc-os-bazzite');
+          const labelEl = document.getElementById('detail-pc-os-label');
+          const iconSpan = document.getElementById('detail-pc-os-icon-span');
+          if (checkWin) checkWin.className = (osLabel === 'Windows') ? "text-[#2196f3] flex items-center" : "hidden text-[#2196f3] flex items-center";
+          if (checkBaz) checkBaz.className = (osLabel === 'Bazzite') ? "text-sky-400 flex items-center" : "hidden text-sky-400 flex items-center";
+          if (labelEl) labelEl.textContent = osLabel;
+          if (iconSpan) iconSpan.textContent = (osLabel === 'Windows') ? 'desktop_windows' : 'sports_esports';
         }
       } else {
         // オフライン: グレー（常時）
@@ -2755,10 +2788,9 @@
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
         }
-        if (detailBadge) detailBadge.className = "inline-block w-2 h-2 rounded-full bg-neutral-500";
       }
 
-      // 詳細シートのUI更新
+      // 詳細シートのUI更新 (オフ / Windows / Bazzite)
       if (detailTitle) {
         detailTitle.textContent = currentStatusText;
         detailTitle.className = isSwitchActive 
@@ -2772,6 +2804,8 @@
           : "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-neutral-300 shadow-md transition-all duration-300";
       }
       if (detailIcon) {
+        const iconName = (currentStatusText === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
+        detailIcon.textContent = iconName;
         detailIcon.className = isSwitchActive 
           ? "material-symbols-rounded text-4xl text-white"
           : "material-symbols-rounded text-4xl text-neutral-400";
