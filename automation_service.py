@@ -12,10 +12,39 @@ import os
 import urllib.request
 
 CONFIG_PATH = "/home/soh/dashboard/automations_config.json"
+HOLIDAYS_CACHE_PATH = "/home/soh/dashboard/jp_holidays.json"
 
-# 日本の祝日計算 (2024年〜2030年対応 / 春分・秋分および振替休日対応)
+# 日本標準時 (JST: UTC+9)
+JST = datetime.timezone(datetime.timedelta(hours=9), name="JST")
+
+def get_now_jst() -> datetime.datetime:
+    """常に日本標準時 (JST: UTC+9) の現在日時を返却"""
+    return datetime.datetime.now(JST)
+
+_official_holidays_cache = None
+
+def _load_official_holidays():
+    global _official_holidays_cache
+    if _official_holidays_cache is not None:
+        return _official_holidays_cache
+    if os.path.exists(HOLIDAYS_CACHE_PATH):
+        try:
+            with open(HOLIDAYS_CACHE_PATH, "r", encoding="utf-8") as f:
+                _official_holidays_cache = json.load(f)
+                return _official_holidays_cache
+        except Exception:
+            pass
+    _official_holidays_cache = {}
+    return _official_holidays_cache
+
+# 日本の祝日判定 (内閣府公式データ + 計算フォールバック / 振替休日・国民の休日完全対応)
 def is_japanese_holiday(dt: datetime.date) -> bool:
-    """日本の祝日（振替休日含む）かどうかを判定"""
+    """日本の祝日（振替休日・国民の休日含む）かどうかを日本基準で判定"""
+    iso_date = dt.strftime("%Y-%m-%d")
+    official = _load_official_holidays()
+    if iso_date in official:
+        return True
+
     year = dt.year
     month = dt.month
     day = dt.day
@@ -36,10 +65,6 @@ def is_japanese_holiday(dt: datetime.date) -> bool:
     }
 
     # 2. ハッピーマンデー (第N月曜日)
-    # 成人の日: 1月第2月曜
-    # 海の日: 7月第3月曜
-    # 敬老の日: 9月第3月曜
-    # スポーツの日: 10月第2月曜
     def is_nth_monday(target_month, n):
         if month != target_month or weekday != 0:
             return False
@@ -76,7 +101,7 @@ def is_japanese_holiday(dt: datetime.date) -> bool:
     return is_holiday
 
 def is_japanese_business_day(dt: datetime.date) -> bool:
-    """土日および祝日を除く平日かどうかを判定"""
+    """日本基準: 土日および祝日を除く平日かどうかを判定"""
     if dt.weekday() >= 5: # 土曜日(5), 日曜日(6)
         return False
     if is_japanese_holiday(dt):
@@ -218,7 +243,8 @@ def _automation_scheduler_worker():
     last_triggered_minute = ""
     while True:
         try:
-            now = datetime.datetime.now()
+            # 常に日本標準時 (JST: UTC+9) で現在日時・時刻を判定
+            now = get_now_jst()
             current_time_str = now.strftime("%H:%M")
             today_date = now.date()
 
@@ -233,14 +259,14 @@ def _automation_scheduler_worker():
                     
                     trig = a.get("trigger", {})
                     if trig.get("type") == "time":
-                        # 06:30 平日トリガー
+                        # 時間一致チェック (JST基準)
                         if trig.get("time") == current_time_str:
                             if "日本の平日" in trig.get("condition", ""):
                                 if is_biz_day:
-                                    print(f"[Automation Triggered] {a['name']} at {current_time_str} on business day {today_date}")
+                                    print(f"[Automation Triggered] {a['name']} at {current_time_str} JST on business day {today_date}")
                                     execute_automation(a["id"])
                             else:
-                                print(f"[Automation Triggered] {a['name']} at {current_time_str}")
+                                print(f"[Automation Triggered] {a['name']} at {current_time_str} JST")
                                 execute_automation(a["id"])
 
                 last_triggered_minute = current_time_str
@@ -254,7 +280,7 @@ def start_automation_service():
     t.start()
 
 if __name__ == '__main__':
-    now = datetime.datetime.now()
-    print(f"Current Date: {now.date()} (Weekday: {now.strftime('%A')})")
+    now = get_now_jst()
+    print(f"Current JST: {now} (Date: {now.date()}, Weekday: {now.strftime('%A')}, Time: {now.strftime('%H:%M')})")
     print(f"Is Japanese Holiday? {is_japanese_holiday(now.date())}")
     print(f"Is Japanese Business Day? {is_japanese_business_day(now.date())}")
