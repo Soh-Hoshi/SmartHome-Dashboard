@@ -11,8 +11,7 @@ import threading
 import time
 import state_manager
 
-PC_DEFAULT_IP = "192.168.0.51"
-PC_IP = PC_DEFAULT_IP
+PC_IP = "192.168.0.51"
 PC_MAC = "a8:a1:59:60:6f:c0"
 PC_PORT = 22
 PC_BROADCAST = "192.168.0.255"
@@ -25,67 +24,10 @@ SHUTDOWN_TIMEOUT = 60.0    # 終了待機最大秒数
 _lock = threading.Lock()
 _cached_status = None
 _last_check = 0
-_last_scan_time = 0
 
 # 楽観的トランジェント状態 ('booting' | 'shutting_down' | None)
 _transient_state = None
 _transient_timestamp = 0.0
-
-def resolve_pc_ip(force_scan=False):
-    """
-    MACアドレス (a8:a1:59:60:6f:c0) から現在のPCのIPアドレスを動的に解決。
-    BazziteがDHCPで別IPを取得した場合でも自動追跡。
-    """
-    global PC_IP, _last_scan_time
-    clean_target = PC_MAC.lower().replace("-", ":")
-
-    def _check_tables():
-        # 1. /proc/net/arp
-        try:
-            with open("/proc/net/arp", "r") as f:
-                for line in f.readlines()[1:]:
-                    parts = line.split()
-                    if len(parts) >= 4:
-                        ip, flags, mac = parts[0], parts[2], parts[3].lower()
-                        if mac == clean_target and flags != "0x0":
-                            return ip
-        except Exception:
-            pass
-
-        # 2. ip neigh
-        try:
-            res = subprocess.run(["ip", "neigh"], capture_output=True, text=True, check=False)
-            for line in res.stdout.splitlines():
-                if clean_target in line.lower():
-                    parts = line.split()
-                    if "FAILED" not in line and len(parts) > 0:
-                        return parts[0]
-        except Exception:
-            pass
-        return None
-
-    found_ip = _check_tables()
-    if found_ip:
-        if PC_IP != found_ip:
-            print(f"[PC Resolver] PC IP updated from {PC_IP} to {found_ip} (MAC: {PC_MAC})")
-            PC_IP = found_ip
-        return found_ip
-
-    now = time.time()
-    if force_scan or (now - _last_scan_time > 30.0):
-        _last_scan_time = now
-        try:
-            subprocess.run(["nmap", "-sn", "192.168.0.0/24"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
-            found_ip = _check_tables()
-            if found_ip:
-                if PC_IP != found_ip:
-                    print(f"[PC Resolver] PC IP discovered: {found_ip} (MAC: {PC_MAC})")
-                    PC_IP = found_ip
-                return found_ip
-        except Exception as e:
-            print(f"[PC Resolver] Subnet scan error: {e}")
-
-    return PC_IP
 
 def send_wol(mac_address: str = PC_MAC, broadcast_ip: str = PC_BROADCAST):
     """
@@ -145,15 +87,35 @@ def send_wol(mac_address: str = PC_MAC, broadcast_ip: str = PC_BROADCAST):
 
     print(f"[WoL Sent] Multi-path magic packet dispatched to {formatted_mac} (broadcast: {broadcast_ip}, unicast: {PC_IP})")
 
-def detect_os_from_banner():
-    """SSHバナーおよび稼働ポートからOS (Windows / Bazzite) を判別"""
-    current_ip = resolve_pc_ip()
+def is_pc_online():
+    """シンプルなIPアドレス(192.168.0.51) Ping方式で稼働を確認 (ポート22も予備確認)"""
+    # 1. 高速 Ping
+    try:
+        r = subprocess.run(["ping", "-c", "1", "-W", "1", PC_IP], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if r.returncode == 0:
+            return True
+    except Exception:
+        pass
 
-    # 1. SSH バナー取得
+    # 2. ポート22疎通 (Pingがブロックされている場合の予備)
+    try:
+        s = socket.socket()
+        s.settimeout(0.5)
+        res = s.connect_ex((PC_IP, PC_PORT))
+        s.close()
+        if res == 0:
+            return True
+    except Exception:
+        pass
+
+    return False
+
+def detect_os_from_banner():
+    """SSHバナーから稼働中OS (Windows / Bazzite) を判別"""
     try:
         s = socket.socket()
         s.settimeout(1.0)
-        s.connect((current_ip, PC_PORT))
+        s.connect((PC_IP, PC_PORT))
         banner = s.recv(1024).decode('utf-8', errors='ignore')
         s.close()
         if "OpenSSH_for_Windows" in banner:
@@ -163,68 +125,8 @@ def detect_os_from_banner():
     except Exception:
         pass
 
-    # 2. ポートベース推定 (Windows特有ポート)
-    for p in [135, 445, 5985]:
-        try:
-            s = socket.socket()
-            s.settimeout(0.3)
-            if s.connect_ex((current_ip, p)) == 0:
-                s.close()
-                return "Windows"
-            s.close()
-        except Exception:
-            pass
-
-    # 3. Steam ポート (27036) または Linux / Bazzite 推定
-    try:
-        s = socket.socket()
-        s.settimeout(0.3)
-        if s.connect_ex((current_ip, 27036)) == 0:
-            s.close()
-            return "Bazzite"
-        s.close()
-    except Exception:
-        pass
-
-    # オンラインであればデフォルトで Bazzite と判定（Windows特有ポートが開いていないため）
+    # オンラインであればデフォルトで Bazzite と判定
     return "Bazzite"
-
-def is_pc_online(force_scan=False):
-    """ポート疎通またはPingでPCの稼働を確認"""
-    current_ip = resolve_pc_ip(force_scan=force_scan)
-
-    # 1. 既知ポート疎通プローブ (SSH, Windows RPC, SMB, WinRM, Steam Streaming)
-    probe_ports = [PC_PORT, 135, 445, 5985, 27036]
-    for p in probe_ports:
-        try:
-            s = socket.socket()
-            s.settimeout(0.3)
-            res = s.connect_ex((current_ip, p))
-            s.close()
-            if res == 0:
-                return True
-        except Exception:
-            pass
-
-    # 2. ICMP Ping
-    try:
-        r = subprocess.run(["ping", "-c", "1", "-W", "1", current_ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if r.returncode == 0:
-            return True
-    except Exception:
-        pass
-
-    # 3. ARPステータスチェック
-    try:
-        clean_target = PC_MAC.lower().replace("-", ":")
-        res = subprocess.run(["ip", "neigh"], capture_output=True, text=True, check=False)
-        for line in res.stdout.splitlines():
-            if clean_target in line.lower() and any(st in line for st in ["REACHABLE", "DELAY", "PROBE"]):
-                return True
-    except Exception:
-        pass
-
-    return False
 
 def _monitor_boot():
     """バックグラウンドで起動完了を監視し、完全起動時にステートを確定"""
@@ -236,8 +138,7 @@ def _monitor_boot():
             if _transient_state != 'booting':
                 return
 
-        # 起動監視中は能動的にサブネット探索も含めてチェック
-        if is_pc_online(force_scan=True):
+        if is_pc_online():
             os_name = detect_os_from_banner()
             with _lock:
                 _transient_state = None
@@ -252,7 +153,7 @@ def _monitor_boot():
                     state_manager.save_state({"pcOnline": True, "pcOs": os_name})
                 except Exception:
                     pass
-            print(f"[PC Monitor] PC booted: {os_name} at {PC_IP}")
+            print(f"[PC Monitor] PC booted: {os_name}")
             return
 
     # タイムアウト
@@ -369,7 +270,7 @@ def get_pc_status(force_refresh=False):
         if not force_refresh and _cached_status is not None and (now - _last_check < 3.0):
             return _cached_status
 
-        online = is_pc_online(force_scan=False)
+        online = is_pc_online()
         os_name = detect_os_from_banner() if online else "オフライン"
 
         _cached_status = {
@@ -450,13 +351,12 @@ def shutdown_pc():
     else:
         remote_cmd = f'systemctl poweroff || sudo poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
 
-    current_ip = resolve_pc_ip()
     last_err = None
     sent = False
     for u in USERS:
         cmd_key = [
             "ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no",
-            "-o", "ConnectTimeout=3", f"{u}@{current_ip}", remote_cmd
+            "-o", "ConnectTimeout=3", f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_key, capture_output=True, text=True)
         if res.returncode == 0:
@@ -466,7 +366,7 @@ def shutdown_pc():
         cmd_pass = [
             "sshpass", "-p", PASSWORD,
             "ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=3",
-            f"{u}@{current_ip}", remote_cmd
+            f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_pass, capture_output=True, text=True)
         if res.returncode == 0:
@@ -484,7 +384,7 @@ def shutdown_pc():
                 "booting": False,
                 "shutting_down": True,
                 "os": "終了中...",
-                "ip": current_ip
+                "ip": PC_IP
             }
             try:
                 state_manager.save_state({"pcOnline": False, "pcOs": "終了中..."})
