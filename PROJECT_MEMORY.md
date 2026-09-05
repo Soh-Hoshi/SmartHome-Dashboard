@@ -148,7 +148,23 @@
      - 設定 URL に `?key=...` が含まれる場合は `X-Access-Key` ヘッダーとしてもフォールバック送信。
   5. **テストスイート**: `test_notifications_e2e.py` に `test_8_crawler_blocking_and_auth` を追加（全8項目 PASS）。
 
-### 4.6 現在の稼働状態
+### 4.6 PWA Manifest ＆ Nova Assist 統一アイコンの整備 (2026-09-05)
+- **背景**: PWA再インストールを容易にし、Android ネイティブアプリ（Nova Assist）とホーム画面での視覚的・世界観の統一感を達成。
+- **デザイン仕様**:
+  - **ベース**: `#0d0f12`（SmartHome ベースダーク色）〜 `#1c1e23` のスクワークルカード背景 ＋ アクセントブルー（`#2196f3`）の光彩。
+  - **モチーフ**: ミニマルなモダンルーフ（スマートホームの象徴）＋ Nova Assist と完全同一ジオメトリの **Nova Sparkles（AI星）** ＋ 純白ハイライトコア。
+  - **アセット一式**:
+    - `icon.svg`: 512x512 高解像度ベクター。
+    - `icon-192.png` / `icon-512.png`: 通常カードアイコン（purpose: "any"）。
+    - `icon-maskable-192.png` / `icon-maskable-512.png`: Android アダプティブアイコン完全対応（purpose: "maskable"、安全領域 80% 内配置）。
+    - `apple-touch-icon.png`: iOS Safari 用 192x192。
+- **PWA 仕様**:
+  - `manifest.json`: `id`, `start_url`, `scope` を `/dashboard/` に完全統一。any と maskable アイコンを明示分離。
+  - `sw.js`: キャッシュバージョンを `v10` に更新し、maskable アイコンもキャッシュ対象に追加。
+  - `index.html`: `<head>` 内に 512x512 アイコンリンクを追加。
+
+### 4.7 現在の稼働状態
 - **systemd サービス**: `dashboard.service`（Active: running, port 8080、合言葉認証＆クローラー遮断有効）。
+- **PWA**: PWA インストール要件完備（Nova Assist 統一デザイン、v10 キャッシュ）。
 - **Android APK**: `android_bridge/app/build/outputs/apk/debug/app-debug.apk` ビルド完了。
 - **Git リポジトリ**: `origin/main` にプッシュ可能状態。
