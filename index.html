@@ -157,6 +157,21 @@
       will-change: transform;
     }
 
+    /* スイッチノブ 穏やかな呼吸（スローパルス）アニメーション */
+    @keyframes thumb-slow-pulse {
+      0%, 100% {
+        opacity: 1;
+        filter: brightness(1);
+      }
+      50% {
+        opacity: 0.65;
+        filter: brightness(0.88);
+      }
+    }
+    .animate-slow-pulse {
+      animation: thumb-slow-pulse 3.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
     /* ロボット掃除機 稼働中アニメーション（優雅な回転 ＆ 自走うねうね感） */
     @keyframes cleaner-wobble-spin {
       0% {
@@ -2981,7 +2996,7 @@
       let activeTileIcon = targetIcon;
 
       if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
-        // 起動中: 脈動（パルス）、アイコンは次回起動OS
+        // 起動中: 脈動（スローパルス）、アイコンは次回起動OS
         currentStatusText = '起動中';
         isSwitchActive = true;
         activeTileIcon = targetIcon;
@@ -2992,10 +3007,10 @@
         if (iconWrap) {
           // Bazziteなら背景になじむダークパープル、Windowsならスレートブルー
           const bootColor = isTargetBazzite ? "bg-[#251f35] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
-          iconWrap.className = `w-11 h-11 rounded-full ${bootColor} flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse`;
+          iconWrap.className = `w-11 h-11 rounded-full ${bootColor} flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-slow-pulse`;
         }
       } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
-        // 終了中: グレー ＋ 脈動（パルス）、アイコンは終了処理中OS
+        // 終了中: グレー ＋ 脈動（スローパルス）、アイコンは終了処理中OS
         currentStatusText = '終了中';
         isSwitchActive = false;
         activeTileIcon = (state.pcOs === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
@@ -3004,7 +3019,7 @@
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
-          iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse";
+          iconWrap.className = "w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-slow-pulse";
         }
       } else if (state.pcOnline) {
         // 完全起動中: アイコンは実際のステータス (稼働OS)
@@ -3041,22 +3056,26 @@
         tileIconEl.textContent = activeTileIcon;
       }
 
-      // 詳細シートのUI更新 (オフ / Windows / Bazzite)
+      // 詳細シートのUI更新
       const containerEl = document.getElementById('pc-slider-container');
 
+      // 詳細画面の中のステータスは「オン」と「オフ」のみ（起動中・終了中・OS名は表示しない）
       if (detailTitle) {
-        detailTitle.textContent = currentStatusText;
+        detailTitle.textContent = isSwitchActive ? 'オン' : 'オフ';
         detailTitle.className = "text-3xl font-bold tracking-tight text-white mb-4 transition-all duration-300";
       }
 
-      // シート背景のアクセント微細グロー (Bazziteのときは上品な紫グロー)
+      // 現在または次回起動OSがBazziteかどうか
+      const isBazziteContext = state.pcOnline ? (currentStatusText === 'Bazzite') : isTargetBazzite;
+
+      // シート背景のアクセント微細グロー (Bazziteのときは上品なラベンダー紫グロー)
       if (sheetContent) {
-        if (state.pcOnline && currentStatusText === 'Bazzite') {
-          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.12) 0%, rgba(30, 32, 37, 1) 75%)';
-        } else if (state.pcOnline) {
-          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(74, 136, 232, 0.08) 0%, rgba(30, 32, 37, 1) 75%)';
+        if (isSwitchActive && isBazziteContext) {
+          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(192, 132, 252, 0.12) 0%, rgba(30, 32, 37, 1) 75%)';
+        } else if (isSwitchActive) {
+          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(74, 136, 232, 0.10) 0%, rgba(30, 32, 37, 1) 75%)';
         } else if (isTargetBazzite) {
-          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.06) 0%, rgba(30, 32, 37, 1) 75%)';
+          sheetContent.style.backgroundImage = 'radial-gradient(ellipse at 50% 0%, rgba(192, 132, 252, 0.05) 0%, rgba(30, 32, 37, 1) 75%)';
         } else {
           sheetContent.style.backgroundImage = 'none';
         }
@@ -3065,24 +3084,25 @@
       if (detailBlock) {
         detailBlock.style.transform = isSwitchActive ? "translateY(-112px)" : "translateY(0)";
 
+        // オン時の配色設定: タイルアイコンのトーン（Bazzite: #c084fc, Windows: #4a88e8）に寄せて統一
+        const osBg = isBazziteContext ? 'bg-[#c084fc]' : 'bg-[#4a88e8]';
+        const osShadow = isBazziteContext ? 'shadow-lg shadow-purple-500/30' : 'shadow-lg shadow-blue-500/25';
+        const trackOnBg = isBazziteContext ? '#311f4d' : '#192e4d';
+
         if (state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...') {
-          // 起動中: スイッチはオン位置へ移動し、準備中を示す深いトーン ＋ 穏やかなパルス
-          const bootThumbClass = isTargetBazzite ? "bg-[#2f1f48] border border-purple-400/30" : "bg-[#223348] border border-blue-400/20";
-          detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${bootThumbClass} flex items-center justify-center text-white shadow-md animate-pulse`;
-          if (containerEl) containerEl.style.backgroundColor = isTargetBazzite ? '#211735' : '#1c2432';
-          if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white animate-pulse">power_settings_new</span>`;
+          // 起動中: スイッチはオン位置へ移動、オン色でノブ部分のみ穏やかに呼吸（スローパルス）
+          detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${osBg} flex items-center justify-center text-white ${osShadow} animate-slow-pulse`;
+          if (containerEl) containerEl.style.backgroundColor = trackOnBg;
+          if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white">power_settings_new</span>`;
         } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
-          // 終了中: スイッチはオフ位置へ移動し、控えめなパルス
-          detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#3a3d46] flex items-center justify-center text-neutral-300 shadow-md animate-pulse";
+          // 終了中: スイッチはオフ位置へ移動、ノブ部分のみ控えめに呼吸（スローパルス）
+          detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-neutral-300 shadow-md animate-slow-pulse";
           if (containerEl) containerEl.style.backgroundColor = '#282b32';
-          if (iconWrapEl) iconWrapEl.innerHTML = `<div class="w-5 h-5 rounded-full border-2 border-neutral-300 animate-pulse"></div>`;
+          if (iconWrapEl) iconWrapEl.innerHTML = `<div class="w-5 h-5 rounded-full border-2 border-neutral-300"></div>`;
         } else if (state.pcOnline) {
-          // 完全起動中: Bazziteは上質で鮮やかなパープル (#8b5cf6)、Windowsは優しいブルー (#4a88e8)
-          const isBazziteActual = (currentStatusText === 'Bazzite');
-          const osBg = isBazziteActual ? 'bg-[#8b5cf6]' : 'bg-[#4a88e8]';
-          const osShadow = isBazziteActual ? 'shadow-lg shadow-purple-900/40' : 'shadow-lg shadow-blue-500/25';
+          // 完全起動中: スイッチはオン位置、オン色（常時点灯）
           detailBlock.className = `slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] ${osBg} flex items-center justify-center text-white ${osShadow}`;
-          if (containerEl) containerEl.style.backgroundColor = isBazziteActual ? '#221634' : '#182332';
+          if (containerEl) containerEl.style.backgroundColor = trackOnBg;
           if (iconWrapEl) iconWrapEl.innerHTML = `<span class="material-symbols-rounded text-2xl text-white">power_settings_new</span>`;
         } else {
           // オフライン: 静止グレー ＆ ライトと同様のオフリング
