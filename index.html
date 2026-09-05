@@ -3014,7 +3014,7 @@
         const isBazziteActual = (osLabel === 'Bazzite');
         activeTileIcon = isBazziteActual ? 'sports_esports' : 'desktop_windows';
         if (statusEl) {
-          statusEl.textContent = osLabel === 'オン' ? 'オン' : `${osLabel} (起動中)`;
+          statusEl.textContent = osLabel;
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
