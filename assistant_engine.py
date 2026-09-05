@@ -731,7 +731,16 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             return {"success": True, "message": "USBスイッチを切り替えました。", "action": "usb_toggle"}
 
     # 12. デスクトップPC (Windows / Bazzite)
-    if any(k in text for k in ['pc', 'パソコン', 'ぱそこん', 'デスクトップ']):
+    if any(k in text for k in ['bazzite', 'バザイト', 'ばざいと', 'windows', 'ウィンドウズ', 'ウインドウズ', 'うぃんどうず', 'pc', 'パソコン', 'ぱそこん', 'デスクトップ']):
+        # OS切り替え指示 (例: "OSをWindowsにして", "Bazziteにして")
+        if any(k in text for k in ['にして', 'に設定', 'に変えて', '切り替え', '選択']) and any(k in text for k in ['windows', 'ウィンドウズ', 'ウインドウズ', 'うぃんどうず', 'bazzite', 'バザイト', 'ばざいと']):
+            target = "Bazzite" if any(k in text for k in ['bazzite', 'バザイト', 'ばざいと']) else "Windows"
+            if send_api_fn:
+                res = send_api_fn('/api/pc/os', {'action': 'set_os', 'target_os': target})
+                msg = res.get('message', f'PCのOSを {target} に設定しました。')
+                return {"success": True, "message": msg, "action": f"pc_os_{target.lower()}"}
+            return {"success": True, "message": f"PCのOSを {target} に設定しました。", "action": f"pc_os_{target.lower()}"}
+
         if any(k in text for k in ['消して', 'けして', '切って', 'きって', 'シャットダウン', '電源切って', '落として', 'オフ', 'off', 'down']):
             if send_api_fn:
                 res = send_api_fn('/api/pc/shutdown', {'action': 'shutdown'})
@@ -739,8 +748,18 @@ def parse_and_execute(prompt: str, send_api_fn=None):
                 return {"success": True, "message": msg, "action": "pc_shutdown"}
             return {"success": True, "message": "PCの電源を切る指示を送信しました。", "action": "pc_shutdown"}
         elif any(k in text for k in ['つけて', '点けて', '起動', 'きどう', 'オン', 'おん', 'ブート', 'ぶーと', 'boot', 'wake', 'on']):
+            # OS指定があるか確認 (例: "Bazzite起動", "Windows立ち上げて")
+            target_os = None
+            if any(k in text for k in ['bazzite', 'バザイト', 'ばざいと']):
+                target_os = "Bazzite"
+            elif any(k in text for k in ['windows', 'ウィンドウズ', 'ウインドウズ', 'うぃんどうず']):
+                target_os = "Windows"
+
             if send_api_fn:
-                res = send_api_fn('/api/pc/boot', {'action': 'boot'})
+                payload = {'action': 'boot'}
+                if target_os:
+                    payload['target_os'] = target_os
+                res = send_api_fn('/api/pc/boot', payload)
                 msg = res.get('message', 'PCへ起動シグナルを送信しました。')
                 return {"success": True, "message": msg, "action": "pc_boot"}
             return {"success": True, "message": "PCへ起動シグナルを送信しました。", "action": "pc_boot"}

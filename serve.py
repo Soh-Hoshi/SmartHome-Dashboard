@@ -245,10 +245,13 @@ def dispatch_internal_api(endpoint: str, payload: dict):
             return {"status": "success", "power": usb_service.set_usb_power(True)}
         elif action == 'off':
             return {"status": "success", "power": usb_service.set_usb_power(False)}
-    elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown'):
+    elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/os'):
         action = payload.get('action')
-        if endpoint == '/api/pc/boot' or action in ('boot', 'on', 'start'):
-            return pc_service.boot_pc()
+        target_os = payload.get('target_os') or payload.get('os')
+        if endpoint == '/api/pc/os' or action in ('set_os', 'select_os'):
+            return pc_service.set_target_os(target_os or 'Windows')
+        elif endpoint == '/api/pc/boot' or action in ('boot', 'on', 'start'):
+            return pc_service.boot_pc(target_os=target_os)
         elif endpoint == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
             return pc_service.shutdown_pc()
         else:
@@ -537,10 +540,13 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 power = usb_service.toggle_usb_power()
             return self.send_json_response({"status": "success", "power": power, "state": state_manager.load_state()})
 
-        if clean_path in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown'):
+        if clean_path in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/os'):
             action = req_data.get('action')
-            if clean_path == '/api/pc/boot' or action in ('boot', 'on', 'start'):
-                res = pc_service.boot_pc()
+            target_os = req_data.get('target_os') or req_data.get('os')
+            if clean_path == '/api/pc/os' or action in ('set_os', 'select_os'):
+                res = pc_service.set_target_os(target_os or 'Windows')
+            elif clean_path == '/api/pc/boot' or action in ('boot', 'on', 'start'):
+                res = pc_service.boot_pc(target_os=target_os)
             elif clean_path == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
                 res = pc_service.shutdown_pc()
             else:

@@ -497,24 +497,6 @@
           <h2 class="text-base font-bold text-white px-1">スイッチ</h2>
           
           <div class="flex flex-col gap-3.5">
-            <!-- USBスイッチタイル (詳細画面なし。アイコンタップでのみトグル) -->
-            <div class="relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center space-x-3.5 shadow-md border border-white/[0.03]">
-              
-              <!-- USB固定アイコン (オン: ティール、オフ: グレー。タップでオン/オフ切り替え) -->
-              <button onclick="toggleUsbPowerFromTile(event)"
-                      id="tile-usb-icon-wrap" 
-                      class="w-11 h-11 rounded-full bg-[#272a31] text-neutral-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0"
-                      aria-label="USBスイッチのオン/オフ切り替え">
-                <span id="tile-usb-icon" class="material-symbols-rounded text-2xl">usb</span>
-              </button>
-
-              <!-- テキスト -->
-              <div class="flex-1 select-none">
-                <div class="text-[15px] font-semibold text-white leading-tight">USB</div>
-                <div id="tile-usb-status" class="text-xs text-neutral-400 font-normal mt-0.5 transition-colors">オフ</div>
-              </div>
-            </div>
-
             <!-- デスクトップPCタイル (アイコンタップでオン/オフ、それ以外の部分で詳細シートへ) -->
             <div onclick="openSheet('pc-sheet')" 
                  class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]">
@@ -1780,7 +1762,8 @@
       pcOnline: false,
       pcBooting: false,
       pcShuttingDown: false,
-      pcOs: 'オフライン'
+      pcOs: 'オフライン',
+      pcTargetOs: 'Windows'
     };
 
     // ファンモード用の統一アイコン
@@ -2848,6 +2831,12 @@
           if (data.status === 'success' && typeof data.power === 'boolean') {
             state.usbPower = data.power;
             updateUsbUi();
+            const targetOs = data.power ? 'Bazzite' : 'Windows';
+            const dropup = document.getElementById('pc-os-dropup-menu');
+            const isDropupOpen = dropup && dropup.classList.contains('open');
+            if (!isDropupOpen && state.pcTargetOs !== targetOs) {
+              applyPcOsSelection(targetOs, false);
+            }
           }
         }
       } catch (e) {}
@@ -2877,7 +2866,8 @@
         state.pcShuttingDown = false;
         state.pcOs = '起動中';
         updatePcUi();
-        showAssistantToast('PCへ起動シグナル(WoL)を送信しました', 'power_settings_new');
+        const targetOs = state.pcTargetOs || 'Windows';
+        showAssistantToast(`${targetOs} へ起動シグナル(WoL)を送信しました`, 'power_settings_new');
         sendPcCommand('boot');
       } else {
         // === 電源オフアクション (シャットダウン) ===
@@ -2895,10 +2885,14 @@
     async function sendPcCommand(action) {
       pcActionLockTime = Date.now();
       try {
+        const payload = { action: action };
+        if (action === 'boot') {
+          payload.target_os = state.pcTargetOs || 'Windows';
+        }
         const res = await fetch(`${apiBasePath}/api/pc`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: action })
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (data.status === 'success' || data.status === 'info') {
@@ -2906,6 +2900,9 @@
           state.pcBooting = !!data.booting;
           state.pcShuttingDown = !!data.shutting_down;
           if (data.os) state.pcOs = data.os;
+          if (data.target_os) {
+            applyPcOsSelection(data.target_os, false);
+          }
           updatePcUi();
           // トランジェント中は2秒後にステータス確認
           if (state.pcBooting || state.pcShuttingDown) {
@@ -2927,9 +2924,9 @@
       togglePcPowerFromTile(event);
     }
 
-    function selectPcOs(os) {
-      closeAllDropups();
+    function applyPcOsSelection(os, sendCommand = false) {
       state.pcTargetOs = os;
+      state.usbPower = (os === 'Bazzite');
 
       // チェックマークの切り替え (Windowsは優しい#4a88e8)
       const checkWin = document.getElementById('check-pc-os-windows');
@@ -2951,6 +2948,22 @@
 
       // オフ時でも選択したOSのアイコンをスイッチに即時反映
       updatePcUi();
+
+      if (sendCommand) {
+        const isBazzite = (os === 'Bazzite');
+        fetch(`${apiBasePath}/api/pc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'set_os', target_os: os })
+        }).catch(err => console.error('[PC Set OS Error]', err));
+
+        showAssistantToast(`起動OSを ${os} に設定しました (USB: ${isBazzite ? 'オン' : 'オフ'})`, isBazzite ? 'sports_esports' : 'desktop_windows');
+      }
+    }
+
+    function selectPcOs(os) {
+      closeAllDropups();
+      applyPcOsSelection(os, true);
     }
 
     function updatePcUi() {
@@ -3083,6 +3096,13 @@
             state.pcBooting = !!data.booting;
             state.pcShuttingDown = !!data.shutting_down;
             state.pcOs = data.os || (state.pcOnline ? '起動中' : 'オフライン');
+            if (data.target_os) {
+              const dropup = document.getElementById('pc-os-dropup-menu');
+              const isDropupOpen = dropup && dropup.classList.contains('open');
+              if (!isDropupOpen && state.pcTargetOs !== data.target_os) {
+                applyPcOsSelection(data.target_os, false);
+              }
+            }
             updatePcUi();
 
             // 起動中または終了中なら、完了をいち早く検知するために2秒後に再チェック
