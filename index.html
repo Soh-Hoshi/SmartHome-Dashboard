@@ -2990,8 +2990,8 @@
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
-          // Bazziteなら明るく鮮やかなパープル背景、Windowsなら優しいブルー
-          const bootColor = isTargetBazzite ? "bg-[#52338d] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
+          // Bazziteなら背景になじむダークパープル、Windowsならスレートブルー
+          const bootColor = isTargetBazzite ? "bg-[#251f35] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
           iconWrap.className = `w-11 h-11 rounded-full ${bootColor} flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer animate-pulse`;
         }
       } else if (state.pcShuttingDown || state.pcOs === '終了中' || state.pcOs === '終了中...' || state.pcOs === 'シャットダウン中' || state.pcOs === 'シャットダウン中...') {
@@ -3018,8 +3018,8 @@
           statusEl.className = "text-xs text-neutral-400 font-normal mt-0.5 transition-colors";
         }
         if (iconWrap) {
-          // Bazziteは明るく鮮やかなパープル背景、Windowsは優しいブルー
-          const onlineColor = isBazziteActual ? "bg-[#52338d] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
+          // Bazziteなら背景になじむダークパープル、Windowsならスレートブルー
+          const onlineColor = isBazziteActual ? "bg-[#251f35] text-[#c084fc]" : "bg-[#1e293b] text-[#4a88e8]";
           iconWrap.className = `w-11 h-11 rounded-full ${onlineColor} flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer`;
         }
       } else {
