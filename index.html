@@ -200,6 +200,79 @@
       color: #fb7185 !important;
       border-color: rgba(244, 63, 94, 0.6) !important;
     }
+
+    /* タブ切り替え スライド＆フェード トランジション */
+    .tab-viewport {
+      position: relative;
+      width: 100%;
+      overflow-x: clip;
+    }
+    .tab-view {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    @keyframes tabSlideOutToLeft {
+      0% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateX(-40px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes tabSlideInFromRight {
+      0% {
+        transform: translateX(40px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes tabSlideOutToRight {
+      0% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateX(40px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes tabSlideInFromLeft {
+      0% {
+        transform: translateX(-40px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .tab-anim-out-left {
+      animation: tabSlideOutToLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: none;
+    }
+
+    .tab-anim-in-right {
+      animation: tabSlideInFromRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .tab-anim-out-right {
+      animation: tabSlideOutToRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: none;
+    }
+
+    .tab-anim-in-left {
+      animation: tabSlideInFromLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="bg-app-bg text-white min-h-screen w-full flex flex-col antialiased font-sans">
@@ -241,6 +314,7 @@
 
     <!-- メインコンテンツ表示エリア (スマホ: 上部大型ヘッダー用 pt-24 / 下部ボトムナビ用 pb-28) -->
     <div class="flex-1 min-w-0 pt-24 md:pt-6 pb-28 flex flex-col">
+      <div id="tab-viewport" class="tab-viewport relative w-full overflow-x-clip">
       
       <!-- ======================================================================= -->
       <!-- タブ1：メインダッシュボード (Masonry多段カラムで縦隙間なく自動詰め)       -->
@@ -667,9 +741,10 @@
         </section>
 
       </div>
-
+      <!-- #tab-viewport 終了 -->
     </div>
   </div>
+</div>
 
   <!-- ======================================================================= -->
   <!-- Nova プロンプトバー (スマホ: 画面最上部固定ヘッダー / PC: 画面最下部フローティング) -->
@@ -1723,25 +1798,100 @@
     };
 
     let isModalHistoryActive = false;
+    let currentActiveTab = 'dashboard';
+    let tabSwitchAnimationTimer = null;
 
     /**
-     * タブの切り替え (ダッシュボード / オートメーション / シーン / データ)
-     * サイドバー(デスクトップ)とボトムナビ(モバイル)の両方を同期更新
+     * タブの切り替え (ダッシュボード / オートメーション / シーン)
+     * サイドバー(デスクトップ)とボトムナビ(モバイル)の両方を同期更新し、
+     * 滑らかな水平スライド＋フェードのアニメーションで遷移
      */
     function switchTab(tabId) {
       const tabs = ['dashboard', 'automations', 'scenes'];
+      if (!tabs.includes(tabId)) return;
+      if (tabId === currentActiveTab) return;
 
-      // ビューの表示/非表示切り替え
+      const prevTabId = currentActiveTab;
+      currentActiveTab = tabId;
+
+      const prevIndex = tabs.indexOf(prevTabId);
+      const nextIndex = tabs.indexOf(tabId);
+      const isForward = nextIndex > prevIndex; // 右へ進む(左スワイプ等)
+
+      const prevView = document.getElementById(`view-${prevTabId}`);
+      const nextView = document.getElementById(`view-${tabId}`);
+
+      // 前のアニメーションのタイマーがあればクリア
+      if (tabSwitchAnimationTimer) {
+        clearTimeout(tabSwitchAnimationTimer);
+        tabSwitchAnimationTimer = null;
+      }
+
+      // クリーンアップ共通関数
+      const cleanupTabStyles = (el) => {
+        if (!el) return;
+        el.classList.remove(
+          'tab-anim-out-left', 'tab-anim-in-right',
+          'tab-anim-out-right', 'tab-anim-in-left'
+        );
+        el.style.position = '';
+        el.style.top = '';
+        el.style.left = '';
+        el.style.width = '';
+        el.style.zIndex = '';
+      };
+
+      // 全タブの余計なスタイルをリセット (遷移対象以外は即座に非表示)
       tabs.forEach(t => {
-        const viewEl = document.getElementById(`view-${t}`);
-        if (viewEl) {
-          if (t === tabId) {
-            viewEl.classList.remove('hidden');
-          } else {
-            viewEl.classList.add('hidden');
-          }
+        const el = document.getElementById(`view-${t}`);
+        if (el && t !== prevTabId && t !== tabId) {
+          cleanupTabStyles(el);
+          el.classList.add('hidden');
+        }
+      });
+
+      if (prevView && nextView) {
+        cleanupTabStyles(prevView);
+        cleanupTabStyles(nextView);
+
+        // 旧タブを一時的に絶対配置で重ね、新タブを通常フローで描画
+        prevView.style.position = 'absolute';
+        prevView.style.top = '0';
+        prevView.style.left = '0';
+        prevView.style.width = '100%';
+        prevView.style.zIndex = '1';
+        prevView.classList.remove('hidden');
+
+        nextView.style.position = 'relative';
+        nextView.style.zIndex = '2';
+        nextView.classList.remove('hidden');
+
+        // 方向に応じたスライドアニメーションクラスを付与
+        if (isForward) {
+          prevView.classList.add('tab-anim-out-left');
+          nextView.classList.add('tab-anim-in-right');
+        } else {
+          prevView.classList.add('tab-anim-out-right');
+          nextView.classList.add('tab-anim-in-left');
         }
 
+        // アニメーション完了後に旧タブを非表示にしスタイルを初期化 (220ms)
+        tabSwitchAnimationTimer = setTimeout(() => {
+          if (prevView) {
+            prevView.classList.add('hidden');
+            cleanupTabStyles(prevView);
+          }
+          if (nextView) {
+            cleanupTabStyles(nextView);
+          }
+          tabSwitchAnimationTimer = null;
+        }, 220);
+      } else if (nextView) {
+        nextView.classList.remove('hidden');
+      }
+
+      // デスクトップ用サイドバーボタンとモバイル用ボトムナビボタンの同期更新
+      tabs.forEach(t => {
         // デスクトップ用サイドバーボタンのスタイル切り替え (アイコン ＋ ホバー展開ラベル)
         const navBtn = document.getElementById(`nav-${t}`);
         if (navBtn) {
@@ -1791,8 +1941,8 @@
         }
       });
 
-      // モバイル時に上部へスムーズスクロール
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // モバイル時に上部へスクロール
+      window.scrollTo(0, 0);
     }
 
     /**
@@ -1846,24 +1996,17 @@
 
       window.addEventListener('touchend', (e) => {
         if (!isHorizontalSwipe || isVerticalScroll) return;
+        if (tabSwitchAnimationTimer) return;
 
         const touch = e.changedTouches[0];
         const dx = touch.clientX - touchStartX;
         const dy = touch.clientY - touchStartY;
         const duration = Date.now() - touchStartTime;
 
-        // 50px以上の水平移動かつ縦移動の1.5倍以上、500ms以内の自然なスワイプ/フリック
-        if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && duration < 500) {
+        // 45px以上の水平移動かつ縦移動の1.5倍以上、500ms以内の自然なスワイプ/フリック
+        if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy) * 1.5 && duration < 500) {
           const tabs = ['dashboard', 'automations', 'scenes'];
-          let currentTab = 'dashboard';
-          tabs.forEach(t => {
-            const el = document.getElementById(`view-${t}`);
-            if (el && !el.classList.contains('hidden')) {
-              currentTab = t;
-            }
-          });
-
-          const currentIndex = tabs.indexOf(currentTab);
+          const currentIndex = tabs.indexOf(currentActiveTab);
           if (dx < 0) {
             // 左スワイプ (右から左へ指を動かす) -> 次のタブへ
             if (currentIndex < tabs.length - 1) {
