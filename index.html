@@ -6,7 +6,7 @@
   <title>ダッシュボード - スマートホーム</title>
 
   <!-- PWA (Progressive Web App) 設定: Home Assistantとの競合を防ぐ絶対パス指定 -->
-  <link id="pwa-manifest" rel="manifest" href="/dashboard/manifest.json">
+  <link id="pwa-manifest" rel="manifest" href="/dashboard/manifest.json" crossorigin="use-credentials">
   <meta name="theme-color" content="#0d0f12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3449,6 +3449,22 @@
             });
         });
       }
+
+      // PWA インストールプロンプト (beforeinstallprompt) ハンドリング
+      window.deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('[PWA] beforeinstallprompt event captured');
+        e.preventDefault();
+        window.deferredInstallPrompt = e;
+      });
+
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA] SmartHome Dashboard was successfully installed as an app');
+        window.deferredInstallPrompt = null;
+        if (typeof showAssistantToast === 'function') {
+          showAssistantToast('アプリをインストールしました', 'check_circle');
+        }
+      });
 
       // Android アシスタントブリッジ連携: URLに ?assist=1 または ?voice=1 が付いている場合は即座に音声起動
       const urlParams = new URLSearchParams(window.location.search);

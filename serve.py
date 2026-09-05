@@ -312,9 +312,15 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(HTTPStatus.NO_CONTENT)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Access-Key')
         self.end_headers()
+
+    def do_HEAD(self):
+        auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
+        if not auth['authenticated']:
+            return self.send_unauthorized(auth.get('reason'))
+        return super().do_HEAD()
 
     def do_GET(self):
         # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)

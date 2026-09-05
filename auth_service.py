@@ -71,6 +71,34 @@ def check_request_auth(headers, client_address, raw_path: str) -> dict:
     access_key = get_access_key()
     expected_cookie = get_expected_cookie_value(access_key)
 
+    # 0. PWA インストール用パブリックアセット判定 (manifest.json, アイコン, sw.js)
+    # Chrome や WebAPK 生成サーバーが Cookie なしで取得しに来るため、
+    # 家電操作APIやHTML以外の安全なPWAメタデータのみパブリック配信を許可。
+    parsed = urllib.parse.urlparse(raw_path)
+    clean_p = parsed.path
+    if clean_p.startswith('/dashboard'):
+        clean_p = clean_p[len('/dashboard'):] or '/'
+
+    pwa_assets = (
+        '/manifest.json',
+        '/sw.js',
+        '/icon-192.png',
+        '/icon-512.png',
+        '/icon-maskable-192.png',
+        '/icon-maskable-512.png',
+        '/icon.svg',
+        '/apple-touch-icon.png',
+        '/favicon.ico',
+    )
+    if clean_p in pwa_assets:
+        return {
+            "authenticated": True,
+            "set_cookie": False,
+            "clean_url": None,
+            "cookie_value": expected_cookie,
+            "reason": "pwa_asset"
+        }
+
     # 1. 真のローカル LAN 直接アクセス判定
     # Tailscale プロキシを経由している場合は X-Forwarded-For が付与されるため、
     # X-Forwarded-For が無く、かつ接続元がプライベート/ループバックIPなら宅内直接アクセスと判定。
