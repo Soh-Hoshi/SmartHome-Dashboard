@@ -415,6 +415,7 @@ def shutdown_pc():
             "os": "オフライン"
         }
 
+    os_type = st.get("os", "Windows")
     if os_type == "Windows":
         remote_cmd = 'shutdown.exe /s /t 0'
         users_to_try = ["user", "Soh", "soh"]
