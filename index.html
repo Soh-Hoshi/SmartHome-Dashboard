@@ -3875,6 +3875,8 @@
           navigator.serviceWorker.register(swUrl, { scope: scopeUrl })
             .then(async (reg) => {
               console.log('[PWA] Service Worker registered for scope:', reg.scope);
+              // 画面起動時に必ず最新SWの更新確認を実行
+              try { reg.update(); } catch (e) {}
               
               // 以前登録された WebPush サブスクリプションがあれば自動解除
               if ('pushManager' in reg) {
@@ -3892,6 +3894,16 @@
             .catch((err) => {
               console.warn('[PWA] Service Worker registration failed:', err);
             });
+
+          // 新しい Service Worker がアクティブ化されたら自動リロードして新UIを即時反映
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              console.log('[PWA] New Service Worker active, reloading...');
+              window.location.reload();
+            }
+          });
         });
       }
 

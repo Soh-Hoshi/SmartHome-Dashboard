@@ -7,6 +7,7 @@ Supports serving from root (/) and subpaths (/dashboard/) over Tailscale HTTPS.
 import os
 import sys
 import time
+import io
 import json
 import socket
 import queue
@@ -612,16 +613,61 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.send_header('Expires', '0')
         super().end_headers()
 
-    def copyfile(self, source, outputfile):
-        if hasattr(source, 'name') and source.name.endswith('.html'):
-            content = source.read()
-            if b'</body>' in content:
-                content = content.replace(b'</body>', LIVE_RELOAD_SCRIPT)
+    def send_head(self):
+        path = self.translate_path(self.path)
+        f = None
+        if os.path.isdir(path):
+            parts = urllib.parse.urlsplit(self.path)
+            if not parts.path.endswith('/'):
+                self.send_response(HTTPStatus.MOVED_PERMANENTLY)
+                new_parts = (parts[0], parts[1], parts[2] + '/', parts[3], parts[4])
+                self.send_header("Location", urllib.parse.urlunsplit(new_parts))
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return None
+            for index in ("index.html", "index.htm"):
+                index_path = os.path.join(path, index)
+                if os.path.exists(index_path):
+                    path = index_path
+                    break
             else:
-                content += LIVE_RELOAD_SCRIPT
-            outputfile.write(content)
-        else:
-            super().copyfile(source, outputfile)
+                return self.list_directory(path)
+
+        ctype = self.guess_type(path)
+        try:
+            f = open(path, 'rb')
+        except OSError:
+            self.send_error(HTTPStatus.NOT_FOUND, "File not found")
+            return None
+
+        try:
+            fs = os.fstat(f.fileno())
+            if path.endswith('.html'):
+                content = f.read()
+                f.close()
+                if b'</body>' in content:
+                    content = content.replace(b'</body>', LIVE_RELOAD_SCRIPT)
+                else:
+                    content += LIVE_RELOAD_SCRIPT
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-type", ctype)
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
+                self.end_headers()
+                return io.BytesIO(content)
+
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-type", ctype)
+            self.send_header("Content-Length", str(fs[6]))
+            self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
+            self.end_headers()
+            return f
+        except Exception:
+            f.close()
+            raise
+
+    def copyfile(self, source, outputfile):
+        super().copyfile(source, outputfile)
 
     def log_message(self, format, *args):
         pass
