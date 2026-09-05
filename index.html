@@ -1710,41 +1710,74 @@
         </div>
       </div>
 
-      <!-- 最下部コントロールエリア: 他シートと完全統一されたドロップアップメニュー -->
-      <div class="relative pt-2 shrink-0">
-        <!-- OS選択 ドロップアップ ポップオーバー -->
-        <div id="pc-os-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-64 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
-          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">OS</div>
-          <div class="space-y-0.5">
-            <button onclick="selectPcOs('Windows')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-[#4a88e8]">
-                <span class="material-symbols-rounded text-xl">desktop_windows</span>
-                <span class="text-white">Windows</span>
-              </div>
-              <span id="check-pc-os-windows" class="text-[#4a88e8] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
-            </button>
-            <button onclick="selectPcOs('Bazzite')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-[#c084fc]">
-                <span class="material-symbols-rounded text-xl">sports_esports</span>
-                <span class="text-white">Bazzite</span>
-              </div>
-              <span id="check-pc-os-bazzite" class="hidden text-[#c084fc] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
-            </button>
-          </div>
+      <!-- 最下部コントロールエリア (1段目: スリープ & 再起動、2段目: OS選択) -->
+      <div class="relative space-y-2.5 pt-1 shrink-0">
+        
+        <!-- 1段目: スリープ & 再起動 (単発トリガーボタン) -->
+        <div class="grid grid-cols-2 gap-3">
+          
+          <!-- スリープ ボタン -->
+          <button onclick="pressPcSleep(event)" 
+                  id="btn-pc-sleep"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-pc-sleep-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+              <span class="material-symbols-rounded text-2xl">bedtime</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">スリープ</div>
+            </div>
+          </button>
+
+          <!-- 再起動 ボタン -->
+          <button onclick="pressPcRestart(event)" 
+                  id="btn-pc-restart"
+                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-pc-restart-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+              <span class="material-symbols-rounded text-2xl">restart_alt</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-[14px] font-semibold text-white truncate">再起動</div>
+            </div>
+          </button>
         </div>
 
-        <!-- OS選択 トリガーボタン -->
-        <button id="btn-trigger-pc-os" onclick="toggleDropup('pc-os-dropup-menu', event)" 
-                class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-          <div id="detail-pc-os-icon" class="text-[#4a88e8] shrink-0 flex items-center justify-center">
-            <span id="detail-pc-os-icon-span" class="material-symbols-rounded text-2xl">desktop_windows</span>
+        <!-- 2段目: OS選択 ドロップアップ -->
+        <div class="relative">
+          <!-- OS選択 ドロップアップ ポップオーバー -->
+          <div id="pc-os-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-64 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+            <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">OS</div>
+            <div class="space-y-0.5">
+              <button onclick="selectPcOs('Windows')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                <div class="flex items-center space-x-3 text-[#4a88e8]">
+                  <span class="material-symbols-rounded text-xl">desktop_windows</span>
+                  <span class="text-white">Windows</span>
+                </div>
+                <span id="check-pc-os-windows" class="text-[#4a88e8] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              </button>
+              <button onclick="selectPcOs('Bazzite')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                <div class="flex items-center space-x-3 text-[#c084fc]">
+                  <span class="material-symbols-rounded text-xl">sports_esports</span>
+                  <span class="text-white">Bazzite</span>
+                </div>
+                <span id="check-pc-os-bazzite" class="hidden text-[#c084fc] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              </button>
+            </div>
           </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-xs text-neutral-400 font-normal">OS</div>
-            <div id="detail-pc-os-label" class="text-[14px] font-semibold text-white truncate mt-0.5">Windows</div>
-          </div>
-          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
-        </button>
+
+          <!-- OS選択 トリガーボタン -->
+          <button id="btn-trigger-pc-os" onclick="toggleDropup('pc-os-dropup-menu', event)" 
+                  class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-pc-os-icon" class="text-[#4a88e8] shrink-0 flex items-center justify-center">
+              <span id="detail-pc-os-icon-span" class="material-symbols-rounded text-2xl">desktop_windows</span>
+            </div>
+            <div class="overflow-hidden leading-tight flex-1">
+              <div class="text-xs text-neutral-400 font-normal">OS</div>
+              <div id="detail-pc-os-label" class="text-[14px] font-semibold text-white truncate mt-0.5">Windows</div>
+            </div>
+            <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          </button>
+        </div>
+
       </div>
 
     </div>
@@ -2932,6 +2965,35 @@
       togglePcPowerFromTile(event);
     }
 
+    function pressPcSleep(event) {
+      if (event) event.stopPropagation();
+      if (!state.pcOnline || state.pcBooting || state.pcShuttingDown) {
+        showAssistantToast('PCがオンラインの時のみスリープ可能です', 'bedtime');
+        return;
+      }
+      state.pcOnline = false;
+      state.pcBooting = false;
+      state.pcShuttingDown = true;
+      state.pcOs = '終了中';
+      updatePcUi();
+      showAssistantToast('PCへスリープを指示しました', 'bedtime');
+      sendPcCommand('sleep');
+    }
+
+    function pressPcRestart(event) {
+      if (event) event.stopPropagation();
+      if (!state.pcOnline || state.pcBooting || state.pcShuttingDown) {
+        showAssistantToast('PCがオンラインの時のみ再起動可能です', 'restart_alt');
+        return;
+      }
+      state.pcBooting = true;
+      state.pcShuttingDown = false;
+      state.pcOs = '起動中';
+      updatePcUi();
+      showAssistantToast('PCへ再起動を指示しました', 'restart_alt');
+      sendPcCommand('restart');
+    }
+
     function applyPcOsSelection(os, sendCommand = false) {
       state.pcTargetOs = os;
       state.usbPower = (os === 'Bazzite');
@@ -3102,6 +3164,43 @@
           detailBlock.className = "slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] bg-[#434752] flex items-center justify-center text-neutral-300 shadow-md";
           if (containerEl) containerEl.style.backgroundColor = '#282b32';
           if (iconWrapEl) iconWrapEl.innerHTML = `<div class="w-5 h-5 rounded-full border-2 border-neutral-300"></div>`;
+        }
+      }
+
+      // 3. スリープ / 再起動 ボタン＆アイコンのUI更新 (稼働中OSのテーマ色に同期)
+      const sleepIcon = document.getElementById('detail-pc-sleep-icon');
+      const restartIcon = document.getElementById('detail-pc-restart-icon');
+      const sleepBtn = document.getElementById('btn-pc-sleep');
+      const restartBtn = document.getElementById('btn-pc-restart');
+
+      const isPcReady = !!(state.pcOnline && !isBooting && !isShuttingDown);
+      const themeColorClass = isBazziteActive ? "text-[#c084fc]" : "text-[#4a88e8]";
+
+      if (sleepIcon) {
+        sleepIcon.className = isPcReady
+          ? `${themeColorClass} shrink-0 flex items-center justify-center transition-colors`
+          : "text-neutral-400 shrink-0 flex items-center justify-center transition-colors";
+      }
+
+      if (restartIcon) {
+        restartIcon.className = isPcReady
+          ? `${themeColorClass} shrink-0 flex items-center justify-center transition-colors`
+          : "text-neutral-400 shrink-0 flex items-center justify-center transition-colors";
+      }
+
+      if (sleepBtn) {
+        if (isPcReady) {
+          sleepBtn.classList.remove('opacity-40');
+        } else {
+          sleepBtn.classList.add('opacity-40');
+        }
+      }
+
+      if (restartBtn) {
+        if (isPcReady) {
+          restartBtn.classList.remove('opacity-40');
+        } else {
+          restartBtn.classList.add('opacity-40');
         }
       }
     }

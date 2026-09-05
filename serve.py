@@ -541,7 +541,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 power = usb_service.toggle_usb_power()
             return self.send_json_response({"status": "success", "power": power, "state": state_manager.load_state()})
 
-        if clean_path in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/os'):
+        if clean_path in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/sleep', '/api/pc/restart', '/api/pc/os'):
             action = req_data.get('action')
             target_os = req_data.get('target_os') or req_data.get('os')
             if clean_path == '/api/pc/os' or action in ('set_os', 'select_os'):
@@ -550,6 +550,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 res = pc_service.boot_pc()
             elif clean_path == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
                 res = pc_service.shutdown_pc()
+            elif clean_path == '/api/pc/sleep' or action in ('sleep', 'suspend'):
+                res = pc_service.sleep_pc()
+            elif clean_path == '/api/pc/restart' or action in ('restart', 'reboot'):
+                res = pc_service.restart_pc()
             else:
                 res = pc_service.toggle_pc()
             return self.send_json_response(res)

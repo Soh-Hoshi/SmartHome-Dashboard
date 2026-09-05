@@ -250,6 +250,74 @@ def _monitor_shutdown():
         if _transient_state == 'shutting_down':
             _transient_state = None
 
+def _monitor_restart():
+    """バックグラウンドで再起動を監視: まず切断(オフライン)を待ち、その後起動完了(SSH復帰)を監視"""
+    global _transient_state, _cached_status
+    start = time.time()
+
+    # フェーズ1: 切断・オフライン待ち (最大40秒)
+    while time.time() - start < 40.0:
+        time.sleep(1.5)
+        with _lock:
+            if _transient_state != 'booting':
+                return
+        if not is_pc_online():
+            print("[PC Monitor] PC restart: went offline as expected.")
+            break
+
+    # フェーズ2: 復旧(SSH応答)待ち (最大 BOOT_TIMEOUT 秒)
+    boot_start = time.time()
+    while time.time() - boot_start < BOOT_TIMEOUT:
+        time.sleep(2.0)
+        with _lock:
+            if _transient_state != 'booting':
+                return
+        if is_pc_online():
+            os_name = detect_os_from_banner()
+            if os_name != "Unknown":
+                with _lock:
+                    _transient_state = None
+                    target_os = get_target_os()
+                    _cached_status = {
+                        "online": True,
+                        "booting": False,
+                        "shutting_down": False,
+                        "os": os_name,
+                        "target_os": target_os,
+                        "usb_power": (target_os == "Bazzite"),
+                        "ip": PC_IP
+                    }
+                    try:
+                        state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                    except Exception:
+                        pass
+                print(f"[PC Monitor] PC reboot completed with verified SSH: {os_name}")
+                return
+            else:
+                print("[PC Monitor] PC responding after reboot, waiting for SSH...")
+
+    # タイムアウト
+    with _lock:
+        if _transient_state == 'booting':
+            _transient_state = None
+            online = is_pc_online()
+            target_os = get_target_os()
+            os_name = detect_os_from_banner() if online else "オフライン"
+            _cached_status = {
+                "online": online,
+                "booting": False,
+                "shutting_down": False,
+                "os": os_name,
+                "target_os": target_os,
+                "usb_power": (target_os == "Bazzite"),
+                "ip": PC_IP
+            }
+            try:
+                state_manager.save_state({"pcOnline": online, "pcOs": os_name})
+            except Exception:
+                pass
+            print(f"[PC Monitor] PC reboot monitor finished (online={online}, os={os_name})")
+
 def get_pc_status(force_refresh=False):
     global _cached_status, _last_check, _transient_state, _transient_timestamp
     now = time.time()
@@ -402,25 +470,18 @@ def boot_pc():
         "target_os": current_target
     }
 
-def shutdown_pc():
-    """OSを自動判別して適切なシャットダウンコマンドをSSH送信"""
-    global _transient_state, _transient_timestamp, _cached_status
-
+def _send_ssh_cmd(remote_cmd_windows: str, remote_cmd_linux: str):
+    """稼働中のOSを判定してSSHコマンドを送信 (返り値: (sent, os_type, error_message))"""
     st = get_pc_status(force_refresh=True)
     if not st["online"] and not st.get("booting"):
-        return {
-            "status": "warning",
-            "message": "PCはすでにオフラインです。",
-            "online": False,
-            "os": "オフライン"
-        }
+        return False, "オフライン", "PCはオフラインです。"
 
     os_type = st.get("os", "Windows")
     if os_type == "Windows":
-        remote_cmd = 'shutdown.exe /s /t 0'
+        remote_cmd = remote_cmd_windows
         users_to_try = ["user", "Soh", "soh"]
     else:
-        remote_cmd = f'sudo /usr/bin/systemctl poweroff || sudo systemctl poweroff || systemctl poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
+        remote_cmd = remote_cmd_linux
         users_to_try = ["Soh", "soh", "user"]
 
     last_err = None
@@ -449,6 +510,24 @@ def shutdown_pc():
             break
         else:
             last_err = res.stderr or res.stdout
+
+    return sent, os_type, last_err
+
+def shutdown_pc():
+    """OSを自動判別して適切なシャットダウンコマンドをSSH送信"""
+    global _transient_state, _transient_timestamp, _cached_status
+
+    win_cmd = 'shutdown.exe /s /t 0'
+    linux_cmd = f'sudo /usr/bin/systemctl poweroff || sudo systemctl poweroff || systemctl poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
+
+    sent, os_type, last_err = _send_ssh_cmd(win_cmd, linux_cmd)
+    if not sent and os_type == "オフライン":
+        return {
+            "status": "warning",
+            "message": "PCはすでにオフラインです。",
+            "online": False,
+            "os": "オフライン"
+        }
 
     if sent:
         with _lock:
@@ -482,6 +561,109 @@ def shutdown_pc():
     return {
         "status": "error",
         "message": f"シャットダウンの送信に失敗しました: {last_err}",
+        "os": os_type
+    }
+
+def sleep_pc():
+    """OSを自動判別してスリープ(サスペンド)コマンドをSSH送信"""
+    global _transient_state, _transient_timestamp, _cached_status
+
+    win_cmd = 'powershell -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', $false, $false)" || rundll32.exe powrprof.dll,SetSuspendState 0,1,0'
+    linux_cmd = f'sudo /usr/bin/systemctl suspend || systemctl suspend || echo {PASSWORD} | sudo -S systemctl suspend'
+
+    sent, os_type, last_err = _send_ssh_cmd(win_cmd, linux_cmd)
+    if not sent and os_type == "オフライン":
+        return {
+            "status": "warning",
+            "message": "PCはオフラインのためスリープできません。",
+            "online": False,
+            "os": "オフライン"
+        }
+
+    if sent:
+        with _lock:
+            _transient_state = 'shutting_down'
+            _transient_timestamp = time.time()
+            target_os = get_target_os()
+            _cached_status = {
+                "online": False,
+                "booting": False,
+                "shutting_down": True,
+                "os": "終了中",
+                "target_os": target_os,
+                "usb_power": (target_os == "Bazzite"),
+                "ip": PC_IP
+            }
+            try:
+                state_manager.save_state({"pcOnline": False, "pcOs": "終了中"})
+            except Exception:
+                pass
+
+        threading.Thread(target=_monitor_shutdown, daemon=True).start()
+
+        return {
+            "status": "success",
+            "message": f"{os_type} にスリープを指示しました。",
+            "online": False,
+            "shutting_down": True,
+            "os": "終了中"
+        }
+
+    return {
+        "status": "error",
+        "message": f"スリープの送信に失敗しました: {last_err}",
+        "os": os_type
+    }
+
+def restart_pc():
+    """OSを自動判別して再起動(リブート)コマンドをSSH送信"""
+    global _transient_state, _transient_timestamp, _cached_status
+
+    win_cmd = 'shutdown.exe /r /t 0'
+    linux_cmd = f'sudo /usr/bin/systemctl reboot || sudo systemctl reboot || systemctl reboot || echo {PASSWORD} | sudo -S systemctl reboot || reboot'
+
+    sent, os_type, last_err = _send_ssh_cmd(win_cmd, linux_cmd)
+    if not sent and os_type == "オフライン":
+        return {
+            "status": "warning",
+            "message": "PCはオフラインのため再起動できません。",
+            "online": False,
+            "os": "オフライン"
+        }
+
+    if sent:
+        with _lock:
+            _transient_state = 'booting'
+            _transient_timestamp = time.time()
+            target_os = get_target_os()
+            _cached_status = {
+                "online": True,
+                "booting": True,
+                "shutting_down": False,
+                "os": "起動中",
+                "target_os": target_os,
+                "usb_power": (target_os == "Bazzite"),
+                "ip": PC_IP
+            }
+            try:
+                state_manager.save_state({"pcOnline": True, "pcOs": "起動中"})
+            except Exception:
+                pass
+
+        threading.Thread(target=_monitor_restart, daemon=True).start()
+
+        return {
+            "status": "success",
+            "message": f"{os_type} に再起動を指示しました。",
+            "online": True,
+            "booting": True,
+            "os": "起動中",
+            "target_os": target_os
+        }
+
+    return {
+        "status": "error",
+        "message": f"再起動の送信に失敗しました: {last_err}",
         "os": os_type
     }
 

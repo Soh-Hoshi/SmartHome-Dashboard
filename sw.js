@@ -1,7 +1,7 @@
 // SmartHome Dashboard PWA Service Worker
 // Dedicated Scope: /dashboard
 
-const CACHE_NAME = 'smarthome-dashboard-v19';
+const CACHE_NAME = 'smarthome-dashboard-v20';
 const STATIC_ASSETS = [
   '/dashboard',
   '/dashboard/',
