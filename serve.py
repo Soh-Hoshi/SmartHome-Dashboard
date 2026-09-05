@@ -251,7 +251,7 @@ def dispatch_internal_api(endpoint: str, payload: dict):
         if endpoint == '/api/pc/os' or action in ('set_os', 'select_os'):
             return pc_service.set_target_os(target_os or 'Windows')
         elif endpoint == '/api/pc/boot' or action in ('boot', 'on', 'start'):
-            return pc_service.boot_pc(target_os=target_os)
+            return pc_service.boot_pc()
         elif endpoint == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
             return pc_service.shutdown_pc()
         else:
@@ -546,7 +546,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             if clean_path == '/api/pc/os' or action in ('set_os', 'select_os'):
                 res = pc_service.set_target_os(target_os or 'Windows')
             elif clean_path == '/api/pc/boot' or action in ('boot', 'on', 'start'):
-                res = pc_service.boot_pc(target_os=target_os)
+                res = pc_service.boot_pc()
             elif clean_path == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
                 res = pc_service.shutdown_pc()
             else:

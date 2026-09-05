@@ -185,35 +185,33 @@ def _monitor_boot():
         if _transient_state == 'booting':
             _transient_state = None
             if is_pc_online():
-                # Pingは通っているのでPC自体は稼働中
-                final_os = get_target_os()
+                # Pingは通っているのでPC自体は稼働中だが、SSHバナー未確認
                 _cached_status = {
                     "online": True,
                     "booting": False,
                     "shutting_down": False,
-                    "os": final_os,
-                    "target_os": final_os,
-                    "usb_power": (final_os == "Bazzite"),
+                    "os": "Unknown",
+                    "target_os": get_target_os(),
+                    "usb_power": usb_service.get_usb_power(),
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": True, "pcOs": final_os, "pcTargetOs": final_os})
+                    state_manager.save_state({"pcOnline": True, "pcOs": "Unknown"})
                 except Exception:
                     pass
-                print(f"[PC Monitor] PC is online via ping, defaulted to {final_os}")
+                print("[PC Monitor] PC is online via ping, SSH unverified (Unknown)")
             else:
-                target_os = get_target_os()
                 _cached_status = {
                     "online": False,
                     "booting": False,
                     "shutting_down": False,
                     "os": "オフライン",
-                    "target_os": target_os,
-                    "usb_power": (target_os == "Bazzite"),
+                    "target_os": get_target_os(),
+                    "usb_power": usb_service.get_usb_power(),
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン", "pcTargetOs": target_os})
+                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
                 except Exception:
                     pass
                 print("[PC Monitor] PC boot timed out.")
@@ -241,7 +239,7 @@ def _monitor_shutdown():
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン", "pcTargetOs": target_os})
+                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
                 except Exception:
                     pass
             print("[PC Monitor] PC shutdown confirmed.")
@@ -347,17 +345,14 @@ def get_pc_status(force_refresh=False):
         }
         _last_check = now
         try:
-            state_manager.save_state({"pcOnline": online, "pcOs": os_name, "pcTargetOs": target_os})
+            state_manager.save_state({"pcOnline": online, "pcOs": os_name})
         except Exception:
             pass
         return _cached_status
 
-def boot_pc(target_os=None):
-    """Wake-on-LAN を送信し、楽観的起動ステートを開始。target_osが指定された場合はUSBスイッチも同期設定"""
+def boot_pc():
+    """Wake-on-LAN を送信し、楽観的起動ステートを開始"""
     global _transient_state, _transient_timestamp, _cached_status
-
-    if target_os:
-        set_target_os(target_os)
 
     current_target = get_target_os()
 
@@ -392,7 +387,7 @@ def boot_pc(target_os=None):
             "ip": PC_IP
         }
         try:
-            state_manager.save_state({"pcOnline": True, "pcOs": "起動中", "pcTargetOs": current_target})
+            state_manager.save_state({"pcOnline": True, "pcOs": "起動中"})
         except Exception:
             pass
 
@@ -400,7 +395,7 @@ def boot_pc(target_os=None):
 
     return {
         "status": "success",
-        "message": f"{current_target} 向けに起動シグナル(WoL)を送信しました。起動中",
+        "message": "起動シグナル(WoL)を送信しました。起動中",
         "online": True,
         "booting": True,
         "os": "起動中",
@@ -465,7 +460,7 @@ def shutdown_pc():
                 "ip": PC_IP
             }
             try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "終了中", "pcTargetOs": target_os})
+                state_manager.save_state({"pcOnline": False, "pcOs": "終了中"})
             except Exception:
                 pass
 

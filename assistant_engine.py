@@ -737,9 +737,9 @@ def parse_and_execute(prompt: str, send_api_fn=None):
             target = "Bazzite" if any(k in text for k in ['bazzite', 'バザイト', 'ばざいと']) else "Windows"
             if send_api_fn:
                 res = send_api_fn('/api/pc/os', {'action': 'set_os', 'target_os': target})
-                msg = res.get('message', f'PCのOSを {target} に設定しました。')
+                msg = res.get('message', f'次回起動OSを {target} に設定しました。')
                 return {"success": True, "message": msg, "action": f"pc_os_{target.lower()}"}
-            return {"success": True, "message": f"PCのOSを {target} に設定しました。", "action": f"pc_os_{target.lower()}"}
+            return {"success": True, "message": f"次回起動OSを {target} に設定しました。", "action": f"pc_os_{target.lower()}"}
 
         if any(k in text for k in ['消して', 'けして', '切って', 'きって', 'シャットダウン', '電源切って', '落として', 'オフ', 'off', 'down']):
             if send_api_fn:

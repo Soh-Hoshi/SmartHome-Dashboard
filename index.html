@@ -2866,8 +2866,7 @@
         state.pcShuttingDown = false;
         state.pcOs = '起動中';
         updatePcUi();
-        const targetOs = state.pcTargetOs || 'Windows';
-        showAssistantToast(`${targetOs} へ起動シグナル(WoL)を送信しました`, 'power_settings_new');
+        showAssistantToast('PCへ起動シグナル(WoL)を送信しました', 'power_settings_new');
         sendPcCommand('boot');
       } else {
         // === 電源オフアクション (シャットダウン) ===
@@ -2885,14 +2884,10 @@
     async function sendPcCommand(action) {
       pcActionLockTime = Date.now();
       try {
-        const payload = { action: action };
-        if (action === 'boot') {
-          payload.target_os = state.pcTargetOs || 'Windows';
-        }
         const res = await fetch(`${apiBasePath}/api/pc`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ action: action })
         });
         const data = await res.json();
         if (data.status === 'success' || data.status === 'info') {
@@ -2900,9 +2895,6 @@
           state.pcBooting = !!data.booting;
           state.pcShuttingDown = !!data.shutting_down;
           if (data.os) state.pcOs = data.os;
-          if (data.target_os) {
-            applyPcOsSelection(data.target_os, false);
-          }
           updatePcUi();
           // トランジェント中は2秒後にステータス確認
           if (state.pcBooting || state.pcShuttingDown) {
@@ -2934,7 +2926,7 @@
       if (checkWin) checkWin.className = (os === 'Windows') ? "text-[#4a88e8] flex items-center" : "hidden text-[#4a88e8] flex items-center";
       if (checkBaz) checkBaz.className = (os === 'Bazzite') ? "text-sky-400 flex items-center" : "hidden text-sky-400 flex items-center";
 
-      // トリガーボタンの表示切り替え
+      // トリガーボタンの表示切り替え (次回起動OSドロップダウンのみ更新)
       const labelEl = document.getElementById('detail-pc-os-label');
       const iconWrap = document.getElementById('detail-pc-os-icon');
       const iconSpan = document.getElementById('detail-pc-os-icon-span');
@@ -2946,9 +2938,6 @@
         iconSpan.textContent = (os === 'Windows') ? 'desktop_windows' : 'sports_esports';
       }
 
-      // オフ時でも選択したOSのアイコンをスイッチに即時反映
-      updatePcUi();
-
       if (sendCommand) {
         const isBazzite = (os === 'Bazzite');
         fetch(`${apiBasePath}/api/pc`, {
@@ -2957,7 +2946,7 @@
           body: JSON.stringify({ action: 'set_os', target_os: os })
         }).catch(err => console.error('[PC Set OS Error]', err));
 
-        showAssistantToast(`起動OSを ${os} に設定しました (USB: ${isBazzite ? 'オン' : 'オフ'})`, isBazzite ? 'sports_esports' : 'desktop_windows');
+        showAssistantToast(`次回起動OSを ${os} に設定しました (USB: ${isBazzite ? 'オン' : 'オフ'})`, isBazzite ? 'sports_esports' : 'desktop_windows');
       }
     }
 
@@ -3012,22 +3001,6 @@
         if (iconWrap) {
           iconWrap.className = "w-11 h-11 rounded-full bg-[#1e293b] text-sky-400 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer";
         }
-        
-        // 起動中のOSをドロップアップの選択状態に反映
-        if (osLabel === 'Windows' || osLabel === 'Bazzite') {
-          const checkWin = document.getElementById('check-pc-os-windows');
-          const checkBaz = document.getElementById('check-pc-os-bazzite');
-          const labelEl = document.getElementById('detail-pc-os-label');
-          const iconWrap = document.getElementById('detail-pc-os-icon');
-          const iconSpan = document.getElementById('detail-pc-os-icon-span');
-          if (checkWin) checkWin.className = (osLabel === 'Windows') ? "text-[#4a88e8] flex items-center" : "hidden text-[#4a88e8] flex items-center";
-          if (checkBaz) checkBaz.className = (osLabel === 'Bazzite') ? "text-sky-400 flex items-center" : "hidden text-sky-400 flex items-center";
-          if (labelEl) labelEl.textContent = osLabel;
-          if (iconWrap) {
-            iconWrap.className = (osLabel === 'Windows') ? "text-[#4a88e8] shrink-0 flex items-center justify-center" : "text-sky-400 shrink-0 flex items-center justify-center";
-          }
-          if (iconSpan) iconSpan.textContent = (osLabel === 'Windows') ? 'desktop_windows' : 'sports_esports';
-        }
       } else {
         // オフライン: グレー（常時）
         currentStatusText = 'オフ';
@@ -3043,8 +3016,7 @@
 
       // 詳細シートのUI更新 (オフ / Windows / Bazzite)
       const containerEl = document.getElementById('pc-slider-container');
-      const targetOs = state.pcTargetOs || 'Windows';
-      const targetIcon = (currentStatusText === 'Bazzite' || (!state.pcOnline && targetOs === 'Bazzite')) ? 'sports_esports' : 'desktop_windows';
+      const activeIcon = (currentStatusText === 'Bazzite') ? 'sports_esports' : 'desktop_windows';
 
       if (detailTitle) {
         detailTitle.textContent = currentStatusText;
@@ -3076,7 +3048,7 @@
       }
 
       if (detailIcon) {
-        detailIcon.textContent = targetIcon;
+        detailIcon.textContent = activeIcon;
         detailIcon.className = isSwitchActive 
           ? "material-symbols-rounded text-[26px] text-white"
           : "material-symbols-rounded text-[26px] text-neutral-400";
