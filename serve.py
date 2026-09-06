@@ -246,7 +246,7 @@ def dispatch_internal_api(endpoint: str, payload: dict):
             return {"status": "success", "power": usb_service.set_usb_power(True)}
         elif action == 'off':
             return {"status": "success", "power": usb_service.set_usb_power(False)}
-    elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/os'):
+    elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/sleep', '/api/pc/restart', '/api/pc/os'):
         action = payload.get('action')
         target_os = payload.get('target_os') or payload.get('os')
         if endpoint == '/api/pc/os' or action in ('set_os', 'select_os'):
@@ -255,6 +255,10 @@ def dispatch_internal_api(endpoint: str, payload: dict):
             return pc_service.boot_pc()
         elif endpoint == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
             return pc_service.shutdown_pc()
+        elif endpoint == '/api/pc/sleep' or action in ('sleep', 'suspend'):
+            return pc_service.sleep_pc()
+        elif endpoint == '/api/pc/restart' or action in ('restart', 'reboot'):
+            return pc_service.restart_pc()
         else:
             return pc_service.toggle_pc()
     elif endpoint in ('/api/notify', '/api/notification'):

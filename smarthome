@@ -125,13 +125,17 @@ def direct_fallback(endpoint, data, original_error):
                 data=data.get('data'),
                 tag=data.get('tag')
             )
-        elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown'):
+        elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/sleep', '/api/pc/restart'):
             import pc_service
             act = data.get('action') if data else None
             if endpoint == '/api/pc/boot' or act in ('boot', 'on', 'start'):
                 res = pc_service.boot_pc()
             elif endpoint == '/api/pc/shutdown' or act in ('shutdown', 'off', 'stop'):
                 res = pc_service.shutdown_pc()
+            elif endpoint == '/api/pc/sleep' or act in ('sleep', 'suspend'):
+                res = pc_service.sleep_pc()
+            elif endpoint == '/api/pc/restart' or act in ('restart', 'reboot'):
+                res = pc_service.restart_pc()
             elif act == 'toggle':
                 res = pc_service.toggle_pc()
             else:
@@ -274,6 +278,16 @@ def cmd_pc(args):
         res = send_api_request('/api/pc/shutdown', {'action': 'shutdown'})
         print(f"結果: {res.get('message', res.get('status'))}")
         return True
+    elif action in ('sleep', 'suspend', 'スリープ'):
+        print("デスクトップPCへスリープを要求しています...")
+        res = send_api_request('/api/pc/sleep', {'action': 'sleep'})
+        print(f"結果: {res.get('message', res.get('status'))}")
+        return True
+    elif action in ('restart', 'reboot', '再起動'):
+        print("デスクトップPCへ再起動を要求しています...")
+        res = send_api_request('/api/pc/restart', {'action': 'restart'})
+        print(f"結果: {res.get('message', res.get('status'))}")
+        return True
     elif action in ('toggle', 't', '切替', 'トグル'):
         print("デスクトップPCの電源を切り替えています...")
         res = send_api_request('/api/pc', {'action': 'toggle'})
@@ -281,7 +295,7 @@ def cmd_pc(args):
         return True
     else:
         print(f"Unknown PC action: {action}")
-        print("Usage: smarthome pc [status|on|boot|off|shutdown|toggle]")
+        print("Usage: smarthome pc [status|on|boot|off|shutdown|sleep|restart|toggle]")
         return False
 
 def cmd_notification(args):

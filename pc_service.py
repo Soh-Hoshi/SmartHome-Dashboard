@@ -471,26 +471,35 @@ def boot_pc():
     }
 
 def _send_ssh_cmd(remote_cmd_windows: str, remote_cmd_linux: str):
-    """稼働中のOSを判定してSSHコマンドを送信 (返り値: (sent, os_type, error_message))"""
-    st = get_pc_status(force_refresh=True)
-    if not st["online"] and not st.get("booting"):
-        return False, "オフライン", "PCはオフラインです。"
+    """稼働中のOSを判定してSSHコマンドを高速送信 (返り値: (sent, os_type, error_message))"""
+    # 1. まず高速キャッシュステータスを確認 (0ms)
+    st = get_pc_status(force_refresh=False)
+    if not st.get("online") and not st.get("booting"):
+        # キャッシュがオフラインの場合のみ、実際に ping / ポート確認で再検証
+        st = get_pc_status(force_refresh=True)
+        if not st.get("online") and not st.get("booting"):
+            return False, "オフライン", "PCはオフラインです。"
 
-    os_type = st.get("os", "Windows")
+    os_type = st.get("os", "Unknown")
+    if os_type == "Unknown":
+        os_type = get_target_os()
+
     if os_type == "Windows":
         remote_cmd = remote_cmd_windows
         users_to_try = ["user", "Soh", "soh"]
     else:
         remote_cmd = remote_cmd_linux
-        users_to_try = ["Soh", "soh", "user"]
+        users_to_try = ["soh", "Soh", "user"]
 
     last_err = None
     sent = False
     for u in users_to_try:
+        # 高速化: ConnectTimeout を 1秒に短縮し、ConnectionAttempts=1 を指定
         cmd_key = [
             "ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR",
-            "-o", "ConnectTimeout=3", f"{u}@{PC_IP}", remote_cmd
+            "-o", "ConnectTimeout=1", "-o", "ConnectionAttempts=1",
+            f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_key, capture_output=True, text=True)
         if res.returncode == 0:
@@ -501,7 +510,7 @@ def _send_ssh_cmd(remote_cmd_windows: str, remote_cmd_linux: str):
             "sshpass", "-p", PASSWORD,
             "ssh", "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR",
-            "-o", "ConnectTimeout=3",
+            "-o", "ConnectTimeout=1", "-o", "ConnectionAttempts=1",
             f"{u}@{PC_IP}", remote_cmd
         ]
         res = subprocess.run(cmd_pass, capture_output=True, text=True)
@@ -518,7 +527,7 @@ def shutdown_pc():
     global _transient_state, _transient_timestamp, _cached_status
 
     win_cmd = 'shutdown.exe /s /t 0'
-    linux_cmd = f'sudo /usr/bin/systemctl poweroff || sudo systemctl poweroff || systemctl poweroff || echo {PASSWORD} | sudo -S systemctl poweroff || shutdown -h now'
+    linux_cmd = 'sudo systemd-run --no-block systemctl poweroff || sudo systemctl poweroff || systemctl poweroff'
 
     sent, os_type, last_err = _send_ssh_cmd(win_cmd, linux_cmd)
     if not sent and os_type == "オフライン":
@@ -568,8 +577,8 @@ def sleep_pc():
     """OSを自動判別してスリープ(サスペンド)コマンドをSSH送信"""
     global _transient_state, _transient_timestamp, _cached_status
 
-    win_cmd = 'powershell -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', $false, $false)" || rundll32.exe powrprof.dll,SetSuspendState 0,1,0'
-    linux_cmd = f'sudo /usr/bin/systemctl suspend || systemctl suspend || echo {PASSWORD} | sudo -S systemctl suspend'
+    win_cmd = 'rundll32.exe powrprof.dll,SetSuspendState 0,1,0'
+    linux_cmd = 'sudo systemd-run --no-block systemctl suspend || sudo systemctl suspend || systemctl suspend'
 
     sent, os_type, last_err = _send_ssh_cmd(win_cmd, linux_cmd)
     if not sent and os_type == "オフライン":
@@ -620,7 +629,7 @@ def restart_pc():
     global _transient_state, _transient_timestamp, _cached_status
 
     win_cmd = 'shutdown.exe /r /t 0'
-    linux_cmd = f'sudo /usr/bin/systemctl reboot || sudo systemctl reboot || systemctl reboot || echo {PASSWORD} | sudo -S systemctl reboot || reboot'
+    linux_cmd = 'sudo systemd-run --no-block systemctl reboot || sudo systemctl reboot || systemctl reboot'
 
     sent, os_type, last_err = _send_ssh_cmd(win_cmd, linux_cmd)
     if not sent and os_type == "オフライン":
