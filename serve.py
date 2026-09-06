@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Lightweight Live-Reload HTTP Server for SmartHome Dashboard
-Supports serving from root (/) and subpaths (/dashboard/) over Tailscale HTTPS.
+SmartHome Dashboard HTTP & REST API Server
+- Serves web dashboard UI with live-reload support
+- Routes device control APIs (Light, AC, Heater, Cleaner, USB, PC Power)
+- Provides SSE stream & polling for Nova Assist native Android notifications
+- Secure access control: LAN direct bypass, Tailscale, and HMAC-signed cookie whitelist
 """
 
 import os
@@ -243,9 +246,14 @@ def dispatch_internal_api(endpoint: str, payload: dict):
     elif endpoint == '/api/usb':
         action = payload.get('action')
         if action == 'on':
-            return {"status": "success", "power": usb_service.set_usb_power(True)}
+            power = usb_service.set_usb_power(True)
         elif action == 'off':
-            return {"status": "success", "power": usb_service.set_usb_power(False)}
+            power = usb_service.set_usb_power(False)
+        elif 'power' in payload:
+            power = usb_service.set_usb_power(bool(payload['power']))
+        else:
+            power = usb_service.toggle_usb_power()
+        return {"status": "success", "power": power, "state": state_manager.load_state()}
     elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/sleep', '/api/pc/restart', '/api/pc/os'):
         action = payload.get('action')
         target_os = payload.get('target_os') or payload.get('os')
@@ -444,13 +452,6 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 return self.send_json_response({"status": "error", "error": str(e)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        if clean_path == '/api/push/vapid-key':
-            try:
-                keys = push_service.get_or_create_vapid_keys()
-                return self.send_json_response({"status": "success", "public_key": keys["public_key"]})
-            except Exception as e:
-                return self.send_json_response({"status": "error", "error": str(e)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-
         if clean_path == '/api/cleaner/status':
             try:
                 client = eufy_client.EufyG30Client()
@@ -508,58 +509,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             )
             return self.send_json_response({"status": "success", "notification": notif})
 
-        # 1. 家電操作 API
-
-        if clean_path == '/api/light':
-            res = execute_light_command(req_data.get('action', 'toggle'))
-            return self.send_json_response(res)
-
-        if clean_path == '/api/ac':
-            res = execute_ac_command(req_data.get('mode', 'cool'), req_data.get('temp', 26), req_data.get('fan_mode', 'auto'))
-            return self.send_json_response(res)
-
-        if clean_path == '/api/heater':
-            res = execute_heater_command(
-                req_data.get('action', 'toggle'),
-                req_data.get('count', 1),
-                req_data.get('temp'),
-                req_data.get('eco')
-            )
-            return self.send_json_response(res)
-
-        if clean_path == '/api/cleaner':
-            res = execute_cleaner_command(req_data.get('action', 'start'), req_data.get('speed'))
-            return self.send_json_response(res)
-
-        if clean_path == '/api/usb':
-            action = req_data.get('action')
-            if action == 'on':
-                power = usb_service.set_usb_power(True)
-            elif action == 'off':
-                power = usb_service.set_usb_power(False)
-            elif action == 'toggle':
-                power = usb_service.toggle_usb_power()
-            elif 'power' in req_data:
-                power = usb_service.set_usb_power(bool(req_data['power']))
-            else:
-                power = usb_service.toggle_usb_power()
-            return self.send_json_response({"status": "success", "power": power, "state": state_manager.load_state()})
-
-        if clean_path in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/sleep', '/api/pc/restart', '/api/pc/os'):
-            action = req_data.get('action')
-            target_os = req_data.get('target_os') or req_data.get('os')
-            if clean_path == '/api/pc/os' or action in ('set_os', 'select_os'):
-                res = pc_service.set_target_os(target_os or 'Windows')
-            elif clean_path == '/api/pc/boot' or action in ('boot', 'on', 'start'):
-                res = pc_service.boot_pc()
-            elif clean_path == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
-                res = pc_service.shutdown_pc()
-            elif clean_path == '/api/pc/sleep' or action in ('sleep', 'suspend'):
-                res = pc_service.sleep_pc()
-            elif clean_path == '/api/pc/restart' or action in ('restart', 'reboot'):
-                res = pc_service.restart_pc()
-            else:
-                res = pc_service.toggle_pc()
+        # 1. デバイス & 家電操作 API (dispatch_internal_api へ完全一本化)
+        device_endpoints = (
+            '/api/light', '/api/ac', '/api/heater', '/api/cleaner',
+            '/api/usb', '/api/pc', '/api/pc/boot', '/api/pc/shutdown',
+            '/api/pc/sleep', '/api/pc/restart', '/api/pc/os'
+        )
+        if clean_path in device_endpoints:
+            res = dispatch_internal_api(clean_path, req_data)
             return self.send_json_response(res)
 
         # 2. アシスタント自然言語 API

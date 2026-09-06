@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Desktop PC Service (Windows & Bazzite Dual-Boot Control)
-Handles Wake-on-LAN (Boot), presence detection, and remote shutdown via SSH.
-Supports optimistic transient states ('booting', 'shutting_down') with automatic background monitoring.
+Handles Wake-on-LAN (Boot), presence detection, and high-speed remote power control
+(Sleep, Shutdown, Restart) via SSH with non-blocking execution.
+Supports optimistic transient states ('booting', 'shutting_down') with background monitoring.
 """
 
 import socket
@@ -16,7 +17,8 @@ PC_IP = "192.168.0.20"
 PC_MAC = "a8:a1:59:60:6f:c0"
 PC_PORT = 22
 PC_BROADCAST = "192.168.0.255"
-USERS = ["Soh", "soh", "user"]
+WINDOWS_USERS = ["user", "Soh", "soh"]
+LINUX_USERS = ["soh", "Soh", "user"]
 PASSWORD = "Tamago1341"
 
 BOOT_TIMEOUT = 90.0        # 起動待機最大秒数
@@ -486,10 +488,10 @@ def _send_ssh_cmd(remote_cmd_windows: str, remote_cmd_linux: str):
 
     if os_type == "Windows":
         remote_cmd = remote_cmd_windows
-        users_to_try = ["user", "Soh", "soh"]
+        users_to_try = WINDOWS_USERS
     else:
         remote_cmd = remote_cmd_linux
-        users_to_try = ["soh", "Soh", "user"]
+        users_to_try = LINUX_USERS
 
     last_err = None
     sent = False

@@ -10,11 +10,12 @@ Usage:
   smarthome vacuum ... (alias for cleaner)
   smarthome eufy ...   (alias for cleaner)
   smarthome usb [on|off|toggle|status]
-  smarthome pc [on|off|toggle|status]
+  smarthome pc [status|on|boot|off|shutdown|sleep|restart|toggle]
   smarthome notification [title] <message>
   smarthome notify <message>
   smarthome status
   smarthome assistant "<natural language prompt>"
+  smarthome nova "<natural language prompt>"
 """
 
 
