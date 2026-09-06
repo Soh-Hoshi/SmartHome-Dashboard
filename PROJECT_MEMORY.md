@@ -89,7 +89,7 @@
 
 - **バックアップの維持:** `index.html` 編集時は必ず `cp index.html index.html.bak` を実行。
 - **構文テスト:** 変更後は `HTMLParser` および JS ブラケット整合性テストを実施。
-- **統合テスト:** 通知システム・バックエンド変更後は `python3 test_notifications_e2e.py` を実行。
+- **実機影響テストの禁止（厳守）:** PC電源など通知・家電に無関係な改修時は、通知テスト（`test_notifications_e2e.py`）を絶対に実行しない。テスト実行により本物の家電（照明・エアコン）が消えたり、スマホへテスト通知が飛ぶため、無関係な変更時は対象モジュール単体の構文・ユニットテストのみで検証する。
 - **Git同期:** テスト通過後、必ず Git にコミット＆プッシュ（`Soh-Hoshi/SmartHome-Dashboard`）。
 - **常駐プロセス:** `python3 serve.py`（ポート 8080、`systemctl --user restart dashboard.service`）。
 

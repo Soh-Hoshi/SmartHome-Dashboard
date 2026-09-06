@@ -79,10 +79,10 @@ def test_3_action_buttons_and_direct_reply():
 
 def test_4_assistant_action_execution():
     print("[4/7] Testing Assistant API action execution (/api/assistant)...")
-    res = post_json("/api/assistant", {"prompt": "いってきます"})
+    res = post_json("/api/assistant", {"prompt": "ヘルプ"})
     assert res.get("success") is True
     assert len(res.get("message", "")) > 0
-    print(f"  -> Passed (Response: {res.get("message")}).")
+    print(f"  -> Passed (Response: {res.get('message')}).")
 
 def test_5_fallback_polling():
     print("[5/7] Testing fallback polling (/api/notifications/poll)...")
