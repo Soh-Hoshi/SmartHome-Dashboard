@@ -426,8 +426,8 @@ def cmd_status():
     print("状態ファイルが読み込めませんでした。")
 
 def main():
-    if len(sys.argv) < 2:
-        print(__doc__)
+    if len(sys.argv) < 2 or sys.argv[1].lower() in ('help', '--help', '-h'):
+        print(__doc__.strip())
         return
 
     subcmd = sys.argv[1].lower()
