@@ -817,54 +817,55 @@
          onclick="closeGeminiOverlay()"
          class="absolute inset-0 bg-black/40 backdrop-blur-[3px] pointer-events-auto opacity-0 transition-opacity duration-300"></div>
 
-    <!-- フローティング エリア (画面下端から浮いて配置) -->
+    <!-- フローティング エリア (画面下端から浮いて配置 / スマホNovaバーと同一の最大幅 max-w-2xl) -->
     <div id="gemini-overlay-container" 
-         class="relative pointer-events-none w-full max-w-lg px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] mb-2 flex flex-col items-center select-none transform translate-y-6 transition-all duration-300 ease-out">
+         class="relative pointer-events-none w-full max-w-2xl px-3 sm:px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] mb-2 sm:mb-4 flex flex-col items-center select-none transform translate-y-6 transition-all duration-300 ease-out">
       
-      <!-- 検索バー上部のフロートエリア (返答バブル ＆ ダッシュボードを開く小ボタン) -->
-      <div class="pointer-events-auto w-full flex flex-col items-center space-y-2 mb-2.5">
+      <!-- 検索バー上部のフロートエリア (返答バブル ＆ ダッシュボードを開くボタン: 左寄せ) -->
+      <div class="pointer-events-auto w-full flex flex-col items-start space-y-2 mb-3">
         
-        <!-- 返答バブル (Nova応答時にフロート表示) -->
+        <!-- 返答バブル (Nova応答時にフロート表示: 左寄せ) -->
         <div id="gemini-response-bubble" 
-             class="hidden opacity-0 translate-y-2 transition-all duration-300 max-w-md bg-[#161820]/95 backdrop-blur-2xl border border-white/10 text-white text-sm px-4 py-2.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center space-x-2.5">
-          <span id="gemini-response-icon" class="material-symbols-rounded text-lg text-[#3b82f6]">auto_awesome</span>
+             class="hidden opacity-0 translate-y-2 transition-all duration-300 max-w-md bg-[#131518]/95 backdrop-blur-xl border border-[#2196f3]/30 text-white text-sm px-4 py-3 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_16px_rgba(33,150,243,0.14)] flex items-center space-x-2.5">
+          <span id="gemini-response-icon" class="material-symbols-rounded text-xl text-[#2196f3]">auto_awesome</span>
           <span id="gemini-response-text" class="font-medium tracking-wide"></span>
         </div>
 
-        <!-- 「ダッシュボードを開く」小さなフロートボタン (Geminiスタイル) -->
+        <!-- 「ダッシュボードを開く」フロートボタン (スマホ版Novaバーと同じデザイン言語、左寄せ、縦幅しっかり) -->
         <button id="gemini-btn-open-dashboard" 
                 onclick="openFullDashboard()"
-                class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#1c1f26]/85 hover:bg-[#252a34] active:scale-95 border border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-xl text-neutral-300 hover:text-white transition-all text-xs font-medium">
-          <span class="material-symbols-rounded text-sm text-[#4a88e8]">grid_view</span>
-          <span>ダッシュボードを開く</span>
+                class="flex items-center space-x-2.5 px-4 py-2.5 min-h-[42px] sm:min-h-[46px] rounded-full bg-[#131518]/95 hover:bg-[#1a1d22] active:scale-95 border border-[#2196f3]/25 hover:border-[#2196f3]/60 focus:ring-2 focus:ring-[#2196f3]/25 shadow-[0_4px_20px_rgba(0,0,0,0.5),0_0_14px_rgba(33,150,243,0.12)] backdrop-blur-xl text-neutral-200 hover:text-white transition-all text-[13.5px] sm:text-[14px] font-medium"
+                aria-label="ダッシュボードを開く">
+          <div class="w-6 h-6 rounded-full bg-white/[0.05] flex items-center justify-center text-[#2196f3] shrink-0">
+            <span class="material-symbols-rounded text-[18px] text-[#2196f3]">grid_view</span>
+          </div>
+          <span class="tracking-wide">ダッシュボードを開く</span>
+          <span class="material-symbols-rounded text-base text-neutral-400 shrink-0">arrow_forward</span>
         </button>
       </div>
 
-      <!-- Gemini風 メイン検索・プロンプトカプセル (ほとんどこれだけがフロートする) -->
+      <!-- スマホ版ダッシュボードと同じNovaバーデザイン (縦幅をより大きく確保: min-h-[62px] sm:min-h-[68px]) -->
       <div id="gemini-search-pill" 
-           class="pointer-events-auto relative w-full h-[58px] bg-[#14161d]/95 backdrop-blur-2xl rounded-full border border-white/[0.12] p-1.5 flex items-center shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_24px_rgba(59,130,246,0.2)] focus-within:border-[#3b82f6]/70 focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.8),0_0_32px_rgba(59,130,246,0.35)] transition-all duration-300">
+           class="pointer-events-auto w-full bg-[#131518]/95 backdrop-blur-xl border border-[#2196f3]/25 focus-within:border-[#2196f3]/70 focus-within:ring-2 focus-within:ring-[#2196f3]/25 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_16px_rgba(33,150,243,0.14)] focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.55),0_0_22px_rgba(33,150,243,0.25)] p-2.5 sm:p-3 min-h-[62px] sm:min-h-[68px] flex items-center gap-2.5 sm:gap-3.5 transition-all duration-200">
 
-        <!-- アンビエント発光グラデーション (Gemini風エッジグロー) -->
-        <div id="gemini-ambient-glow" class="absolute -inset-[1.5px] rounded-full bg-gradient-to-r from-blue-500/25 via-indigo-500/25 to-sky-400/25 opacity-50 blur-[3px] pointer-events-none -z-10"></div>
-
-        <!-- キラキラ アイコン -->
-        <div id="gemini-sparkle-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-[#3b82f6] shrink-0 ml-1">
-          <span class="material-symbols-rounded text-2xl">auto_awesome</span>
+        <!-- Nova アイコン (Gemini風 キラキラ) -->
+        <div id="gemini-sparkle-icon" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/[0.05] flex items-center justify-center text-neutral-300 shrink-0 select-none ml-0.5 transition-transform duration-300">
+          <span class="material-symbols-rounded text-2xl sm:text-[26px] text-[#2196f3]">auto_awesome</span>
         </div>
 
-        <!-- 検索・テキスト入力欄 -->
+        <!-- コマンド入力フォーム -->
         <input type="text" 
                id="gemini-command-input" 
-               placeholder="話しかけるか、入力..." 
-               class="flex-1 bg-transparent text-[16px] text-white placeholder-neutral-400 focus:outline-none px-2.5 font-normal"
+               placeholder="Novaに話しかける..." 
+               class="flex-1 bg-transparent text-[16px] sm:text-[17px] text-white placeholder-neutral-400 focus:outline-none px-2 py-1.5 font-normal"
                autocomplete="off" />
 
-        <!-- アクションボタン (マイク / 送信) -->
+        <!-- 音声コマンド / アクションボタン -->
         <button id="gemini-btn-action" 
                 onclick="handleGeminiAction()"
-                class="w-11 h-11 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-95 text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-md"
-                aria-label="アクション">
-          <span id="gemini-action-icon" class="material-symbols-rounded text-2xl">mic</span>
+                class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#1e2128] hover:bg-[#282c35] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-sm border border-white/[0.04]"
+                aria-label="Nova音声入力">
+          <span id="gemini-action-icon" class="material-symbols-rounded text-2xl sm:text-[26px]">mic</span>
         </button>
 
       </div>
@@ -4013,15 +4014,16 @@
       const hasText = input.value.trim().length > 0;
       if (hasText) {
         icon.textContent = 'arrow_upward';
-        btn.classList.remove('gemini-mic-recording');
-        btn.style.backgroundColor = '#2563eb';
+        btn.classList.remove('gemini-mic-recording', 'bg-[#1e2128]', 'text-neutral-200');
+        btn.classList.add('bg-[#2196f3]', 'text-white');
       } else {
-        icon.textContent = 'mic';
+        icon.textContent = geminiIsRecording ? 'graphic_eq' : 'mic';
+        btn.classList.remove('bg-[#2196f3]', 'text-white');
+        btn.classList.add('bg-[#1e2128]', 'text-neutral-200');
         if (geminiIsRecording) {
           btn.classList.add('gemini-mic-recording');
         } else {
           btn.classList.remove('gemini-mic-recording');
-          btn.style.backgroundColor = '#2563eb';
         }
       }
     }
