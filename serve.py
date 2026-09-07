@@ -325,7 +325,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                     content = f.read()
                 if error:
                     content = content.replace('id="error-box" class="hidden', 'id="error-box" class="flex')
-                    content = content.replace('id="error-msg">アクセスキーが正しくありません', f'id="error-msg">{error}')
+                    content = content.replace('id="error-msg">パスワードが正しくありません', f'id="error-msg">{error}')
                 body = content.encode('utf-8')
                 self.send_response(HTTPStatus.OK)
                 self.send_header('Content-Type', 'text/html; charset=utf-8')
@@ -531,13 +531,13 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         else:
             accept = self.headers.get('Accept', '')
             if 'text/html' in accept:
-                self.send_login_page(error="アクセスキーが正しくありません")
+                self.send_login_page(error="パスワードが正しくありません")
             else:
                 self.send_response(HTTPStatus.UNAUTHORIZED)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
                 self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": "アクセスキーが正しくありません"}).encode('utf-8'))
+                self.wfile.write(json.dumps({"status": "error", "message": "パスワードが正しくありません"}).encode('utf-8'))
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
