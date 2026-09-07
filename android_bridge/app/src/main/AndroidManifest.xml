@@ -31,7 +31,7 @@
         <activity
             android:name=".AssistActivity"
             android:exported="true"
-            android:theme="@style/Theme.NovaAssist"
+            android:theme="@style/Theme.NovaAssist.Overlay"
             android:launchMode="singleTask"
             android:excludeFromRecents="true"
             android:windowSoftInputMode="adjustResize">
