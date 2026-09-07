@@ -4346,7 +4346,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
-          const swUrl = (basePath || '') + '/sw.js';
+          const swUrl = (basePath || '') + '/sw.js?v=22';
           const scopeUrl = (basePath || '') + '/';
           
           // ローカルアクセス時はマニフェストパスを調整
