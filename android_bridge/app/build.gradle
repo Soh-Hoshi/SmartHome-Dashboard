@@ -9,13 +9,26 @@ android {
         applicationId "com.smarthome.nova"
         minSdk 26
         targetSdk 34
-        versionCode 6
-        versionName "1.0.0"
+        versionCode 7
+        versionName "1.0.1"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("nova_release.keystore")
+            storePassword "novasmarthome"
+            keyAlias "nova"
+            keyPassword "novasmarthome"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
+            debuggable false
         }
     }
     compileOptions {

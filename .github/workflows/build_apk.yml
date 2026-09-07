@@ -27,10 +27,10 @@ jobs:
       - name: Make Gradlew Executable
         run: chmod +x android_bridge/gradlew
 
-      - name: Build Debug APK
+      - name: Build Release APK
         run: |
           cd android_bridge
-          ./gradlew assembleDebug --no-daemon --stacktrace > ../gradle_build.log 2>&1 || {
+          ./gradlew assembleRelease --no-daemon --stacktrace > ../gradle_build.log 2>&1 || {
             echo "::error::Gradle build failed. Showing last 60 lines of build log:"
             tail -n 60 ../gradle_build.log
             exit 1
@@ -53,7 +53,7 @@ jobs:
       - name: Prepare APK Output
         run: |
           mkdir -p build_output
-          cp android_bridge/app/build/outputs/apk/debug/app-debug.apk build_output/NovaAssist.apk
+          cp android_bridge/app/build/outputs/apk/release/app-release.apk build_output/NovaAssist.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
