@@ -10,9 +10,12 @@ class AssistActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val defaultUrl = "https://server.tail52d127.ts.net/dashboard"
+        val defaultUrl = "https://home.sohhoshi.com/?key=uFD3nti9jGViEBwm4zceAQ"
         val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
-        val baseUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+        var baseUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+        if (baseUrl.contains("tail52d127.ts.net")) {
+            baseUrl = defaultUrl
+        }
 
         val assistUrl = if (baseUrl.contains("?")) {
             "$baseUrl&assist=1"

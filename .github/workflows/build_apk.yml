@@ -67,10 +67,11 @@ jobs:
           tag_name: android-latest
           name: "Nova Assist Android Bridge"
           body: |
-            ### 🤖 Nova Assist Android Bridge (最新APK v1.1.0)
+            ### 🤖 Nova Assist Android Bridge (最新APK v1.2.0)
             Androidの「デフォルトのデジタルアシスタントアプリ」＋「サーバー通知受信」対応の超軽量ブリッジアプリです。
 
-            **新機能**:
+            **変更点**:
+            - 🔑 認証キー付きドメイン (`https://home.sohhoshi.com/?key=...`) に接続先を移行
             - 🔔 家のサーバーからのプッシュ通知受信機能（SSE ＋ ポーリング二重化、常駐 Foreground Service）
             - 🚀 `smarthome notification <タイトル> <メッセージ>` コマンドによる即時ヘッドアップ通知
             - 🚪 外出時の消し忘れ警告通知との自動連携

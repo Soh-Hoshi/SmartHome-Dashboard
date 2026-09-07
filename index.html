@@ -1747,7 +1747,7 @@
         <div class="relative">
           <!-- OS選択 ドロップアップ ポップオーバー -->
           <div id="pc-os-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-64 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
-            <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">次回起動OS</div>
+            <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">起動OS</div>
             <div class="space-y-0.5">
               <button onclick="selectPcOs('Windows')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <div class="flex items-center space-x-3 text-[#4a88e8]">
@@ -1769,12 +1769,12 @@
           <!-- OS選択 トリガーボタン -->
           <button id="btn-trigger-pc-os" onclick="toggleDropup('pc-os-dropup-menu', event)" 
                   class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-                  aria-label="次回起動OSを選択">
+                  aria-label="起動OSを選択">
             <div id="detail-pc-os-icon" class="text-[#4a88e8] shrink-0 flex items-center justify-center">
               <span id="detail-pc-os-icon-span" class="material-symbols-rounded text-2xl">desktop_windows</span>
             </div>
             <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-xs text-neutral-400 font-normal">次回起動OS</div>
+              <div class="text-xs text-neutral-400 font-normal">起動OS</div>
               <div id="detail-pc-os-label" class="text-[14px] font-semibold text-white truncate mt-0.5">Windows</div>
             </div>
             <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>

@@ -405,8 +405,11 @@ class NotificationService : Service() {
 
     private fun getBaseUrl(): String {
         val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
-        val defaultUrl = "https://server.tail52d127.ts.net/dashboard"
-        val fullUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+        val defaultUrl = "https://home.sohhoshi.com/?key=uFD3nti9jGViEBwm4zceAQ"
+        var fullUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+        if (fullUrl.contains("tail52d127.ts.net")) {
+            fullUrl = defaultUrl
+        }
 
         return try {
             val u = URL(fullUrl)
@@ -414,7 +417,7 @@ class NotificationService : Service() {
             val path = u.path.trimEnd('/')
             "${u.protocol}://${u.host}$portStr$path"
         } catch (e: Exception) {
-            "https://server.tail52d127.ts.net/dashboard"
+            "https://home.sohhoshi.com"
         }
     }
 

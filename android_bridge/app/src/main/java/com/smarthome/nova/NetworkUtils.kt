@@ -19,8 +19,11 @@ object NetworkUtils {
         // 2. 設定 URL に ?key=... が含まれている場合は X-Access-Key ヘッダーとしても付与
         try {
             val sharedPref = context.getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
-            val defaultUrl = "https://server.tail52d127.ts.net/dashboard"
-            val fullUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+            val defaultUrl = "https://home.sohhoshi.com/?key=uFD3nti9jGViEBwm4zceAQ"
+            var fullUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+            if (fullUrl.contains("tail52d127.ts.net")) {
+                fullUrl = defaultUrl
+            }
             val u = URL(fullUrl)
             val query = u.query
             if (!query.isNullOrEmpty()) {
