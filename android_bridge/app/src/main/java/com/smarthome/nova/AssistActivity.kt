@@ -39,20 +39,15 @@ class AssistActivity : AppCompatActivity() {
     private var autoDismissRunnable: Runnable? = null
 
     private lateinit var rootLayout: FrameLayout
-    private lateinit var bottomSheet: LinearLayout
-    private lateinit var dragHandle: View
+    private lateinit var floatingContainer: LinearLayout
     private lateinit var btnOpenDashboard: LinearLayout
-    private lateinit var btnClose: ImageView
+    private lateinit var statusContainer: LinearLayout
     private lateinit var tvStatus: TextView
     private lateinit var loadingSpinner: ProgressBar
+    private lateinit var searchPill: LinearLayout
     private lateinit var etCommand: EditText
     private lateinit var btnAction: FrameLayout
     private lateinit var iconAction: ImageView
-
-    private lateinit var chipLight: TextView
-    private lateinit var chipAc: TextView
-    private lateinit var chipPc: TextView
-    private lateinit var chipCleaner: TextView
 
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
@@ -65,50 +60,39 @@ class AssistActivity : AppCompatActivity() {
         setupListeners()
         setupGestures()
 
-        // 起動時に自動で音声認識を開始
         checkAudioPermissionAndStartListening()
     }
 
     private fun initViews() {
         rootLayout = findViewById(R.id.rootLayout)
-        bottomSheet = findViewById(R.id.bottomSheet)
-        dragHandle = findViewById(R.id.dragHandle)
+        floatingContainer = findViewById(R.id.floatingContainer)
         btnOpenDashboard = findViewById(R.id.btnOpenDashboard)
-        btnClose = findViewById(R.id.btnClose)
+        statusContainer = findViewById(R.id.statusContainer)
         tvStatus = findViewById(R.id.tvStatus)
         loadingSpinner = findViewById(R.id.loadingSpinner)
+        searchPill = findViewById(R.id.searchPill)
         etCommand = findViewById(R.id.etCommand)
         btnAction = findViewById(R.id.btnAction)
         iconAction = findViewById(R.id.iconAction)
-
-        chipLight = findViewById(R.id.chipLight)
-        chipAc = findViewById(R.id.chipAc)
-        chipPc = findViewById(R.id.chipPc)
-        chipCleaner = findViewById(R.id.chipCleaner)
     }
 
     private fun setupListeners() {
-        // カード外の背景タップでオーバーレイ終了
+        // 外側タップで終了
         rootLayout.setOnClickListener {
             dismissWithAnimation()
         }
 
-        // カード自体のタップはイベント消費（背景タップでの終了を防ぐ）
-        bottomSheet.setOnClickListener {
+        // 検索カプセル自体のタップはイベント消費
+        searchPill.setOnClickListener {
             cancelAutoDismiss()
         }
 
-        // ダッシュボード全画面を開くボタン
+        // ダッシュボードを開く小さなフロートボタン
         btnOpenDashboard.setOnClickListener {
             openDashboard()
         }
 
-        // 閉じるボタン
-        btnClose.setOnClickListener {
-            dismissWithAnimation()
-        }
-
-        // コマンド入力欄のテキスト変更監視 (文字があれば送信アイコン、空ならマイクアイコン)
+        // 入力監視 (文字あり: 送信 / 文字なし: マイク)
         etCommand.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -118,7 +102,7 @@ class AssistActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        // キーボードの「送信」「検索」押下時
+        // キーボードのEnter/送信
         etCommand.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND || actionId == EditorInfo.IME_ACTION_DONE) {
                 val text = etCommand.text.toString().trim()
@@ -132,7 +116,7 @@ class AssistActivity : AppCompatActivity() {
             }
         }
 
-        // アクションボタン (文字あり: 送信 / 文字なし: 音声認識トグル)
+        // アクションボタン (マイク / 送信)
         btnAction.setOnClickListener {
             cancelAutoDismiss()
             val text = etCommand.text.toString().trim()
@@ -147,28 +131,6 @@ class AssistActivity : AppCompatActivity() {
                 }
             }
         }
-
-        // ショートカットチップ群
-        chipLight.setOnClickListener {
-            cancelAutoDismiss()
-            etCommand.setText("電気を消す")
-            submitCommand("電気を消す")
-        }
-        chipAc.setOnClickListener {
-            cancelAutoDismiss()
-            etCommand.setText("エアコンをつける")
-            submitCommand("エアコンをつける")
-        }
-        chipPc.setOnClickListener {
-            cancelAutoDismiss()
-            etCommand.setText("PCを起動")
-            submitCommand("PCを起動")
-        }
-        chipCleaner.setOnClickListener {
-            cancelAutoDismiss()
-            etCommand.setText("掃除機スタート")
-            submitCommand("掃除機スタート")
-        }
     }
 
     private fun setupGestures() {
@@ -176,48 +138,22 @@ class AssistActivity : AppCompatActivity() {
             override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
                 if (e1 == null) return false
                 val dy = e2.rawY - e1.rawY
-                if (dy < -100 && Math.abs(velocityY) > 250) {
-                    // 上スワイプ ➔ ダッシュボード全画面を開く
-                    openDashboard()
-                    return true
-                } else if (dy > 100 && Math.abs(velocityY) > 250) {
-                    // 下スワイプ ➔ オーバーレイを閉じる
+                if (dy > 80 && Math.abs(velocityY) > 200) {
+                    // 下フリックで閉じる
                     dismissWithAnimation()
+                    return true
+                } else if (dy < -80 && Math.abs(velocityY) > 200) {
+                    // 上フリックでダッシュボード
+                    openDashboard()
                     return true
                 }
                 return false
             }
         })
 
-        // dragHandle にスワイプおよびタップを設定
-        var startY = 0f
-        dragHandle.setOnTouchListener { v, event ->
+        searchPill.setOnTouchListener { _, event ->
             gestureDetector.onTouchEvent(event)
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    startY = event.rawY
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    val deltaY = event.rawY - startY
-                    if (deltaY < -50) {
-                        openDashboard()
-                        true
-                    } else if (deltaY > 50) {
-                        dismissWithAnimation()
-                        true
-                    } else if (Math.abs(deltaY) < 15) {
-                        v.performClick()
-                        true
-                    } else {
-                        false
-                    }
-                }
-                else -> false
-            }
-        }
-        dragHandle.setOnClickListener {
-            openDashboard()
+            false
         }
     }
 
@@ -245,7 +181,7 @@ class AssistActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startListening()
             } else {
-                tvStatus.text = "マイク権限がありません。テキストでコマンドを入力できます。"
+                etCommand.hint = "テキストで入力してください"
                 etCommand.requestFocus()
             }
         }
@@ -253,7 +189,7 @@ class AssistActivity : AppCompatActivity() {
 
     private fun startListening() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            tvStatus.text = "音声認識が利用できません。テキストで入力してください。"
+            etCommand.hint = "キーボードで入力してください"
             return
         }
 
@@ -264,18 +200,18 @@ class AssistActivity : AppCompatActivity() {
                     override fun onReadyForSpeech(params: Bundle?) {
                         isListening = true
                         updateActionButtonUi()
-                        tvStatus.text = "お聞きしています..."
-                        tvStatus.setTextColor(Color.parseColor("#e2e8f0"))
+                        etCommand.hint = "お聞きしています..."
                     }
 
                     override fun onBeginningOfSpeech() {
+                        statusContainer.visibility = View.VISIBLE
+                        loadingSpinner.visibility = View.GONE
                         tvStatus.text = "音声を認識中..."
                     }
 
                     override fun onRmsChanged(rmsdB: Float) {
-                        // 音声レベルに応じてマイクボタンをなめらかにパルスアニメーション
                         if (isListening) {
-                            val scale = 1.0f + (Math.max(0f, rmsdB) / 10f) * 0.28f
+                            val scale = 1.0f + (Math.max(0f, rmsdB) / 10f) * 0.25f
                             btnAction.animate().scaleX(scale).scaleY(scale).setDuration(80).start()
                         }
                     }
@@ -286,6 +222,8 @@ class AssistActivity : AppCompatActivity() {
                         isListening = false
                         resetMicScale()
                         updateActionButtonUi()
+                        statusContainer.visibility = View.VISIBLE
+                        loadingSpinner.visibility = View.VISIBLE
                         tvStatus.text = "解析中..."
                     }
 
@@ -293,16 +231,8 @@ class AssistActivity : AppCompatActivity() {
                         isListening = false
                         resetMicScale()
                         updateActionButtonUi()
-
-                        val msg = when (error) {
-                            SpeechRecognizer.ERROR_NO_MATCH -> "音声を認識できませんでした。もう一度お試しください。"
-                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "音声が検出されませんでした。"
-                            SpeechRecognizer.ERROR_NETWORK -> "通信エラーが発生しました。"
-                            SpeechRecognizer.ERROR_AUDIO -> "音声録音エラー。"
-                            else -> "聞き取れませんでした。マイクをタップしてやり直せます。"
-                        }
-                        tvStatus.text = msg
-                        tvStatus.setTextColor(Color.parseColor("#94a3b8"))
+                        statusContainer.visibility = View.GONE
+                        etCommand.hint = "聞き取れませんでした。もう一度お試しください"
                     }
 
                     override fun onResults(results: Bundle?) {
@@ -322,7 +252,6 @@ class AssistActivity : AppCompatActivity() {
                         val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                         if (!matches.isNullOrEmpty()) {
                             val partial = matches[0]
-                            tvStatus.text = partial
                             etCommand.setText(partial)
                             etCommand.setSelection(partial.length)
                         }
@@ -341,7 +270,7 @@ class AssistActivity : AppCompatActivity() {
 
             speechRecognizer?.startListening(intent)
         } catch (e: Exception) {
-            tvStatus.text = "音声認識の開始に失敗しました。"
+            etCommand.hint = "話しかけるか、入力..."
         }
     }
 
@@ -377,6 +306,7 @@ class AssistActivity : AppCompatActivity() {
 
     private fun submitCommand(prompt: String) {
         stopListening()
+        statusContainer.visibility = View.VISIBLE
         loadingSpinner.visibility = View.VISIBLE
         tvStatus.text = "実行中..."
         tvStatus.setTextColor(Color.parseColor("#e2e8f0"))
@@ -392,14 +322,12 @@ class AssistActivity : AppCompatActivity() {
                 if (success) {
                     tvStatus.setTextColor(Color.parseColor("#60a5fa"))
                     vibrateDevice()
-                    // 成功時は 2秒後に自動で元のアプリへ戻る
                     autoDismissRunnable = Runnable {
                         dismissWithAnimation()
                     }
                     mainHandler.postDelayed(autoDismissRunnable!!, 2000)
                 } else {
                     tvStatus.setTextColor(Color.parseColor("#f87171"))
-                    // エラー時は自動では閉じず、ユーザーが確認できるようにする
                 }
             }
         }.start()

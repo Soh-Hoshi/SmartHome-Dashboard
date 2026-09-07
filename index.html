@@ -55,6 +55,25 @@
       background-color: #0d0f12 !important;
       background: #0d0f12 !important;
     }
+    body.transparent-mode, body.transparent-mode html {
+      background-color: transparent !important;
+      background: transparent !important;
+    }
+
+    @keyframes gemini-pulse-mic {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+      }
+    }
+    .gemini-mic-recording {
+      animation: gemini-pulse-mic 1.3s infinite ease-in-out !important;
+      background-color: #ef4444 !important;
+    }
     * {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -760,8 +779,11 @@
       <div id="command-bar-container"
            class="pointer-events-auto w-full bg-[#131518]/95 backdrop-blur-xl border border-[#2196f3]/25 focus-within:border-[#2196f3]/70 focus-within:ring-2 focus-within:ring-[#2196f3]/25 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_16px_rgba(33,150,243,0.14)] focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.55),0_0_22px_rgba(33,150,243,0.25)] p-2 sm:p-2.5 min-h-[56px] sm:min-h-[62px] flex items-center gap-2.5 sm:gap-3.5 transition-all duration-200">
         
-        <!-- Nova アイコン (Gemini風 キラキラ) -->
-        <div id="assistant-sparkle-icon" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] flex items-center justify-center text-neutral-300 shrink-0 select-none ml-0.5 transition-transform duration-300">
+        <!-- Nova アイコン (Gemini風 キラキラ) - クリックでGeminiオーバーレイ起動 -->
+        <div id="assistant-sparkle-icon" 
+             onclick="openGeminiOverlay()" 
+             class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] hover:bg-[#2196f3]/20 active:scale-90 cursor-pointer flex items-center justify-center text-neutral-300 hover:text-[#2196f3] shrink-0 select-none ml-0.5 transition-all duration-300"
+             title="Gemini風フローティングUIを開く">
           <span class="material-symbols-rounded text-2xl sm:text-[26px] text-[#2196f3]">auto_awesome</span>
         </div>
 
@@ -783,6 +805,80 @@
       </div>
     </div>
   </div>
+
+  <!-- ======================================================================= -->
+  <!-- Gemini風 ミニマル・フローティング アシスタント (PWA UIテスト対応)       -->
+  <!-- ======================================================================= -->
+  <div id="gemini-assistant-overlay" 
+       class="fixed inset-0 z-50 flex flex-col justify-end items-center pointer-events-none opacity-0 invisible transition-all duration-300">
+    
+    <!-- 背景暗転 scrim (外側タップで閉じる) -->
+    <div id="gemini-overlay-backdrop" 
+         onclick="closeGeminiOverlay()"
+         class="absolute inset-0 bg-black/40 backdrop-blur-[3px] pointer-events-auto opacity-0 transition-opacity duration-300"></div>
+
+    <!-- フローティング エリア (画面下端から浮いて配置) -->
+    <div id="gemini-overlay-container" 
+         class="relative pointer-events-none w-full max-w-lg px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] mb-2 flex flex-col items-center select-none transform translate-y-6 transition-all duration-300 ease-out">
+      
+      <!-- 検索バー上部のフロートエリア (返答バブル ＆ ダッシュボードを開く小ボタン) -->
+      <div class="pointer-events-auto w-full flex flex-col items-center space-y-2 mb-2.5">
+        
+        <!-- 返答バブル (Nova応答時にフロート表示) -->
+        <div id="gemini-response-bubble" 
+             class="hidden opacity-0 translate-y-2 transition-all duration-300 max-w-md bg-[#161820]/95 backdrop-blur-2xl border border-white/10 text-white text-sm px-4 py-2.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center space-x-2.5">
+          <span id="gemini-response-icon" class="material-symbols-rounded text-lg text-[#3b82f6]">auto_awesome</span>
+          <span id="gemini-response-text" class="font-medium tracking-wide"></span>
+        </div>
+
+        <!-- 「ダッシュボードを開く」小さなフロートボタン (Geminiスタイル) -->
+        <button id="gemini-btn-open-dashboard" 
+                onclick="openFullDashboard()"
+                class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#1c1f26]/85 hover:bg-[#252a34] active:scale-95 border border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-xl text-neutral-300 hover:text-white transition-all text-xs font-medium">
+          <span class="material-symbols-rounded text-sm text-[#4a88e8]">grid_view</span>
+          <span>ダッシュボードを開く</span>
+        </button>
+      </div>
+
+      <!-- Gemini風 メイン検索・プロンプトカプセル (ほとんどこれだけがフロートする) -->
+      <div id="gemini-search-pill" 
+           class="pointer-events-auto relative w-full h-[58px] bg-[#14161d]/95 backdrop-blur-2xl rounded-full border border-white/[0.12] p-1.5 flex items-center shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_24px_rgba(59,130,246,0.2)] focus-within:border-[#3b82f6]/70 focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.8),0_0_32px_rgba(59,130,246,0.35)] transition-all duration-300">
+
+        <!-- アンビエント発光グラデーション (Gemini風エッジグロー) -->
+        <div id="gemini-ambient-glow" class="absolute -inset-[1.5px] rounded-full bg-gradient-to-r from-blue-500/25 via-indigo-500/25 to-sky-400/25 opacity-50 blur-[3px] pointer-events-none -z-10"></div>
+
+        <!-- キラキラ アイコン -->
+        <div id="gemini-sparkle-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-[#3b82f6] shrink-0 ml-1">
+          <span class="material-symbols-rounded text-2xl">auto_awesome</span>
+        </div>
+
+        <!-- 検索・テキスト入力欄 -->
+        <input type="text" 
+               id="gemini-command-input" 
+               placeholder="話しかけるか、入力..." 
+               class="flex-1 bg-transparent text-[16px] text-white placeholder-neutral-400 focus:outline-none px-2.5 font-normal"
+               autocomplete="off" />
+
+        <!-- アクションボタン (マイク / 送信) -->
+        <button id="gemini-btn-action" 
+                onclick="handleGeminiAction()"
+                class="w-11 h-11 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-95 text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-md"
+                aria-label="アクション">
+          <span id="gemini-action-icon" class="material-symbols-rounded text-2xl">mic</span>
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Gemini UI テスト起動ボタン (モバイル・デスクトップ共通テスト用) -->
+  <button onclick="openGeminiOverlay()" 
+          class="fixed bottom-20 md:bottom-24 right-4 md:right-8 z-30 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#181a22]/90 hover:bg-[#222632] border border-[#2196f3]/30 text-xs text-[#60a5fa] shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-xl active:scale-95 transition-all select-none group"
+          title="Gemini風フローティングUIをテスト">
+    <span class="material-symbols-rounded text-sm text-[#2196f3] group-hover:rotate-12 transition-transform">auto_awesome</span>
+    <span class="font-medium">Gemini UI テスト</span>
+  </button>
 
   <!-- ======================================================================= -->
   <!-- モバイル用ボトムナビゲーションバー (Google Home / Material 3 スタイル)    -->
@@ -3737,6 +3833,265 @@
       if (inputEl) inputEl.placeholder = 'Novaに話しかける...';
     }
 
+    // =========================================================================
+    // Gemini風 フローティング アシスタント (PWA UIテスト & オーバーレイ)
+    // =========================================================================
+    let geminiOverlayActive = false;
+    let geminiAutoDismissTimer = null;
+    let geminiRecognition = null;
+    let geminiIsRecording = false;
+
+    function openGeminiOverlay(autoStartVoice = true) {
+      const overlay = document.getElementById('gemini-assistant-overlay');
+      const backdrop = document.getElementById('gemini-overlay-backdrop');
+      const container = document.getElementById('gemini-overlay-container');
+      const input = document.getElementById('gemini-command-input');
+      const bubble = document.getElementById('gemini-response-bubble');
+
+      if (!overlay) return;
+
+      geminiOverlayActive = true;
+      overlay.classList.remove('invisible');
+      overlay.classList.add('opacity-100');
+      backdrop.classList.add('opacity-100');
+      container.classList.remove('translate-y-6');
+      container.classList.add('translate-y-0');
+
+      if (bubble) {
+        bubble.classList.add('hidden', 'opacity-0');
+      }
+
+      if (input) {
+        input.value = '';
+        input.placeholder = autoStartVoice ? 'Novaがお聞きしています...' : '話しかけるか、入力...';
+      }
+      updateGeminiActionIcon();
+
+      if (autoStartVoice) {
+        setTimeout(() => {
+          startGeminiVoiceRecognition();
+        }, 150);
+      }
+    }
+
+    function closeGeminiOverlay(openDashboard = false) {
+      if (geminiAutoDismissTimer) {
+        clearTimeout(geminiAutoDismissTimer);
+        geminiAutoDismissTimer = null;
+      }
+      stopGeminiVoiceRecognition();
+
+      const overlay = document.getElementById('gemini-assistant-overlay');
+      const backdrop = document.getElementById('gemini-overlay-backdrop');
+      const container = document.getElementById('gemini-overlay-container');
+
+      if (!overlay) return;
+
+      geminiOverlayActive = false;
+      overlay.classList.remove('opacity-100');
+      backdrop.classList.remove('opacity-100');
+      container.classList.remove('translate-y-0');
+      container.classList.add('translate-y-6');
+
+      setTimeout(() => {
+        overlay.classList.add('invisible');
+      }, 300);
+
+      // ネイティブ Android アプリ内の場合はブリッジを呼び出し
+      if (openDashboard && window.Android && window.Android.openDashboard) {
+        window.Android.openDashboard();
+      } else if (!openDashboard && window.Android && window.Android.closeOverlay) {
+        window.Android.closeOverlay();
+      }
+    }
+
+    function openFullDashboard() {
+      closeGeminiOverlay(true);
+    }
+
+    function handleGeminiAction() {
+      const input = document.getElementById('gemini-command-input');
+      if (!input) return;
+      const text = input.value.trim();
+
+      if (text.length > 0) {
+        submitGeminiCommand(text);
+      } else {
+        if (geminiIsRecording) {
+          stopGeminiVoiceRecognition();
+        } else {
+          startGeminiVoiceRecognition();
+        }
+      }
+    }
+
+    function startGeminiVoiceRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        const input = document.getElementById('gemini-command-input');
+        if (input) input.placeholder = '音声認識非対応です。キーボードで入力してください';
+        return;
+      }
+
+      try {
+        if (geminiRecognition) {
+          try { geminiRecognition.abort(); } catch (e) {}
+        }
+        geminiRecognition = new SpeechRecognition();
+        geminiRecognition.lang = 'ja-JP';
+        geminiRecognition.interimResults = true;
+        geminiRecognition.maxAlternatives = 1;
+        geminiRecognition.continuous = false;
+
+        let finalSpeech = '';
+
+        geminiRecognition.onstart = () => {
+          geminiIsRecording = true;
+          updateGeminiActionIcon();
+          const input = document.getElementById('gemini-command-input');
+          if (input) input.placeholder = 'Novaがお聞きしています...';
+        };
+
+        geminiRecognition.onresult = (e) => {
+          let interim = '';
+          for (let i = e.resultIndex; i < e.results.length; ++i) {
+            if (e.results[i].isFinal) {
+              finalSpeech += e.results[i][0].transcript;
+            } else {
+              interim += e.results[i][0].transcript;
+            }
+          }
+          const displayText = finalSpeech || interim;
+          const input = document.getElementById('gemini-command-input');
+          if (input && displayText) {
+            input.value = displayText;
+            updateGeminiActionIcon();
+          }
+
+          if (finalSpeech) {
+            stopGeminiVoiceRecognition();
+            submitGeminiCommand(finalSpeech);
+          }
+        };
+
+        geminiRecognition.onerror = (e) => {
+          geminiIsRecording = false;
+          updateGeminiActionIcon();
+          const input = document.getElementById('gemini-command-input');
+          if (input) input.placeholder = '聞き取れませんでした。マイクを押して再試行か入力';
+        };
+
+        geminiRecognition.onend = () => {
+          geminiIsRecording = false;
+          updateGeminiActionIcon();
+          if (finalSpeech) {
+            submitGeminiCommand(finalSpeech);
+          }
+        };
+
+        geminiRecognition.start();
+      } catch (err) {
+        geminiIsRecording = false;
+        updateGeminiActionIcon();
+      }
+    }
+
+    function stopGeminiVoiceRecognition() {
+      geminiIsRecording = false;
+      if (geminiRecognition) {
+        try { geminiRecognition.stop(); } catch (e) {}
+      }
+      updateGeminiActionIcon();
+    }
+
+    function updateGeminiActionIcon() {
+      const input = document.getElementById('gemini-command-input');
+      const icon = document.getElementById('gemini-action-icon');
+      const btn = document.getElementById('gemini-btn-action');
+      if (!input || !icon || !btn) return;
+
+      const hasText = input.value.trim().length > 0;
+      if (hasText) {
+        icon.textContent = 'arrow_upward';
+        btn.classList.remove('gemini-mic-recording');
+        btn.style.backgroundColor = '#2563eb';
+      } else {
+        icon.textContent = 'mic';
+        if (geminiIsRecording) {
+          btn.classList.add('gemini-mic-recording');
+        } else {
+          btn.classList.remove('gemini-mic-recording');
+          btn.style.backgroundColor = '#2563eb';
+        }
+      }
+    }
+
+    async function submitGeminiCommand(text) {
+      if (!text || !text.trim()) return;
+      stopGeminiVoiceRecognition();
+
+      const input = document.getElementById('gemini-command-input');
+      const bubble = document.getElementById('gemini-response-bubble');
+      const bubbleText = document.getElementById('gemini-response-text');
+      const bubbleIcon = document.getElementById('gemini-response-icon');
+      const sparkle = document.getElementById('gemini-sparkle-icon');
+
+      if (sparkle) sparkle.classList.add('animate-spin');
+      if (input) input.placeholder = '実行中...';
+
+      try {
+        const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
+        const res = await fetch(`${basePath}/api/assistant`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: text.trim() })
+        });
+        const data = await res.json();
+
+        if (bubble && bubbleText) {
+          bubbleText.textContent = data.message || '操作を完了しました';
+          bubbleIcon.textContent = data.success ? 'auto_awesome' : 'info';
+          bubbleIcon.style.color = data.success ? '#3b82f6' : '#f87171';
+          bubble.classList.remove('hidden');
+          setTimeout(() => {
+            bubble.classList.remove('opacity-0', 'translate-y-2');
+          }, 20);
+        }
+
+        // 状態更新をUI全体に反映
+        if (data.state) {
+          Object.assign(state, data.state);
+          state.animRatio = (state.acTemp - 22) / (28 - 22);
+          state.heaterAnimRatio = (state.heaterTemp - 22) / (28 - 22);
+          if (typeof renderAcGauge === 'function') renderAcGauge();
+          if (typeof updateAcUi === 'function') updateAcUi();
+          if (typeof renderHeaterGauge === 'function') renderHeaterGauge();
+          if (typeof updateHeaterUi === 'function') updateHeaterUi();
+          if (typeof updateLightUi === 'function') updateLightUi();
+          if (typeof updateCleanerUi === 'function') updateCleanerUi();
+        }
+
+        if (input) input.value = '';
+
+        // 成功時は2.5秒後に自動で閉じる
+        if (data.success) {
+          geminiAutoDismissTimer = setTimeout(() => {
+            closeGeminiOverlay();
+          }, 2500);
+        }
+      } catch (err) {
+        if (bubble && bubbleText) {
+          bubbleText.textContent = '通信エラーが発生しました';
+          bubbleIcon.textContent = 'error';
+          bubbleIcon.style.color = '#f87171';
+          bubble.classList.remove('hidden', 'opacity-0');
+        }
+      } finally {
+        if (sparkle) sparkle.classList.remove('animate-spin');
+        if (input) input.placeholder = '話しかけるか、入力...';
+      }
+    }
+
     async function fetchWeatherData() {
       try {
         const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
@@ -4057,13 +4412,53 @@
         }
       });
 
-      // Android アシスタントブリッジ連携: URLに ?assist=1 または ?voice=1 が付いている場合は即座に音声起動
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('assist') || urlParams.has('voice')) {
-        setTimeout(() => {
-          if (!isRecording) {
-            toggleVoiceRecognition();
+      // Gemini Input イベント設定
+      const gInput = document.getElementById('gemini-command-input');
+      if (gInput) {
+        gInput.addEventListener('input', () => {
+          if (geminiAutoDismissTimer) {
+            clearTimeout(geminiAutoDismissTimer);
+            geminiAutoDismissTimer = null;
           }
+          updateGeminiActionIcon();
+        });
+        gInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleGeminiAction();
+          }
+        });
+      }
+
+      // 下スワイプで閉じるジェスチャー
+      (() => {
+        let startY = 0;
+        const c = document.getElementById('gemini-overlay-container');
+        if (c) {
+          c.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+          }, { passive: true });
+          c.addEventListener('touchend', (e) => {
+            const deltaY = e.changedTouches[0].clientY - startY;
+            if (deltaY > 60) {
+              closeGeminiOverlay();
+            }
+          }, { passive: true });
+        }
+      })();
+
+      // ESCキーで閉じる
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && geminiOverlayActive) {
+          closeGeminiOverlay();
+        }
+      });
+
+      // Android アシスタント連携 / PWA オーバーレイモード (?overlay=1, ?assist=1)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('overlay') || urlParams.has('assist') || urlParams.has('voice') || urlParams.has('gemini')) {
+        setTimeout(() => {
+          openGeminiOverlay(true);
         }, 300);
       }
     });

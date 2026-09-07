@@ -6,166 +6,108 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <!-- Bottom Sheet Card (Gemini Style) -->
+    <!-- Floating Gemini Container (Bottom Aligned, Floating) -->
     <LinearLayout
-        android:id="@+id/bottomSheet"
+        android:id="@+id/floatingContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:orientation="vertical"
-        android:background="@drawable/bg_assist_bottom_sheet"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="12dp"
+        android:gravity="center_horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="24dp"
-        android:clickable="true"
-        android:focusable="true">
+        android:clickable="false">
 
-        <!-- Drag Handle / Swipe Indicator -->
-        <View
-            android:id="@+id/dragHandle"
-            android:layout_width="44dp"
-            android:layout_height="5dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="14dp"
-            android:background="@drawable/bg_drag_handle" />
+        <!-- Top Floating Row: Small Dashboard Button -->
+        <LinearLayout
+            android:id="@+id/btnOpenDashboard"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="horizontal">
 
-        <!-- Header: Title & Actions -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp">
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_open_dashboard"
+                app:tint="#60a5fa" />
 
-            <!-- Left: Nova Sparkle & Brand -->
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_marginStart="6dp"
+                android:text="ダッシュボードを開く"
+                android:textColor="#cbd5e1"
+                android:textSize="12sp"
+                android:textStyle="normal" />
+        </LinearLayout>
 
-                <ImageView
-                    android:id="@+id/iconSparkle"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_sparkle"
-                    app:tint="#3b82f6" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Nova"
-                    android:textColor="#ffffff"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Right: Open Dashboard Button + Close Button -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/btnOpenDashboard"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center_vertical"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:src="@drawable/ic_open_dashboard"
-                        app:tint="#94a3b8" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
-                        android:text="ダッシュボード"
-                        android:textColor="#cbd5e1"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <ImageView
-                    android:id="@+id/btnClose"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginStart="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_close"
-                    app:tint="#8a94a6"
-                    android:clickable="true"
-                    android:focusable="true" />
-            </LinearLayout>
-        </RelativeLayout>
-
-        <!-- Status / Response / Live Transcript Display -->
+        <!-- Floating Status / Response Bubble -->
         <LinearLayout
             android:id="@+id/statusContainer"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="40dp"
+            android:minHeight="32dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_chip"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <ProgressBar
                 android:id="@+id/loadingSpinner"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginEnd="10dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="8dp"
                 android:indeterminate="true"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/tvStatus"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="お聞きしています..."
                 android:textColor="#e2e8f0"
-                android:textSize="15sp"
-                android:lineSpacingExtra="2dp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- Search / Command Input Bar -->
+        <!-- Gemini Floating Search / Input Pill -->
         <LinearLayout
-            android:id="@+id/inputBarContainer"
+            android:id="@+id/searchPill"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:background="@drawable/bg_search_bar"
             android:gravity="center_vertical"
-            android:paddingStart="14dp"
-            android:paddingEnd="7dp"
-            android:orientation="horizontal">
+            android:paddingStart="12dp"
+            android:paddingEnd="6dp"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
-                android:id="@+id/barSparkle"
+                android:id="@+id/iconSparkle"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_sparkle"
-                app:tint="#2196f3" />
+                app:tint="#3b82f6" />
 
             <EditText
                 android:id="@+id/etCommand"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginEnd="6dp"
                 android:background="@null"
                 android:hint="話しかけるか、入力..."
@@ -176,11 +118,10 @@
                 android:inputType="text"
                 android:singleLine="true" />
 
-            <!-- Action Button (Mic or Send) -->
             <FrameLayout
                 android:id="@+id/btnAction"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:background="@drawable/bg_mic_button"
                 android:clickable="true"
                 android:focusable="true">
@@ -194,79 +135,6 @@
                     app:tint="#ffffff" />
             </FrameLayout>
         </LinearLayout>
-
-        <!-- Quick Shortcut Suggestion Chips -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/chipLight"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="💡 電気を消す"
-                    android:textColor="#94a3b8"
-                    android:textSize="13sp"
-                    android:layout_marginEnd="8dp"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <TextView
-                    android:id="@+id/chipAc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="❄️ エアコンをつける"
-                    android:textColor="#94a3b8"
-                    android:textSize="13sp"
-                    android:layout_marginEnd="8dp"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <TextView
-                    android:id="@+id/chipPc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="🖥️ PCを起動"
-                    android:textColor="#94a3b8"
-                    android:textSize="13sp"
-                    android:layout_marginEnd="8dp"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <TextView
-                    android:id="@+id/chipCleaner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_chip"
-                    android:gravity="center"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="🧹 掃除機スタート"
-                    android:textColor="#94a3b8"
-                    android:textSize="13sp"
-                    android:clickable="true"
-                    android:focusable="true" />
-            </LinearLayout>
-        </HorizontalScrollView>
 
     </LinearLayout>
 </FrameLayout>
