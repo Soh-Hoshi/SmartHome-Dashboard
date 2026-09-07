@@ -340,12 +340,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
+        xff = self.headers.get('X-Forwarded-For') or self.client_address[0]
+        ua = self.headers.get('User-Agent', 'Unknown')
         auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
         if not auth['authenticated']:
-            print(f"[AUTH DENIED] path={self.path} client={self.client_address} reason={auth.get('reason')} xff={self.headers.get('X-Forwarded-For')}")
+            print(f"[AUTH DENIED] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
             return self.send_unauthorized(auth.get('reason'))
 
-        print(f"[AUTH OK] path={self.path} client={self.client_address} reason={auth.get('reason')}")
+        print(f"[AUTH OK] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
 
         # ?key=合言葉 による初回アクセス時は、永続Cookieを発行して綺麗なURLへリダイレクト
         if auth.get('set_cookie') and auth.get('clean_url') is not None:
@@ -470,9 +472,12 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        xff = self.headers.get('X-Forwarded-For') or self.client_address[0]
+        ua = self.headers.get('User-Agent', 'Unknown')
         # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
         auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
         if not auth['authenticated']:
+            print(f"[POST DENIED] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
             return self.send_unauthorized(auth.get('reason'))
 
         parsed = urllib.parse.urlparse(self.path)
@@ -486,6 +491,8 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             req_data = json.loads(post_body.decode('utf-8'))
         except Exception:
             req_data = {}
+
+        print(f"[POST EXEC] path={clean_path} client={xff} auth={auth.get('reason')} ua={ua[:60]} data={req_data}")
 
         # 0. 通知発行 API (NovaAssist ネイティブ通知)
         if clean_path in ('/api/notify', '/api/notification'):

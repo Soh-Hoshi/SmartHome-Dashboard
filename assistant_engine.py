@@ -485,6 +485,7 @@ def parse_and_execute(prompt: str, send_api_fn=None):
     自然言語プロンプトを解釈し、対応する家電アクションを実行して画一化された応答テキストを返す。
     誤操作防止ガード付き。
     """
+    print(f"[Assistant Engine] Prompt received: {repr(prompt)}")
     if not prompt or not prompt.strip():
         return {
             "success": False,

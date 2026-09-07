@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ダッシュボード - スマートホーム</title>
 
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <!-- PWA (Progressive Web App) 設定: Home Assistantとの競合を防ぐ絶対パス指定 -->
   <link id="pwa-manifest" rel="manifest" href="/dashboard/manifest.json" crossorigin="use-credentials">
   <meta name="theme-color" content="#0d0f12">
@@ -4000,7 +4001,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
-          const swUrl = (basePath || '') + '/sw.js?v=22';
+          const swUrl = (basePath || '') + '/sw.js?v=24';
           const scopeUrl = (basePath || '') + '/';
           
           // ローカルアクセス時はマニフェストパスを調整
@@ -4059,16 +4060,6 @@
           showAssistantToast('アプリをインストールしました', 'check_circle');
         }
       });
-
-      // Android アシスタントブリッジ連携: URLに ?assist=1 または ?voice=1 が付いている場合は即座に音声起動
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('assist') || urlParams.has('voice')) {
-        setTimeout(() => {
-          if (!isRecording) {
-            toggleVoiceRecognition();
-          }
-        }, 300);
-      }
     });
 
   </script>

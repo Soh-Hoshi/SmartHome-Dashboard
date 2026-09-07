@@ -82,6 +82,7 @@ def check_request_auth(headers, client_address, raw_path: str) -> dict:
     pwa_assets = (
         '/manifest.json',
         '/sw.js',
+        '/robots.txt',
         '/icon-192.png',
         '/icon-512.png',
         '/icon-maskable-192.png',
@@ -97,6 +98,22 @@ def check_request_auth(headers, client_address, raw_path: str) -> dict:
             "clean_url": None,
             "cookie_value": expected_cookie,
             "reason": "pwa_asset"
+        }
+
+    # 外部クローラー・ボットの明示的遮断 (User-Agent 検査)
+    user_agent = (headers.get("User-Agent") or "").lower()
+    known_bots = (
+        'bot', 'crawler', 'spider', 'scraper', 'headless', 'puppeteer',
+        'playwright', 'semrush', 'ahrefs', 'dotbot', 'petalbot', 'bytespider',
+        'yandex', 'censys', 'shodan', 'zoomeye', 'mj12'
+    )
+    if any(b in user_agent for b in known_bots):
+        return {
+            "authenticated": False,
+            "set_cookie": False,
+            "clean_url": None,
+            "cookie_value": expected_cookie,
+            "reason": f"crawler_blocked:{user_agent[:32]}"
         }
 
     # 1. 真のローカル LAN 直接アクセス判定
