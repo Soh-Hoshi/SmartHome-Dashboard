@@ -3725,12 +3725,10 @@
         finalTranscript = '';
         const micIcon = document.getElementById('voice-mic-icon');
         const micBtn = document.getElementById('btn-voice-command');
-        const cmdBar = document.getElementById('command-bar-container');
         const inputEl = document.getElementById('command-search-input');
 
         if (micBtn) micBtn.classList.add('voice-listening');
         if (micIcon) micIcon.textContent = 'graphic_eq';
-        if (cmdBar) cmdBar.classList.add('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
         if (inputEl) inputEl.placeholder = 'Novaがお聞きしています...（例: 電気消して、エアコン24度）';
 
         showAssistantToast('Novaがお聞きしています...', 'mic', false);
@@ -3810,12 +3808,10 @@
       isRecording = false;
       const micIcon = document.getElementById('voice-mic-icon');
       const micBtn = document.getElementById('btn-voice-command');
-      const cmdBar = document.getElementById('command-bar-container');
       const inputEl = document.getElementById('command-search-input');
 
       if (micBtn) micBtn.classList.remove('voice-listening');
       if (micIcon) micIcon.textContent = 'mic';
-      if (cmdBar) cmdBar.classList.remove('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
       if (inputEl) inputEl.placeholder = 'Novaに話しかける...';
     }
 
@@ -3998,25 +3994,16 @@
       const input = document.getElementById('gemini-command-input');
       const icon = document.getElementById('gemini-action-icon');
       const btn = document.getElementById('gemini-btn-action');
-      const pill = document.getElementById('gemini-search-pill');
       if (!input || !icon || !btn) return;
 
       if (geminiIsRecording) {
-        // 音声認識中: Novaバーと完全に一致するスタイル (ローズ透過背景 + ローズ境界 + パルスアニメーション + graphic_eq)
+        // 音声認識中: マイクボタンのみ Novaバーと同じスタイル (半透明ローズ + パルス + graphic_eq)
         icon.textContent = 'graphic_eq';
         btn.classList.remove('bg-[#2196f3]', 'bg-[#1e2128]', 'text-white', 'text-neutral-200');
         btn.classList.add('voice-listening');
-        if (pill) {
-          pill.classList.add('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
-          pill.classList.remove('border-[#2196f3]/25');
-        }
       } else {
         // 録音停止時
         btn.classList.remove('voice-listening');
-        if (pill) {
-          pill.classList.remove('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
-          pill.classList.add('border-[#2196f3]/25');
-        }
 
         const hasText = input.value.trim().length > 0;
         if (hasText) {

@@ -296,17 +296,14 @@ class AssistActivity : AppCompatActivity() {
             iconAction.setImageResource(R.drawable.ic_send)
             iconAction.clearColorFilter()
             btnAction.setBackgroundResource(R.drawable.bg_mic_button)
-            searchPillContainer.setBackgroundResource(R.drawable.bg_search_bar)
         } else {
             iconAction.setImageResource(R.drawable.ic_mic)
             if (isListening) {
                 btnAction.setBackgroundResource(R.drawable.bg_mic_button_listening)
                 iconAction.setColorFilter(Color.parseColor("#fb7185"))
-                searchPillContainer.setBackgroundResource(R.drawable.bg_search_bar_listening)
             } else {
                 btnAction.setBackgroundResource(R.drawable.bg_mic_button)
                 iconAction.clearColorFilter()
-                searchPillContainer.setBackgroundResource(R.drawable.bg_search_bar)
             }
         }
     }
