@@ -189,24 +189,7 @@ def check_request_auth(headers, client_address, raw_path: str) -> dict:
         except Exception:
             pass
 
-    # 5. URL クエリパラメータ認証 (?key=合言葉)
-    parsed = urllib.parse.urlparse(raw_path)
-    query_params = urllib.parse.parse_qs(parsed.query)
-    url_keys = query_params.get("key", [])
-    if url_keys and any(hmac.compare_digest(k, access_key) for k in url_keys):
-        # 正しい合言葉パラメータを検出
-        clean_qs = [(k, v) for k, v in urllib.parse.parse_qsl(parsed.query) if k != "key"]
-        new_query = urllib.parse.urlencode(clean_qs)
-        clean_url = parsed.path + (f"?{new_query}" if new_query else "")
-        return {
-            "authenticated": True,
-            "set_cookie": True,
-            "clean_url": clean_url,
-            "cookie_value": expected_cookie,
-            "reason": "url_key"
-        }
-
-    # すべての認証条件を満たさない場合（外部クローラー・未認証アクセス）
+    # すべての認証条件を満たさない場合（ログイン画面表示または403遮断）
     return {
         "authenticated": False,
         "set_cookie": False,

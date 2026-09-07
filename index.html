@@ -2946,7 +2946,6 @@
         sendPcCommand('boot');
       } else {
         // === 電源オフアクション (シャットダウン) ===
-        if (!confirm('PCの電源をオフ（シャットダウン）にしますか？')) return;
         // オプティミスティックUI: 即座に終了中表示へ
         state.pcOnline = false;
         state.pcBooting = false;
@@ -2996,7 +2995,6 @@
 
     function pressPcSleep(event) {
       if (event) event.stopPropagation();
-      if (!confirm('PCをスリープにしますか？')) return;
       if (!state.pcOnline || state.pcBooting || state.pcShuttingDown) {
         showAssistantToast('PCがオンラインの時のみスリープ可能です', 'bedtime');
         return;
@@ -3012,7 +3010,6 @@
 
     function pressPcRestart(event) {
       if (event) event.stopPropagation();
-      if (!confirm('本当にPCを再起動しますか？')) return;
       if (!state.pcOnline || state.pcBooting || state.pcShuttingDown) {
         showAssistantToast('PCがオンラインの時のみ再起動可能です', 'restart_alt');
         return;

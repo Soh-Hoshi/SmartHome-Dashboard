@@ -171,21 +171,16 @@ def test_8_crawler_blocking_and_auth():
     except urllib.error.HTTPError as e:
         assert e.code == 403, f"Expected 403 for crawler POST, got {e.code}"
 
-    # 3. 正しい合言葉による初回アクセス -> 302 リダイレクト & Set-Cookie
-    class NoRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            return None
-
-    opener = urllib.request.build_opener(NoRedirect)
-    try:
-        res = opener.open(urllib.request.Request(f"{BASE_URL}/dashboard/?key={key}", headers={"X-Forwarded-For": "198.51.100.22"}))
-        status, hdrs = res.status, res.headers
-    except urllib.error.HTTPError as e:
-        status, hdrs = e.code, e.headers
-
-    assert status == 302, f"Expected 302 on ?key=, got {status}"
-    cookie_hdr = hdrs.get("Set-Cookie", "")
-    assert "sh_auth=" in cookie_hdr, "Set-Cookie missing sh_auth"
+    # 3. ログイン画面 API によるアクセスキー認証 -> 200 OK & Set-Cookie
+    login_req = urllib.request.Request(
+        f"{BASE_URL}/api/login",
+        data=json.dumps({"key": key}).encode("utf-8"),
+        headers={"X-Forwarded-For": "198.51.100.22", "Content-Type": "application/json", "X-Requested-With": "SmartHome-UI"}
+    )
+    with urllib.request.urlopen(login_req, timeout=5) as res:
+        assert res.status == 200
+        cookie_hdr = res.headers.get("Set-Cookie", "")
+        assert "sh_auth=" in cookie_hdr, "Set-Cookie missing sh_auth"
 
     # 4. Cookie 付きでの継続アクセス -> 200 OK
     cookie_val = [p.split(';')[0] for p in cookie_hdr.split(', ') if 'sh_auth=' in p][0]
