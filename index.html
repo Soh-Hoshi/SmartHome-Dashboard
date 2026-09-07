@@ -60,20 +60,6 @@
       background: transparent !important;
     }
 
-    @keyframes gemini-pulse-mic {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
-      }
-      50% {
-        transform: scale(1.08);
-        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-      }
-    }
-    .gemini-mic-recording {
-      animation: gemini-pulse-mic 1.3s infinite ease-in-out !important;
-      background-color: #ef4444 !important;
-    }
     * {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -3863,7 +3849,7 @@
 
       if (input) {
         input.value = '';
-        input.placeholder = autoStartVoice ? 'Novaがお聞きしています...' : '話しかけるか、入力...';
+        input.placeholder = autoStartVoice ? 'Novaがお聞きしています...（例: 電気消して、エアコン24度）' : 'Novaに話しかける...';
       }
       updateGeminiActionIcon();
 
@@ -3914,7 +3900,7 @@
       if (!input) return;
       const text = input.value.trim();
 
-      if (text.length > 0) {
+      if (text.length > 0 && !geminiIsRecording) {
         submitGeminiCommand(text);
       } else {
         if (geminiIsRecording) {
@@ -3947,9 +3933,9 @@
 
         geminiRecognition.onstart = () => {
           geminiIsRecording = true;
-          updateGeminiActionIcon();
           const input = document.getElementById('gemini-command-input');
-          if (input) input.placeholder = 'Novaがお聞きしています...';
+          if (input) input.placeholder = 'Novaがお聞きしています...（例: 電気消して、エアコン24度）';
+          updateGeminiActionIcon();
         };
 
         geminiRecognition.onresult = (e) => {
@@ -4001,6 +3987,10 @@
       if (geminiRecognition) {
         try { geminiRecognition.stop(); } catch (e) {}
       }
+      const input = document.getElementById('gemini-command-input');
+      if (input && !input.value.trim()) {
+        input.placeholder = 'Novaに話しかける...';
+      }
       updateGeminiActionIcon();
     }
 
@@ -4008,21 +3998,37 @@
       const input = document.getElementById('gemini-command-input');
       const icon = document.getElementById('gemini-action-icon');
       const btn = document.getElementById('gemini-btn-action');
+      const pill = document.getElementById('gemini-search-pill');
       if (!input || !icon || !btn) return;
 
-      const hasText = input.value.trim().length > 0;
-      if (hasText) {
-        icon.textContent = 'arrow_upward';
-        btn.classList.remove('gemini-mic-recording', 'bg-[#1e2128]', 'text-neutral-200');
-        btn.classList.add('bg-[#2196f3]', 'text-white');
+      if (geminiIsRecording) {
+        // 音声認識中: Novaバーと完全に一致するスタイル (ローズ透過背景 + ローズ境界 + パルスアニメーション + graphic_eq)
+        icon.textContent = 'graphic_eq';
+        btn.classList.remove('bg-[#2196f3]', 'bg-[#1e2128]', 'text-white', 'text-neutral-200');
+        btn.classList.add('voice-listening');
+        if (pill) {
+          pill.classList.add('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
+          pill.classList.remove('border-[#2196f3]/25');
+        }
       } else {
-        icon.textContent = geminiIsRecording ? 'graphic_eq' : 'mic';
-        btn.classList.remove('bg-[#2196f3]', 'text-white');
-        btn.classList.add('bg-[#1e2128]', 'text-neutral-200');
-        if (geminiIsRecording) {
-          btn.classList.add('gemini-mic-recording');
+        // 録音停止時
+        btn.classList.remove('voice-listening');
+        if (pill) {
+          pill.classList.remove('ring-2', 'ring-rose-500/40', 'border-rose-500/50');
+          pill.classList.add('border-[#2196f3]/25');
+        }
+
+        const hasText = input.value.trim().length > 0;
+        if (hasText) {
+          // テキスト入力あり: 送信ボタン (上矢印 & ブルー)
+          icon.textContent = 'arrow_upward';
+          btn.classList.remove('bg-[#1e2128]', 'text-neutral-200');
+          btn.classList.add('bg-[#2196f3]', 'text-white');
         } else {
-          btn.classList.remove('gemini-mic-recording');
+          // テキストなし: マイクボタン (通常色 & micアイコン)
+          icon.textContent = 'mic';
+          btn.classList.remove('bg-[#2196f3]', 'text-white');
+          btn.classList.add('bg-[#1e2128]', 'text-neutral-200');
         }
       }
     }
@@ -4089,7 +4095,7 @@
         }
       } finally {
         if (sparkle) sparkle.classList.remove('animate-spin');
-        if (input) input.placeholder = '話しかけるか、入力...';
+        if (input) input.placeholder = 'Novaに話しかける...';
       }
     }
 
@@ -4421,7 +4427,11 @@
             clearTimeout(geminiAutoDismissTimer);
             geminiAutoDismissTimer = null;
           }
-          updateGeminiActionIcon();
+          if (geminiIsRecording && document.activeElement === gInput) {
+            stopGeminiVoiceRecognition();
+          } else {
+            updateGeminiActionIcon();
+          }
         });
         gInput.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
