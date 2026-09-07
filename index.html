@@ -1797,6 +1797,23 @@
   <!-- JavaScript: アニメーション、ドラッグ操作、状態管理、スムーズな戻るアニメーション -->
   <!-- SmartHome Core Logic -->
   <script>
+    // === セキュリティ対策: クローラー/ボット遮断 & カスタムヘッダー自動付与 ===
+    const _originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+      if (navigator.webdriver && options.method && options.method.toUpperCase() === 'POST') {
+        console.warn('[Security] Automated interaction blocked via webdriver detection.');
+        return Promise.reject(new Error('Automated browser execution is blocked.'));
+      }
+      options = options || {};
+      options.headers = options.headers || {};
+      if (options.headers instanceof Headers) {
+        options.headers.set('X-Requested-With', 'SmartHome-UI');
+      } else {
+        options.headers['X-Requested-With'] = 'SmartHome-UI';
+      }
+      return _originalFetch.call(this, url, options);
+    };
+
     // 状態管理
     const state = {
       acTemp: 26,           // 22℃ 〜 28℃ (整数値)
@@ -2929,6 +2946,7 @@
         sendPcCommand('boot');
       } else {
         // === 電源オフアクション (シャットダウン) ===
+        if (!confirm('PCの電源をオフ（シャットダウン）にしますか？')) return;
         // オプティミスティックUI: 即座に終了中表示へ
         state.pcOnline = false;
         state.pcBooting = false;
@@ -2978,6 +2996,7 @@
 
     function pressPcSleep(event) {
       if (event) event.stopPropagation();
+      if (!confirm('PCをスリープにしますか？')) return;
       if (!state.pcOnline || state.pcBooting || state.pcShuttingDown) {
         showAssistantToast('PCがオンラインの時のみスリープ可能です', 'bedtime');
         return;
@@ -2993,6 +3012,7 @@
 
     function pressPcRestart(event) {
       if (event) event.stopPropagation();
+      if (!confirm('本当にPCを再起動しますか？')) return;
       if (!state.pcOnline || state.pcBooting || state.pcShuttingDown) {
         showAssistantToast('PCがオンラインの時のみ再起動可能です', 'restart_alt');
         return;
@@ -4001,7 +4021,7 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
-          const swUrl = (basePath || '') + '/sw.js?v=24';
+          const swUrl = (basePath || '') + '/sw.js?v=25';
           const scopeUrl = (basePath || '') + '/';
           
           // ローカルアクセス時はマニフェストパスを調整

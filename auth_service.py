@@ -48,6 +48,13 @@ def get_expected_cookie_value(access_key: str = None) -> str:
         access_key = get_access_key()
     return hmac.new(access_key.encode("utf-8"), b"smarthome_auth_cookie_v1", hashlib.sha256).hexdigest()
 
+def verify_access_key(key: str) -> bool:
+    """入力されたアクセスキーを安全に比較検証"""
+    if not key:
+        return False
+    access_key = get_access_key()
+    return hmac.compare_digest(key.strip(), access_key)
+
 def is_trusted_private_ip(ip_str: str) -> bool:
     """IP アドレスがループバックまたはプライベートネットワークか判定"""
     try:

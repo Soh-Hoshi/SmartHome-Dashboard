@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         NotificationService.start(this)
 
         val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
-        val defaultUrl = "https://home.sohhoshi.com/?key=uFD3nti9jGViEBwm4zceAQ"
+        val defaultUrl = "https://home.sohhoshi.com"
         var url = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
         if (url.contains("tail52d127.ts.net")) {
             url = defaultUrl
@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val targetUrl = intent?.getStringExtra("TARGET_URL") ?: url
+        saveKeyFromUrlIfPresent(targetUrl)
         webView.loadUrl(targetUrl)
     }
 
@@ -76,8 +77,26 @@ class MainActivity : AppCompatActivity() {
         setIntent(intent)
         val targetUrl = intent?.getStringExtra("TARGET_URL")
         if (!targetUrl.isNullOrEmpty()) {
+            saveKeyFromUrlIfPresent(targetUrl)
             webView.loadUrl(targetUrl)
         }
+    }
+
+    private fun saveKeyFromUrlIfPresent(targetUrl: String) {
+        try {
+            val u = java.net.URL(targetUrl)
+            val query = u.query
+            if (!query.isNullOrEmpty()) {
+                for (param in query.split("&")) {
+                    val parts = param.split("=")
+                    if (parts.size == 2 && parts[0] == "key") {
+                        val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+                        sharedPref.edit().putString("access_key", parts[1]).apply()
+                        break
+                    }
+                }
+            }
+        } catch (ignored: Exception) {}
     }
 
     private fun checkRequiredPermissions() {

@@ -317,6 +317,27 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(msg)
 
+    def send_login_page(self, error: str = ""):
+        login_file = os.path.join(DIRECTORY, "login.html")
+        if os.path.exists(login_file):
+            try:
+                with open(login_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+                if error:
+                    content = content.replace('id="error-box" class="hidden', 'id="error-box" class="flex')
+                    content = content.replace('id="error-msg">アクセスキーが正しくありません', f'id="error-msg">{error}')
+                body = content.encode('utf-8')
+                self.send_response(HTTPStatus.OK)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                print(f"[Login Page Error] {e}")
+        self.send_unauthorized("login_page_missing")
+
     def send_auth_redirect(self, clean_url: str, cookie_val: str):
         self.send_response(HTTPStatus.FOUND)
         self.send_header('Location', clean_url or '/dashboard/')
@@ -329,7 +350,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.send_response(HTTPStatus.NO_CONTENT)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Access-Key')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Access-Key, X-Requested-With')
         self.end_headers()
 
     def do_HEAD(self):
@@ -339,11 +360,32 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         return super().do_HEAD()
 
     def do_GET(self):
-        # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
+        parsed = urllib.parse.urlparse(self.path)
+        clean_path = parsed.path
+        if clean_path.startswith('/dashboard'):
+            clean_path = clean_path[len('/dashboard'):] or '/'
+
         xff = self.headers.get('X-Forwarded-For') or self.client_address[0]
         ua = self.headers.get('User-Agent', 'Unknown')
+
+        # 明示的なログインページ直接アクセス
+        if clean_path in ('/login', '/login.html'):
+            return self.send_login_page()
+
+        # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
         auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
         if not auth['authenticated']:
+            # 外部クローラーが検出された場合は403で即遮断
+            if auth.get('reason', '').startswith('crawler_blocked'):
+                print(f"[AUTH CRAWLER BLOCKED] path={self.path} client={xff} ua={ua[:60]}")
+                return self.send_unauthorized(auth.get('reason'))
+
+            # ブラウザがダッシュボードを開こうとしている場合はログイン画面を表示
+            accept = self.headers.get('Accept', '')
+            if clean_path in ('/', '/index.html', '') and 'text/html' in accept:
+                print(f"[AUTH SHOW LOGIN] path={self.path} client={xff} ua={ua[:60]}")
+                return self.send_login_page()
+
             print(f"[AUTH DENIED] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
             return self.send_unauthorized(auth.get('reason'))
 
@@ -353,10 +395,6 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         if auth.get('set_cookie') and auth.get('clean_url') is not None:
             return self.send_auth_redirect(auth['clean_url'], auth['cookie_value'])
 
-        parsed = urllib.parse.urlparse(self.path)
-        clean_path = parsed.path
-        if clean_path.startswith('/dashboard'):
-            clean_path = clean_path[len('/dashboard'):] or '/'
         query_params = urllib.parse.parse_qs(parsed.query)
 
         # LiveReload SSE
@@ -471,15 +509,47 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.path = clean_path
         return super().do_GET()
 
-    def do_POST(self):
-        xff = self.headers.get('X-Forwarded-For') or self.client_address[0]
-        ua = self.headers.get('User-Agent', 'Unknown')
-        # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
-        auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
-        if not auth['authenticated']:
-            print(f"[POST DENIED] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
-            return self.send_unauthorized(auth.get('reason'))
+    def handle_login(self, req_data, post_body):
+        key = ""
+        if isinstance(req_data, dict) and req_data.get("key"):
+            key = str(req_data["key"]).strip()
+        else:
+            try:
+                parsed_form = urllib.parse.parse_qs(post_body.decode('utf-8'))
+                if "key" in parsed_form:
+                    key = parsed_form["key"][0].strip()
+            except Exception:
+                pass
 
+        if auth_service.verify_access_key(key):
+            cookie_val = auth_service.get_expected_cookie_value()
+            cookie_header = auth_service.build_cookie_header(cookie_val, secure=True)
+            accept = self.headers.get('Accept', '')
+            if 'text/html' in accept:
+                self.send_response(HTTPStatus.FOUND)
+                self.send_header('Location', '/')
+                self.send_header('Set-Cookie', cookie_header)
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+                self.end_headers()
+            else:
+                self.send_response(HTTPStatus.OK)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Set-Cookie', cookie_header)
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "success", "message": "Authenticated"}).encode('utf-8'))
+        else:
+            accept = self.headers.get('Accept', '')
+            if 'text/html' in accept:
+                self.send_login_page(error="アクセスキーが正しくありません")
+            else:
+                self.send_response(HTTPStatus.UNAUTHORIZED)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": "アクセスキーが正しくありません"}).encode('utf-8'))
+
+    def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         clean_path = parsed.path
         if clean_path.startswith('/dashboard'):
@@ -491,6 +561,32 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             req_data = json.loads(post_body.decode('utf-8'))
         except Exception:
             req_data = {}
+
+        # ログイン処理 (未認証でも許可)
+        if clean_path in ('/api/login', '/login'):
+            return self.handle_login(req_data, post_body)
+
+        xff = self.headers.get('X-Forwarded-For') or self.client_address[0]
+        ua = self.headers.get('User-Agent', 'Unknown')
+        # 認証チェック (外部クローラー遮断 ＆ 合言葉/Cookie/ローカル判定)
+        auth = auth_service.check_request_auth(self.headers, self.client_address, self.path)
+        if not auth['authenticated']:
+            print(f"[POST DENIED] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
+            return self.send_unauthorized(auth.get('reason'))
+
+        # CSRF / クローラー直接POST防止 (カスタムヘッダー検証)
+        # WebUIからのPOSTは X-Requested-With: SmartHome-UI を付与
+        # Androidアプリからは X-Requested-With: Nova-Android-App または Authorization / X-Access-Key を付与
+        # LAN内直接アクセス(local_direct)は利便性のためヘッダーチェック免除
+        req_with = self.headers.get('X-Requested-With', '')
+        has_custom_auth = bool(self.headers.get('Authorization') or self.headers.get('X-Access-Key'))
+        is_local = (auth.get('reason') == 'local_direct')
+        if not is_local and req_with not in ('SmartHome-UI', 'Nova-Android-App') and not has_custom_auth:
+            print(f"[POST REJECTED - Missing Custom Header] path={clean_path} client={xff} ua={ua[:60]}")
+            return self.send_json_response({
+                "status": "error",
+                "message": "Invalid request header. Access denied."
+            }, status=HTTPStatus.BAD_REQUEST)
 
         print(f"[POST EXEC] path={clean_path} client={xff} auth={auth.get('reason')} ua={ua[:60]} data={req_data}")
 
