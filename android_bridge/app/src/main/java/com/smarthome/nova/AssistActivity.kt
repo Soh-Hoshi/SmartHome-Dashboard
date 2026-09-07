@@ -293,17 +293,17 @@ class AssistActivity : AppCompatActivity() {
     private fun updateActionButtonUi() {
         val hasText = etCommand.text.toString().trim().isNotEmpty()
         if (hasText) {
-            iconAction.setImageResource(R.drawable.ic_send)
-            iconAction.clearColorFilter()
-            btnAction.setBackgroundResource(R.drawable.bg_mic_button)
+            iconAction.setImageResource(R.drawable.ic_arrow_upward)
+            iconAction.setColorFilter(Color.WHITE)
+            btnAction.setBackgroundResource(R.drawable.bg_mic_button_send)
         } else {
             iconAction.setImageResource(R.drawable.ic_mic)
             if (isListening) {
                 btnAction.setBackgroundResource(R.drawable.bg_mic_button_listening)
                 iconAction.setColorFilter(Color.parseColor("#fb7185"))
             } else {
-                btnAction.setBackgroundResource(R.drawable.bg_mic_button)
-                iconAction.clearColorFilter()
+                btnAction.setBackgroundResource(R.drawable.bg_mic_button_idle)
+                iconAction.setColorFilter(Color.parseColor("#e2e8f0"))
             }
         }
     }

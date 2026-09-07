@@ -19,48 +19,50 @@
         android:paddingBottom="24dp"
         android:clickable="false">
 
-        <!-- Top Floating Row: Small Dashboard Button -->
+        <!-- Top Floating Row: Small Dashboard Button (Left Aligned) -->
         <LinearLayout
             android:id="@+id/btnOpenDashboard"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start"
             android:background="@drawable/bg_chip"
             android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginBottom="8dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:layout_marginBottom="10dp"
             android:clickable="true"
             android:focusable="true"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:src="@drawable/ic_open_dashboard"
-                app:tint="#60a5fa" />
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_grid_view"
+                app:tint="#2196f3" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="8dp"
                 android:text="ダッシュボード"
                 android:textColor="#cbd5e1"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textStyle="normal" />
         </LinearLayout>
 
-        <!-- Floating Status / Response Bubble -->
+        <!-- Floating Status / Response Bubble (Left Aligned) -->
         <LinearLayout
             android:id="@+id/statusContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="32dp"
-            android:layout_marginBottom="8dp"
+            android:minHeight="36dp"
+            android:layout_gravity="start"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/bg_chip"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:visibility="gone">
@@ -82,23 +84,23 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- Gemini Floating Search / Input Pill -->
+        <!-- Gemini Floating Search / Input Pill (Taller Pill matching Nova bar) -->
         <LinearLayout
             android:id="@+id/searchPill"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="62dp"
             android:background="@drawable/bg_search_bar"
             android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="6dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="10dp"
             android:orientation="horizontal"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
                 android:id="@+id/iconSparkle"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_sparkle"
                 app:tint="#3b82f6" />
 
@@ -107,8 +109,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="6dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
                 android:background="@null"
                 android:hint="話しかけるか、入力..."
                 android:textColor="#ffffff"
@@ -122,7 +124,7 @@
                 android:id="@+id/btnAction"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:background="@drawable/bg_mic_button"
+                android:background="@drawable/bg_mic_button_idle"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -132,7 +134,7 @@
                     android:layout_height="22dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_mic"
-                    app:tint="#ffffff" />
+                    app:tint="#e2e8f0" />
             </FrameLayout>
         </LinearLayout>
 

@@ -38,16 +38,17 @@ jobs:
 
       - name: Upload Debug Log on Failure
         if: failure()
-        uses: softprops/action-gh-release@v2
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: debug-log
-          name: "Build Failure Log"
-          body: "Gradle build log attached."
-          files: gradle_build.log
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: gradle-build-log
+          path: gradle_build.log
 
-
+      - name: Extract App Version
+        id: get_version
+        run: |
+          VERSION=$(grep 'versionName' android_bridge/app/build.gradle | awk -F '"' '{print $2}')
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "App Version: ${VERSION}"
 
       - name: Prepare APK Output
         run: |
@@ -60,21 +61,20 @@ jobs:
           name: NovaAssist-APK
           path: build_output/NovaAssist.apk
 
-      - name: Create or Update GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: android-latest
-          name: "Nova Assist Android Bridge"
+          tag_name: v${{ env.VERSION }}
+          name: "Nova Assist v${{ env.VERSION }}"
           body: |
-            ### 🤖 Nova Assist Android Bridge (最新APK v1.3.1)
+            ### 🤖 Nova Assist Android Bridge (v${{ env.VERSION }})
             Androidの「デフォルトのデジタルアシスタントアプリ」＋「サーバー通知受信」対応の超軽量ブリッジアプリです。
 
-            **新機能 (v1.3.1)**:
-            - ✨ **Gemini完全再現ミニマルフローティングUI**: 余計なシートやボタンを排除し、画面下部に検索カプセルだけが浮遊する極限のミニマル設計
+            **主な機能**:
+            - ✨ **Gemini風ミニマルフローティングUI**: 余計なシートやボタンを排除し、画面下部に検索カプセルだけが浮遊する極限のミニマル設計
             - ⊞ **フロート式ダッシュボードボタン**: 検索バー上部に小さくフロートするボタンから全画面ダッシュボードへワンタップ移行
-            - 🌐 **PWA / Webテスト対応**: ダッシュボードWeb版（PWA）でも「Gemini UI テスト」ボタンから即座に同一UIを試走可能
-            - 🎙️ **即時音声認識＆波形パルス**: 声の音量に合わせたリアルタイム波形アニメーション
+            - 🎙️ **即時音声認識＆ステータス表示**: マイクボタンのステータス変化と音声入力
             - ↩️ **自動復帰**: コマンド実行成功時は自動クローズ（外側タップや下フリックでも即終了）
 
             **インストール手順**:
