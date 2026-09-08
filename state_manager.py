@@ -28,7 +28,8 @@ DEFAULT_STATE = {
     "cleanerPlay": False,
     "usbPower": False,
     "pcOnline": False,
-    "pcOs": "オフライン"
+    "pcOs": "オフライン",
+    "pcTargetOs": "Windows"
 }
 
 def load_state() -> dict:

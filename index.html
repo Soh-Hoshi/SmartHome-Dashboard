@@ -779,9 +779,9 @@
                class="flex-1 bg-transparent text-[16px] sm:text-[17px] text-white placeholder-neutral-400 focus:outline-none px-2 py-1.5 font-normal"
                autocomplete="off" />
 
-        <!-- 音声コマンド マイクボタン -->
+        <!-- 音声コマンド / 送信ボタン -->
         <button id="btn-voice-command"
-                onclick="toggleVoiceRecognition()"
+                onclick="handleVoiceOrSubmitClick()"
                 class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#1e2128] hover:bg-[#282c35] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-sm border border-white/[0.04]"
                 aria-label="Nova音声入力">
           <span id="voice-mic-icon" class="material-symbols-rounded text-2xl sm:text-[26px]">mic</span>
@@ -2907,7 +2907,8 @@
           if (data.status === 'success' && typeof data.power === 'boolean') {
             state.usbPower = data.power;
             updateUsbUi();
-            const targetOs = data.power ? 'Bazzite' : 'Windows';
+            // target_osをAPIから直接受け取る（永続保存値優先）。なければUSB状態から推定。
+            const targetOs = data.target_os || (data.power ? 'Bazzite' : 'Windows');
             const dropup = document.getElementById('pc-os-dropup-menu');
             const isDropupOpen = dropup && dropup.classList.contains('open');
             if (!isDropupOpen && state.pcTargetOs !== targetOs) {
@@ -3637,12 +3638,53 @@
           updateCleanerUi();
         }
 
-        if (inputEl) inputEl.value = '';
+        if (inputEl) {
+          inputEl.value = '';
+          updateCommandBarButton();
+        }
       } catch (err) {
         showAssistantToast('コマンドの送信に失敗しました。', 'error', true);
         console.error('[Assistant Error]', err);
       } finally {
         if (sparkleIcon) sparkleIcon.classList.remove('animate-spin');
+      }
+    }
+
+    // コマンドバーのボタン状態更新 (文字入力中はなじむ送信ボタン、通常時はマイクボタン、録音時はイコライザー)
+    function updateCommandBarButton() {
+      const inputEl = document.getElementById('command-search-input');
+      const micBtn = document.getElementById('btn-voice-command');
+      const micIcon = document.getElementById('voice-mic-icon');
+      if (!inputEl || !micBtn || !micIcon) return;
+
+      if (isRecording) {
+        micBtn.className = 'w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-sm border voice-listening';
+        micIcon.textContent = 'graphic_eq';
+        micBtn.setAttribute('aria-label', '音声入力停止');
+        return;
+      }
+
+      const hasText = inputEl.value.trim().length > 0;
+      if (hasText) {
+        // 文字入力中はなじむ送信ボタン表示 (モダン紙飛行機 + 上品なダークブルーアクセント)
+        micBtn.className = 'w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#1b222c] hover:bg-[#222b38] active:scale-95 text-[#60a5fa] border border-[#2196f3]/35 flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-[0_2px_8px_rgba(33,150,243,0.15)]';
+        micIcon.textContent = 'send';
+        micBtn.setAttribute('aria-label', 'コマンド送信');
+      } else {
+        // 通常時はマイクボタン
+        micBtn.className = 'w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#1e2128] hover:bg-[#282c35] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition-all shrink-0 mr-0.5 shadow-sm border border-white/[0.04]';
+        micIcon.textContent = 'mic';
+        micBtn.setAttribute('aria-label', 'Nova音声入力');
+      }
+    }
+
+    function handleVoiceOrSubmitClick() {
+      const inputEl = document.getElementById('command-search-input');
+      const text = inputEl ? inputEl.value.trim() : '';
+      if (text && !isRecording) {
+        submitAssistantCommand(text);
+      } else {
+        toggleVoiceRecognition();
       }
     }
 
@@ -3739,7 +3781,6 @@
         } catch (err) {
           try {
             recognition.abort();
-            setTimeout(() => recognition.start(), 150);
           } catch (e2) {
             stopVoiceRecognition();
           }
@@ -3749,13 +3790,9 @@
 
     function stopVoiceRecognition() {
       isRecording = false;
-      const micIcon = document.getElementById('voice-mic-icon');
-      const micBtn = document.getElementById('btn-voice-command');
       const inputEl = document.getElementById('command-search-input');
-
-      if (micBtn) micBtn.classList.remove('voice-listening');
-      if (micIcon) micIcon.textContent = 'mic';
       if (inputEl) inputEl.placeholder = 'Novaに話しかける...';
+      updateCommandBarButton();
     }
 
     async function fetchWeatherData() {
@@ -3979,7 +4016,7 @@
       // 天気・気象データの定期同期 (10分ごと)
       setInterval(fetchWeatherData, 600000);
 
-      // コマンド入力バーの Enter キー送信
+      // コマンド入力バーの Enter キー送信 ＆ 入力時ボタン切り替え
       const cmdInput = document.getElementById('command-search-input');
       if (cmdInput) {
         cmdInput.addEventListener('keydown', (e) => {
@@ -3988,6 +4025,7 @@
             submitAssistantCommand(cmdInput.value);
           }
         });
+        cmdInput.addEventListener('input', updateCommandBarButton);
       }
 
       // 時間別予報の横ホイールスクロール連動

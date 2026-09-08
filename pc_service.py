@@ -33,23 +33,27 @@ _transient_state = None
 _transient_timestamp = 0.0
 
 def get_target_os() -> str:
-    """USBスイッチの状態からターゲットOSを取得 (ON=Bazzite, OFF=Windows)"""
+    """永続化されたpcTargetOsを優先返却。未設定時のみUSBスイッチ実機状態にフォールバック。"""
+    saved = state_manager.load_state().get("pcTargetOs")
+    if saved in ("Windows", "Bazzite"):
+        return saved
+    # フォールバック: USBスイッチの物理状態から推定
     return "Bazzite" if usb_service.get_usb_power() else "Windows"
 
 def set_target_os(target_os: str) -> dict:
     """ターゲットOSに合わせてUSBスイッチを設定 (Bazzite=ON, Windows=OFF)"""
     is_bazzite = (target_os.lower() == "bazzite")
+    # ユーザーの選択を先に永続保存（USBスイッチ操作の成否に関わらず選択を保持）
+    intended_os = "Bazzite" if is_bazzite else "Windows"
+    state_manager.update_state(pcTargetOs=intended_os)
     power = usb_service.set_usb_power(is_bazzite)
     actual_os = "Bazzite" if power else "Windows"
-    try:
-        state_manager.update_state(pcTargetOs=actual_os, usbPower=power)
-    except Exception:
-        pass
+    state_manager.update_state(usbPower=power)
     return {
         "status": "success",
-        "target_os": actual_os,
+        "target_os": intended_os,
         "usb_power": power,
-        "message": f"OSを {actual_os} に設定しました (USBスイッチ: {'オン' if power else 'オフ'})"
+        "message": f"OSを {intended_os} に設定しました (USBスイッチ: {'オン' if power else 'オフ'})"
     }
 
 def send_wol(mac_address: str = PC_MAC, broadcast_ip: str = PC_BROADCAST):

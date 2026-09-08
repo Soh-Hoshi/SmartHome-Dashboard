@@ -472,7 +472,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             '/api/tile': lambda: {"status": "success", "tile": tile_service.get_tile_status()},
             '/api/automations': lambda: {"status": "success", "automations": automation_service.load_automations()},
             '/api/scenes': lambda: {"status": "success", "scenes": flow_engine.load_scenes()},
-            '/api/usb': lambda: {"status": "success", "power": usb_service.get_usb_power()},
+            '/api/usb': lambda: {"status": "success", "power": usb_service.get_usb_power(), "target_os": pc_service.get_target_os()},
             '/api/pc': lambda: {"status": "success", **pc_service.get_pc_status()},
         }
 
