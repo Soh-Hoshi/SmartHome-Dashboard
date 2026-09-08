@@ -1,6 +1,9 @@
 package com.smarthome.nova
 
 import android.Manifest
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -20,6 +23,7 @@ import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
@@ -51,6 +55,7 @@ class AssistActivity : AppCompatActivity() {
 
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
+    private var pulseAnimator: AnimatorSet? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -200,6 +205,7 @@ class AssistActivity : AppCompatActivity() {
                     override fun onReadyForSpeech(params: Bundle?) {
                         isListening = true
                         updateActionButtonUi()
+                        startPulseAnimation()
                         etCommand.hint = "Novaがお聞きしています...（例: 電気消して、エアコン24度）"
                     }
 
@@ -209,18 +215,13 @@ class AssistActivity : AppCompatActivity() {
                         tvStatus.text = "音声を認識中..."
                     }
 
-                    override fun onRmsChanged(rmsdB: Float) {
-                        if (isListening) {
-                            val scale = 1.0f + (Math.max(0f, rmsdB) / 10f) * 0.25f
-                            btnAction.animate().scaleX(scale).scaleY(scale).setDuration(80).start()
-                        }
-                    }
+                    override fun onRmsChanged(rmsdB: Float) {}  // pulseアニメで代替
 
                     override fun onBufferReceived(buffer: ByteArray?) {}
 
                     override fun onEndOfSpeech() {
                         isListening = false
-                        resetMicScale()
+                        stopPulseAnimation()
                         updateActionButtonUi()
                         statusContainer.visibility = View.VISIBLE
                         loadingSpinner.visibility = View.VISIBLE
@@ -229,7 +230,7 @@ class AssistActivity : AppCompatActivity() {
 
                     override fun onError(error: Int) {
                         isListening = false
-                        resetMicScale()
+                        stopPulseAnimation()
                         updateActionButtonUi()
                         statusContainer.visibility = View.GONE
                         etCommand.hint = "聞き取れませんでした。もう一度お試しください"
@@ -237,7 +238,7 @@ class AssistActivity : AppCompatActivity() {
 
                     override fun onResults(results: Bundle?) {
                         isListening = false
-                        resetMicScale()
+                        stopPulseAnimation()
                         updateActionButtonUi()
 
                         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -280,24 +281,59 @@ class AssistActivity : AppCompatActivity() {
                 speechRecognizer?.stopListening()
             } catch (ignored: Exception) {}
             isListening = false
-            resetMicScale()
+            stopPulseAnimation()
             etCommand.hint = "Novaに話しかける..."
             updateActionButtonUi()
         }
     }
 
-    private fun resetMicScale() {
-        btnAction.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
+    // ダッシュボード voice-pulse と同等のpulseアニメーション (scale 1.0→1.06, 1300ms loop)
+    private fun startPulseAnimation() {
+        pulseAnimator?.cancel()
+        val scaleUp = ObjectAnimator.ofFloat(btnAction, "scaleX", 1.0f, 1.06f).apply {
+            duration = 650
+            interpolator = AccelerateDecelerateInterpolator()
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+        }
+        val scaleUpY = ObjectAnimator.ofFloat(btnAction, "scaleY", 1.0f, 1.06f).apply {
+            duration = 650
+            interpolator = AccelerateDecelerateInterpolator()
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+        }
+        pulseAnimator = AnimatorSet().apply {
+            playTogether(scaleUp, scaleUpY)
+            start()
+        }
+    }
+
+    private fun stopPulseAnimation() {
+        pulseAnimator?.cancel()
+        pulseAnimator = null
+        btnAction.scaleX = 1.0f
+        btnAction.scaleY = 1.0f
     }
 
     private fun updateActionButtonUi() {
-        iconAction.setImageResource(R.drawable.ic_mic)
         if (isListening) {
+            // 録音中: ダッシュボード完全準拠のイコライザー波形 (graphic_eq / ローズピンク)
+            iconAction.setImageResource(R.drawable.ic_graphic_eq)
             btnAction.setBackgroundResource(R.drawable.bg_mic_button_listening)
             iconAction.setColorFilter(Color.parseColor("#fb7185"))
         } else {
-            btnAction.setBackgroundResource(R.drawable.bg_mic_button_idle)
-            iconAction.setColorFilter(Color.parseColor("#e2e8f0"))
+            val hasText = etCommand.text.toString().trim().isNotEmpty()
+            if (hasText) {
+                // 文字入力中: なじむ送信ボタン表示 (モダン角丸紙飛行機 + 上品なダークブルーアクセント)
+                iconAction.setImageResource(R.drawable.ic_send_custom)
+                btnAction.setBackgroundResource(R.drawable.bg_mic_button_send)
+                iconAction.setColorFilter(Color.parseColor("#60a5fa"))
+            } else {
+                // 通常時: ダッシュボード完全準拠のマイクボタン
+                iconAction.setImageResource(R.drawable.ic_mic)
+                btnAction.setBackgroundResource(R.drawable.bg_mic_button_idle)
+                iconAction.setColorFilter(Color.parseColor("#e2e8f0"))
+            }
         }
     }
 
@@ -385,6 +421,7 @@ class AssistActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         cancelAutoDismiss()
+        stopPulseAnimation()
         try {
             speechRecognizer?.destroy()
         } catch (ignored: Exception) {}

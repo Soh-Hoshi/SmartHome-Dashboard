@@ -1,189 +1,81 @@
-# SmartHome Dashboard - Project Memory & Development Guidelines
+# SmartHome Dashboard - Project Memory
 
-本ファイルは、ユーザーとのこれまでの開発履歴、設計思想、デザイン規約、ハードウェア仕様、ユーザーの好み、および実装状態をまとめた完全な引き継ぎ記憶ファイルです。次回以降のセッションでは、本ファイルを最優先で読み込んで開発を継続してください。
+次回セッション開始時に本ファイルを最優先で読み込むこと。
 
----
+## 1. 設計規約・ユーザーの好み
 
-## 1. ユーザーの好み・設計思想（超重要）
+**デザイン（Apple/Google Home風ダークUI）:**
+- 背景: `#0d0f12` / カード: `#1c1e23` / ホバー: `#23262d` / モーダル内カード: `#2a2d36`(ホバー`#323640`) / モーダル背景: `#1e2025`
+- 角丸: タイル`rounded-3xl`(p-3.5) / ボトムシート`rounded-t-[32px] sm:rounded-[36px]` / ボタン`rounded-2xl`
+- ボーダー: `border border-white/[0.03]`〜`border-white/[0.04]`
+- フォント: 見出し`text-base font-bold text-white px-1` / タイル名`text-[15px] font-semibold text-white` / サブテキスト`text-xs text-neutral-400 font-normal`
+- レイアウト: 全タブ共通 `columns-1 md:columns-2 lg:columns-3 gap-6` + `section` + `h2`
+- 装飾的コネクタ線・不要バッジ禁止。等高(44px固定)クリーンカードリストに統一
 
-1. **デザイン規約（Apple / Google Home 風の洗練されたダークUI）:**
-   - **背景・カード色:** 背景 `#0d0f12`、カード `#1c1e23`、ホバー `#23262d`、モーダル内カード `#2a2d36`（ホバー `#323640`）、モーダル背景 `#1e2025`。
-   - **角丸:** タイル・カード `rounded-3xl`（p-3.5）、ボトムシート `rounded-t-[32px] sm:rounded-[36px]`、ボタン `rounded-2xl`。
-   - **ボーダー:** `border border-white/[0.03]` 〜 `border-white/[0.04]`。
-   - **フォント・サイズ:** 見出し `text-base font-bold text-white px-1`、タイル名 `text-[15px] font-semibold text-white`、サブテキスト `text-xs text-neutral-400 font-normal`。
-   - **カテゴリ制（Masonryレイアウト）:** ダッシュボード、シーン、オートメーションの全タブで `columns-1 md:columns-2 lg:columns-3 gap-6` ＋ `section` ＋ `h2` の1pxの狂いもない共通構造。
-   - **余計なノイズの排除:** 装飾的なコネクタ線（縦線）や不要なバッジ（「フロー」等）は排除し、等高（高さ44px固定）のクリーンなカードリストに統一。
+**NOVAアシスタント:**
+- 構成: ①ルールベース(0ms) → ②Gemini 2.0 Flash(無料枠) → ③Ollama(フォールバック)
+- 未確定情報を推測・断定禁止。確定事実のみ回答
+- 鍵: 室内検知→「室内にあります」/ 未検知→「室内にはありません」
+- 機器操作応答: 「リビングをオンにしました」「エアコンを冷房26℃に設定しました」
 
-2. **アシスタント（Nova）の応答ルール ＆ アーキテクチャ:**
-   - **ハイブリッド構成:** ①超高速ルールベース（0ms） ➔ ②Gemini 2.0 Flash API（無料枠、高度な意図解釈・会話対応） ➔ ③ローカルLLM（Ollama）フォールバック。
-   - **確定情報のみを誠実に回答する:** システムが知り得ない未確定情報（例: 「ポストにある」など）を勝手に推測・断定してはいけない。
-   - **鍵の所在:** 室内検知時は **「室内にあります」**、未検知時は **「室内にはありません」** と事実のみを即答。
-   - **機器操作:** 画一的でシンプルな構文（例: 「リビングをオンにしました」「エアコンを冷房26℃に設定しました」）。
+**実用ファースト原則:**
+- 説明モーダル・複雑なフロー図禁止
+- シーン: タップ即実行
+- オートメーション: タイル上でトグル+テスト実行ボタン
 
-3. **実用ファースト・超高速スマートホーム設計（YAGNI原則）:**
-   - **不要な説明モーダルの全廃:** 不特定多数向けの汎用アプリのような「ステップ詳細モーダル」や「複雑なフロー図」を排除し、個人専用の実用性・スピードを最優先。
-   - **シーン（Scenes）:** タイルをタップした瞬間にその場で即実行（Apple Home風の快適な操作感）。
-   - **オートメーション（Automations）:** タイル上で「有効/無効のトグルスイッチ」と「テスト実行ボタン」を直感操作。
-   - **バックエンド（Python）:** 木月の体感温度（`feels_like`）や日没判定、在宅状態をダイレクトに判定し、最適なスマート空調・照明制御・消し忘れ通知を瞬時に実行。
+## 2. ハードウェア仕様
 
----
+**気象センサー:** 座標`35.5647N, 139.6544E` / Open-Meteo JMA / キャッシュ10分 / `weather_service.py`
 
-## 2. 機器・ハードウェア仕様 ＆ 連携システム
+**在宅確認センサー:** IP`192.168.0.30` / MAC`72:58:BA:C7:40:FA`(SHG07) / ARP/ICMP 2秒間隔・外出猶予30秒 / `presence_service.py`
 
-1. **気象センサー（川崎市中原区木月）:**
-   - 座標: `35.5647 N, 139.6544 E`
-   - データソース: Open-Meteo API（JMA高精度モデル、APIキー不要、キャッシュ10分）
-   - モジュール: `weather_service.py`（外気温、体感温度、天気、湿度、風速、日の出・日の入り、12時間予報）
+**鍵トラッカー:** Tile UUID`0000feed-0000-1000-8000-00805f9b34fb` / `bluetoothctl`リアルタイムBLEスキャン(静的キャッシュ排除) / `tile_service.py`
 
-2. **在宅確認センサー（スマートフォン LAN 検知）:**
-   - IP: `192.168.0.30`、MAC: `72:58:BA:C7:40:FA` (SHG07)
-   - 方式: 高速ARP/ICMPプローブ（2秒間隔、外出猶予30秒）
-   - モジュール: `presence_service.py`
+**オートメーション:** `automation_service.py` / `automations_config.json`
+- `平日6:30`: 日本の平日(土日祝除く) 06:30 リビング点灯
+- `平日9:00`: 日本の平日 09:00 Eufy RoboVac G30起動 + Androidプッシュ通知
+- `外出時`: 在宅→外出変化時、稼働機器(照明/エアコン/ヒーター)があれば通知。ボタン:「いってきます」「Novaへ指示」の2つのみ
 
-3. **鍵トラッカー（Tile Mate BLE Bluetooth）:**
-   - 識別子: Tile, Inc. UUID `0000feed-0000-1000-8000-00805f9b34fb`（MACアドレス定期ローテーション対応・動的追跡方式）
-   - 方式: BlueZの静的キャッシュを排除し、`bluetoothctl` によるリアルタイム BLE ライブスキャンパケットで即時判定。
-   - モジュール: `tile_service.py`
+**家電:**
+- エアコン: SwitchBot API (冷房/除湿/オフ、22〜28℃)
+- ヒーター: スマートプラグ/赤外線 (暖房/オフ、エコ、パワー)
+- 照明: リモコンAPI (全灯、常夜灯、明るさ上下)
+- クリーナー: Eufy RoboVac G30 (開始/一時停止/帰還/探す)
 
-4. **オートメーション（日本の祝日判定対応）:**
-   - モジュール: `automation_service.py`（バックグラウンド監視）
-   - 設定ファイル: `automations_config.json`
-   - 実装済みルール:
-     - **`平日 6:30`**: 日本の平日（土日祝除く）06:30にリビングライト点灯
-     - **`平日 9:00`**: 日本の平日（土日祝除く）09:00にロボット掃除機（Eufy RoboVac G30）自動起動 ＋ Androidプッシュ通知
-     - **`外出時`**: 在宅 ➔ 外出 変化時に稼働機器（照明/エアコン/ヒーター）がある場合のみ通知（全消灯時は送信スキップ）。説明文や不要なボタン・アイコンを排除し、本文に稼働機器名のみを記載。アクションボタンは「いってきます」「novaへ指示」の2つに最適化。
+**Nova Assist (Android):**
+- パス: `android_bridge/` (Kotlin 1.9, Java 17, minSdk 26, targetSdk 34)
+- 常駐: `NotificationService`(Foreground Service, `dataSync`属性, `BootReceiver`自動常駐)
+- 通信: `HttpURLConnection` / `/api/notifications/stream` SSE + `/api/notifications/poll`フォールバック(外部ライブラリ依存ゼロ)
+- **PWA通知は廃止・完全無効化。Nova Assistネイティブに一本化**
+- 高機能通知: アクションボタン(`actions`) / インライン返信(`RemoteInput`) / プログレスバー(`progress`) / インプレース更新(`id`)
+- Hardening(2026-09): `readTimeout=45000` / `last_poll_ts` SharedPreferences永続化 / `setOnlyAlertOnce(true)` / ID正規化(2000〜101999、常駐ID1001と衝突防止) / `getBaseUrl()`で`/dashboard`サブパス保持 / SSEキュー`maxsize=100`
+- CLI: `smarthome notification [タイトル] <メッセージ>` / `smarthome notify <メッセージ> [--title, --progress, --action, --reply, --test-away, --test-progress]`
+- テスト: `python3 test_notifications_e2e.py`(全8項目PASS)
+- 自動ビルド: GitHub Actions `.github/workflows/build_apk.yml` → Release `android-latest` に `NovaAssist.apk`
 
-5. **エアコン・ヒーター・照明・クリーナー:**
-   - エアコン: SwitchBot API連携（冷房/除湿/オフ、22〜28℃）
-   - ヒーター: スマートプラグ/赤外線（暖房/オフ、エコ、パワー）
-   - 照明: リモコンAPI（全灯、常夜灯、明るさ上下）
-   - クリーナー: Eufy RoboVac G30（掃除開始、一時停止、帰還、探す）
+**認証(クローラー遮断):**
+- `auth_service.py`: `config.json`の`access_key`をHMAC-SHA256署名Cookie(`sh_auth`、10年、HttpOnly,Secure)で管理
+- `serve.py`多層判定: 宅内LAN直接→無条件パス / `Tailscale-User-Login`ヘッダー→無条件パス / `sh_auth` Cookie→パス / `?key=<合言葉>`→Cookie発行+302リダイレクト / その他→403
+- `NetworkUtils.kt`: `DEFAULT_ACCESS_KEY="Tamago1341"` / `X-Access-Key`ヘッダー常時送信 / CookieManager継承
 
-6. **Nova Assist (Android ネイティブアプリ) & 通知システム:**
-   - パス: `android_bridge/` (Kotlin 1.9, Java 17, minSdk 26, targetSdk 34)
-   - 機能: Android デフォルトデジタルアシスタント ＋ サーバープッシュ通知常駐受信
-   - 常駐方式: `NotificationService` (Foreground Service, `dataSync` 属性, 端末起動時 `BootReceiver` 自動常駐)
-   - 通信方式: 外部ライブラリ依存ゼロ (`HttpURLConnection` による `/api/notifications/stream` SSE ＋ `/api/notifications/poll` 自動フォールバック)
-   - 通知方針: **PWA (WebPush/ServiceWorker) 通知は廃止・完全無効化し、Nova Assist ネイティブアプリへ一本化**（二重通知やブラウザ通知の不具合を防止）。
-   - 高機能ネイティブ通知対応:
-     - 🔘 **アクションボタン (`actions`)**: 通知タップでアプリを開かず裏で家電操作をバックグラウンド実行（`NotificationActionReceiver` 経由）。
-     - 💬 **インライン返信 (`RemoteInput`)**: 通知内の入力欄から直接テキスト入力して Nova アシスタントに指示。
-     - 📊 **プログレスバー (`progress`)**: 掃除機の進捗やタイマーなどの進行状況バー表示。
-     - 🔄 **インプレース動的更新 (`id`)**: 同一 ID の通知を上書き更新（「⏳ 実行中...」➔「✅ 完了」へその場更新）。
-   - 堅牢化・Hardening 済み仕様 (2026-09):
-     - 🛡️ **二重/空通知抑止**: SSE `connected` ハンドシェイク時の `server_time` 同期と空メッセージ通知防止。
-     - ⏱️ **タイムアウト・切断検知**: `readTimeout = 45000`（15秒keepalive×3回で無音切断を早期検知し再接続）。
-     - 🕒 **時計ズレ耐性**: `last_poll_ts` の `SharedPreferences` 永続化と接続時キャッチアップポーリング。
-     - 🔕 **過剰チャイム防止**: インプレース更新・プログレス進行時の `setOnlyAlertOnce(true)` 適用。
-     - 🔗 **ディープリンク & 起動復元**: `onNewIntent` 実装および通知タップ時 `TARGET_URL` 伝達。
-     - 🔒 **安全なID生成 & 例外保護**: ID 1001（常駐通知）との衝突防止マスク、Android 13+ の `SecurityException` 捕捉。
-     - 🌐 **Tailscale Funnel サブパス保護**: `getBaseUrl()` で `/dashboard` を保持し、404 エラーを防止。
-     - ⚡ **サーバー安定化**: LiveReload SSE keepalive、`push_service` キューサイズ上限 (100)、`daemon_threads = True`。
-   - CLI操作: `smarthome notification [タイトル] <メッセージ>` または `smarthome notify <メッセージ> [オプション: --title, --progress, --action, --reply, --test-away, --test-progress]`
-   - テストスイート: `python3 test_notifications_e2e.py`（全7項目: 通常通知、インプレース更新/プログレス、アクション/返信、アシスタント実行、ポーリング、並行リアルタイムSSE、Tailscale互換性）
-   - 自動ビルド: GitHub Actions (`.github/workflows/build_apk.yml`) ➔ Release `android-latest` に `NovaAssist.apk` を自動発行
+**アイコン仕様:**
+- 録音中: `graphic_eq`(Material Symbols Rounded、Android: `ic_graphic_eq.xml` 5本角丸波形バー `#fb7185`)
+- 送信ボタン(入力中): `send`(Web) / `ic_send_custom.xml`(Android) / 色: bg`#1b222c`・枠`border-[#2196f3]/35`・アイコン`#60a5fa`
+- 空欄/送信後: マイクボタンへ自動復帰
 
----
+**PWAアイコン:** `icon.svg`/`icon-192.png`/`icon-512.png`/`icon-maskable-192.png`/`icon-maskable-512.png`/`apple-touch-icon.png` / `manifest.json`: `id`,`start_url`,`scope`=`/dashboard/` / `sw.js`: キャッシュ`v10`
 
-## 3. 開発運用ルール（安全策）
+## 3. 開発運用ルール
 
-- **バックアップの維持:** `index.html` 編集時は必ず `cp index.html index.html.bak` を実行。
-- **構文テスト:** 変更後は `HTMLParser` および JS ブラケット整合性テストを実施。
-- **実機影響テストの禁止（厳守）:** PC電源など通知・家電に無関係な改修時は、通知テスト（`test_notifications_e2e.py`）を絶対に実行しない。テスト実行により本物の家電（照明・エアコン）が消えたり、スマホへテスト通知が飛ぶため、無関係な変更時は対象モジュール単体の構文・ユニットテストのみで検証する。
-- **Git同期:** テスト通過後、必ず Git にコミット＆プッシュ（`Soh-Hoshi/SmartHome-Dashboard`）。
-- **常駐プロセス:** `python3 serve.py`（ポート 8080、`systemctl --user restart dashboard.service`）。
+- `index.html`編集前: `cp index.html index.html.bak`
+- 変更後: HTMLParser & JSブラケット整合性テスト
+- **家電/通知と無関係な変更時は`test_notifications_e2e.py`を絶対に実行しない**（実機家電が動作・スマホに通知が飛ぶ）
+- テスト通過後: `git commit & push` (`Soh-Hoshi/SmartHome-Dashboard`)
+- 常駐: `python3 serve.py`(Port 8080) / `systemctl --user restart dashboard.service`
 
----
+## 4. 現在の稼働状態 (2026-09-08)
 
-## 4. 直近の開発経緯・セッション引き継ぎログ (2026-09-04)
-
-### 4.1 通知システム ＆ Android Bridge の包括的堅牢化（Hardening）
-- **背景**: Android ネイティブ通知（Nova Assist）の高機能化に伴う潜在バグの監査・改修。
-- **改修内容**:
-  1. `MainActivity.kt`: `onNewIntent` を実装。アプリがメモリ内にある状態でも、電源長押しやアシスタントジェスチャーで `?assist=1` が破棄されず正常に音声起動するように修正。
-  2. `NotificationService.kt`:
-     - SSE 接続時の `connected` ハンドシェイクで不要な空通知（SmartHome）が出る問題を抑止（`server_time` 同期）。
-     - `readTimeout = 45000` を設定し、TCP サイレント切断を早期検知して自動再接続。
-     - `last_poll_ts` を `SharedPreferences` に永続化し、起動時の過去通知バースト再生を防ぎつつ未読通知を補完。
-     - `.setOnlyAlertOnce(true)` でプログレス更新時の連続バイブ/チャイムを抑止。
-     - 通知 ID を正数（2000〜101999）にマスク正規化し、常駐サービス ID（1001）との衝突やオーバーフローを防止。
-     - `getBaseUrl()` で `/dashboard` サブパスを維持し、Tailscale Funnel 経由での 404 エラーを防止。
-     - アクションボタンのアイコン引数を `0`（非表示）に設定。
-  3. `NotificationActionReceiver.kt`:
-     - 更新通知に `contentIntent` を設定し、通知タップでアプリ起動可能かつ `setAutoCancel(true)` が OS 側で正常動作するように改修。
-     - Android 13+ の `SecurityException` などの例外安全保護を追加。
-  4. `push_service.py` / `serve.py` / `smarthome`:
-     - SSE キュー上限（`maxsize=100`）でメモリリークを防止。
-     - インプレース更新時に配列末尾に再配置し、時系列順序を維持。
-     - `dispatch_internal_api` および CLI の `direct_fallback` でリッチ通知パラメータ（`actions`, `id`, `progress`, `ongoing`, `auto_cancel`）を漏れなく完全転送。
-     - LiveReload SSE に 20秒間隔の keepalive を追加し、ブラウザタブ切断時のスレッドリークを防止。`server.daemon_threads = True` を設定。
-  5. `test_notifications_e2e.py`:
-     - 通常通知・インプレース更新・プログレスバー・アクション/返信・アシスタント実行・ポーリング・並行リアルタイムSSE配信・Tailscaleサブパス互換性の全7項目を自動検証するテストスイートを新設（常時 PASS を維持）。
-
-### 4.2 オートメーション「平日 9:00」（クリーナー起動）の追加
-- **設定**: `automations_config.json` に `weekday_morning_cleaner` を追加（日本の平日〈土日祝除く〉09:00 JST）。
-- **バックエンド**: `automation_service.py` で 09:00 に Eufy RoboVac G30 の掃除開始（`/api/cleaner` ➔ `action: start`）を実行し、Nova Assist へ完了プッシュ通知を送信。
-- **フロントエンド**: `index.html` の「デイリー」セクションに等高・SVGクリーナーアイコン付きのカードタイルを追加し、右端の ▶ ボタンから即時テスト実行可能に。
-
-### 4.3 外出時消し忘れ通知 ＆ 通知全般の極限シンプル化
-- **消灯時スキップ**: 在宅 ➔ 外出 変化時、照明・エアコン・ヒーター等の電気がすべて消えている場合は通知を一切送信しない（稼働機器がある場合のみ送信）。
-- **本文・説明文の全廃**: 「リビング照明」等の機器名や説明文を全廃。タイトル「お出かけですか？」とアクションボタンのみをコンパクトに表示。Android Bridge側でも本文が空の場合は `setContentText` / `BigTextStyle` を呼び出さず、タイトルとボタンのみを描画。
-- **ボタンの整理**: 「そのまま」ボタンを削除。ボタン文言を「いってきます」「Novaへ指示」の2つに整理（大文字の「Nova」に統一）。
-- **通知全般のアイコン・絵文字全廃**: 外出時通知のみならず、その他の通知（アクション実行中・完了・エラー通知、プログレス通知等）からも絵文字（⏳, ✅, ⚠️, 🤖 等）およびアクションボタンアイコンを完全排除。
-
-### 4.4 全体名称のダッシュボード表記統一 ＆ シーン応答文の短縮・改行
-- **名称統一**: ロボット掃除機・掃除機表記をダッシュボード上の呼称である「クリーナー」に統一（`automation_service.py`, `assistant_engine.py`, `smarthome` CLI）。ライト表記も「リビング照明」に統一。
-- **シーン応答文の短縮・改行**: 通知カードやアシスタント応答で冗長な長文（理由説明等）を排除。挨拶 ＋ 改行 ＋ 簡潔な実行結果（例：「いってらっしゃい！\n照明と空調を停止しました。」「おはようございます！\n照明を点灯し、エアコンを設定しました。」）に整理。
-
-### 4.5 クローラー遮断 ＆ シークレットキー（合言葉）永続Cookieホワイトリスト (2026-09-05)
-- **課題と経緯**: Tailscale Funnel（全世界公開）を経由して巡回クローラー・ボットがアクセスし、HTML内のボタンをクリック走査したことで照明・エアコン等の家電が勝手に動作する被害が発生。アカウント制/パスワード入力画面は個人用途で利便性を損なうため撤廃し、ログイン不要で快適に扱えるホワイトリスト方式を採用。
-- **アーキテクチャ**:
-  1. **初回キーアクセス**: `https://.../dashboard/?key=<合言葉>` をブラウザで一度開くと、サーバーが HMAC 署名付きの永続Cookie（`sh_auth`、有効期限10年、HttpOnly, Secure）を発行し、URLパラメータ無しの `/dashboard/` へ 302 リダイレクト。アドレスバーが綺麗になりキーの漏洩も防止。
-  2. **クローラー遮断**: Cookieもキーも持たない外部インターネット（Funnel）からのアクセスは、HTMLやAPIを一切渡さず即座に `403 Forbidden` で切断。ボタン自体が存在しないため走査・誤作動は100%防止。
-  3. **スマートバイパス**:
-     - **宅内LAN直接アクセス**: `X-Forwarded-For` が無くプライベートIPからの直接通信は無条件パス。
-     - **Tailscale VPN接続端末**: `Tailscale-User-Login` ヘッダー付きのリクエストは無条件パス。
-  4. **Nova Assist (Android Bridge) 連携**:
-     - `NetworkUtils.kt`: WebView の CookieManager から Cookie を継承して `HttpURLConnection`（SSE / Polling / ActionReceiver）に自動付与。
-     - 設定 URL に `?key=...` が含まれる場合は `X-Access-Key` ヘッダーとしてもフォールバック送信。
-  5. **テストスイート**: `test_notifications_e2e.py` に `test_8_crawler_blocking_and_auth` を追加（全8項目 PASS）。
-
-### 4.6 PWA Manifest ＆ Nova Assist 統一アイコンの整備 (2026-09-05)
-- **背景**: PWA再インストールを容易にし、Android ネイティブアプリ（Nova Assist）とホーム画面での視覚的・世界観の統一感を達成。
-- **デザイン仕様**:
-  - **ベース**: `#0d0f12`（SmartHome ベースダーク色）〜 `#1c1e23` のスクワークルカード背景 ＋ アクセントブルー（`#2196f3`）の光彩。
-  - **モチーフ**: ミニマルなモダンルーフ（スマートホームの象徴）＋ Nova Assist と完全同一ジオメトリの **Nova Sparkles（AI星）** ＋ 純白ハイライトコア。
-  - **アセット一式**:
-    - `icon.svg`: 512x512 高解像度ベクター。
-    - `icon-192.png` / `icon-512.png`: 通常カードアイコン（purpose: "any"）。
-    - `icon-maskable-192.png` / `icon-maskable-512.png`: Android アダプティブアイコン完全対応（purpose: "maskable"、安全領域 80% 内配置）。
-    - `apple-touch-icon.png`: iOS Safari 用 192x192。
-- **PWA 仕様**:
-  - `manifest.json`: `id`, `start_url`, `scope` を `/dashboard/` に完全統一。any と maskable アイコンを明示分離。
-  - `sw.js`: キャッシュバージョンを `v10` に更新し、maskable アイコンもキャッシュ対象に追加。
-  - `index.html`: `<head>` 内に 512x512 アイコンリンクを追加。
-
-### 4.8 Nova Assist HTTPエラー解消 ＆ ダッシュボードUI完全一致改修 (2026-09-08)
-- **背景と課題**:
-  1. Nova Assist アプリからコマンド（音声・テキスト）を送信しようとすると HTTP エラー（HTTP 403 Forbidden）が発生。
-  2. アシスタントオーバーレイのUIがダッシュボードのスマホ版 Nova バーとデザインが異なり、特に文字入力時に青く目立つ送信ボタン（全面 `#2196f3`）に変化してしまうのが不快。
-- **原因と改修内容**:
-  1. **HTTP エラー（403 Forbidden）の解消**:
-     - **原因**: 外部回線・Tailscale Funnel 経由でのアクセス時、サーバー側のクローラー遮断ホワイトリスト（`auth_service.py`）により、合言葉（`Tamago1341`）またはセッションCookie（`sh_auth`）のないリクエストがクローラーと判定され 403 遮断されていた。アプリ側に合言葉が初期値として定義されていなかったため、未認証状態で通信していた。
-     - **対策 (`NetworkUtils.kt`, `MainActivity.kt`)**:
-       - `DEFAULT_ACCESS_KEY = "Tamago1341"` を導入。
-       - `getAccessKey(context)` で SharedPreferences 保存キー、またはデフォルトキーを確実に取得。
-       - `applyAuthHeaders` で `X-Access-Key` ヘッダーおよび `User-Agent: NovaAssist-Android/1.0` を常時付与。
-       - `MainActivity.kt` で起動時にキーを SharedPreferences に同期し、CookieManager の受取・フラッシュ（ディスク同期）を完備。
-  2. **ダッシュボード スマホ版 Nova バーとのデザイン完全統一 ＆ 青い目立つボタンの全廃**:
-     - **左側アイコン**: ダッシュボード完全準拠の 40dp 円形コンテナ（`bg-white/[0.05]` = `@drawable/bg_sparkle_container`）＋中央キラキラアイコン（22dp、`#2196f3`）を新設。
-     - **カプセル本体**: 縦幅 58dp、左右パディング 8dp、ヒント文字 `Novaに話しかける...`（色 `#94a3b8`）に統一。
-     - **青い目立つ送信ボタンの完全廃止**: 文字入力時に全面青（`#2196f3`）の円形ボタンに変化する処理を撤廃。文字入力中もダッシュボードと全く同じダークグレー（`#1e2128`、ボーダー `#0Dffffff`）のマイクボタンを維持。
-     - **操作性の両立**: 見た目はダッシュボードと100%同一のまま、文字入力時はキーボードの Enter / Send だけでなく、右端ボタンのタップでも直感的に送信（`submitCommand`）されるスマートな設計。
-     - **バージョン更新**: `1.0.3` (code 9)。Debug (3.1MB) / Release (2.5MB) ともにビルド成功。
-
-### 4.9 現在の稼働状態
-- **systemd サービス**: `dashboard.service`（Active: running, port 8080）。
-- **Android APK**: `android_bridge/app/build/outputs/apk/release/app-release.apk` (v1.0.3, 2.5MB ビルド成功)。
-- **Git リポジトリ**: `origin/main` にプッシュ可能状態。
-
+- `dashboard.service`: Active running, Port 8080
+- `index.html`: 構文テストPASS / 送信ボタン切替・イコライザー波形連動
+- APK: `android_bridge/app/build/outputs/apk/release/app-release.apk` v1.0.4 (2.5MB)
+- Git: `origin/main` プッシュ可能状態
