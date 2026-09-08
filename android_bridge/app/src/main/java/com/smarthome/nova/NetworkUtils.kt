@@ -27,8 +27,40 @@ object NetworkUtils {
         }
     }
 
+    const val DEFAULT_ACCESS_KEY = "Tamago1341"
+
+    fun getAccessKey(context: Context): String {
+        val sharedPref = context.getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+        val savedKey = sharedPref.getString("access_key", null)
+        if (!savedKey.isNullOrEmpty()) {
+            return savedKey
+        }
+
+        // URL に ?key=... が含まれている場合はそれを保存して返す
+        try {
+            val defaultUrl = "https://home.sohhoshi.com"
+            val fullUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
+            val u = URL(fullUrl)
+            val query = u.query
+            if (!query.isNullOrEmpty()) {
+                for (param in query.split("&")) {
+                    val parts = param.split("=")
+                    if (parts.size == 2 && parts[0] == "key" && parts[1].isNotEmpty()) {
+                        sharedPref.edit().putString("access_key", parts[1]).apply()
+                        return parts[1]
+                    }
+                }
+            }
+        } catch (ignored: Exception) {}
+
+        // デフォルト合言葉を保存して返す
+        sharedPref.edit().putString("access_key", DEFAULT_ACCESS_KEY).apply()
+        return DEFAULT_ACCESS_KEY
+    }
+
     fun applyAuthHeaders(conn: HttpURLConnection, baseUrl: String, context: Context) {
         conn.setRequestProperty("X-Requested-With", "Nova-Android-App")
+        conn.setRequestProperty("User-Agent", "NovaAssist-Android/1.0")
 
         // 1. WebView CookieManager からセッション Cookie を引き継ぐ
         try {
@@ -38,27 +70,11 @@ object NetworkUtils {
             }
         } catch (ignored: Exception) {}
 
-        // 2. 端末保存のアクセスキー、または設定 URL に ?key=... が含まれている場合は X-Access-Key ヘッダーとしても付与
+        // 2. アクセスキーを X-Access-Key ヘッダーとして確実に付与
         try {
-            val sharedPref = context.getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
-            val savedKey = sharedPref.getString("access_key", null)
-            if (!savedKey.isNullOrEmpty()) {
-                conn.setRequestProperty("X-Access-Key", savedKey)
-            } else {
-                val defaultUrl = "https://home.sohhoshi.com"
-                var fullUrl = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
-                val u = URL(fullUrl)
-                val query = u.query
-                if (!query.isNullOrEmpty()) {
-                    for (param in query.split("&")) {
-                        val parts = param.split("=")
-                        if (parts.size == 2 && parts[0] == "key") {
-                            conn.setRequestProperty("X-Access-Key", parts[1])
-                            sharedPref.edit().putString("access_key", parts[1]).apply()
-                            break
-                        }
-                    }
-                }
+            val key = getAccessKey(context)
+            if (key.isNotEmpty()) {
+                conn.setRequestProperty("X-Access-Key", key)
             }
         } catch (ignored: Exception) {}
     }

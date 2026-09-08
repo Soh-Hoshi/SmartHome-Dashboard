@@ -102,8 +102,22 @@ Tailscale Funnel（外部公開）経由で巡回ボットがアクセスし、H
    - `NetworkUtils.kt` を新設。WebView の CookieManager からセッション Cookie を取得して `HttpURLConnection`（SSE / Polling / ActionReceiver）に自動付与。
    - 設定 URL に `?key=...` が含まれる場合は `X-Access-Key` ヘッダーとしてもフォールバック送信。
    - Android APK を再ビルド（3.2MB、ビルド成功）。
-3. **テスト検証**:
-   - `test_notifications_e2e.py` に `test_8_crawler_blocking_and_auth` を追加し、全8項目 PASS を確認。
+### ⑤ Nova Assist HTTPエラー解消 ＆ スマホ版Novaバー完全一致UI改修 (2026-09-08)
+ユーザーからのご指摘（「コマンド送ろうとすると、httpエラーが出る」「uiがダッシュボードのスマホのnovaのバーとデザインが違うのが嫌だ（文字入力来た時に青い目立つ送信ボタンが出るのが嫌です。）」）に基づき、原因を徹底特定し完全修正を実施しました。
+
+1. **HTTPエラー (403 Forbidden) の根本原因と解決**:
+   - **原因**: 外部回線（Tailscale Funnel / 外部IP `210.157.194.129`）経由で Android ネイティブアプリから送信されるリクエスト（`/api/assistant`, `/api/notifications/stream` 等）に合言葉（`Tamago1341`）が付与されておらず、サーバーのクローラー遮断ホワイトリスト判定で `reason=unauthorized` となり 403 拒否されていた。
+   - **対策 (`NetworkUtils.kt`, `MainActivity.kt`)**:
+     - `DEFAULT_ACCESS_KEY = "Tamago1341"` をアプリ内に定義。
+     - `NetworkUtils.getAccessKey(context)` により、端末内に保存された合言葉、またはデフォルト合言葉を確実に取得。
+     - `applyAuthHeaders` で `X-Access-Key: Tamago1341` および `User-Agent: NovaAssist-Android/1.0` を常時付与。
+     - `MainActivity.kt` 起動時にキーを同期し、CookieManager のディスク同期（`flush()`）を完備。
+2. **スマホ版Novaプロンプトバーとのデザイン完全統一 ＆ 青い送信ボタンの全廃**:
+   - **左側アイコン**: ダッシュボードの `w-10 h-10 rounded-full bg-white/[0.05]` と同一の 40dp 円形薄白コンテナ（`@drawable/bg_sparkle_container`）を新設し、中央にキラキラアイコン（22dp、`#2196f3`）を配置。
+   - **青い目立つ送信ボタンの完全廃止**: 文字入力時に全面青（`#2196f3`）の円形ボタンに変化していた処理（`bg_mic_button_send`）を完全撤廃。文字入力時もダッシュボードと全く同じダークグレー（`#1e2128`、ボーダー `#0Dffffff`）のマイクボタンをそのまま維持。
+   - **操作性の両立**: 見た目はダッシュボードと100%同一のまま、文字入力時はキーボードの Enter / 送信 に加え、右端ボタンのタップでも直感的に送信（`submitCommand`）される洗練されたUXを実現。
+   - **バーの形状・ヒント**: 縦幅 58dp、左右余白 8dp、プレースホルダー `Novaに話しかける...`（色 `#94a3b8`）に統一。
+   - **バージョン更新**: `1.0.3` (code 9)。Debug (3.1MB) / Release (2.5MB) ともにビルド成功。
 
 ---
 
@@ -112,10 +126,11 @@ Tailscale Funnel（外部公開）経由で巡回ボットがアクセスし、H
 | 項目 | 状態 | 備考 |
 | :--- | :--- | :--- |
 | **HTTP / SSE サーバー** | 🟢 稼働中 (Active: running) | systemd user サービス (`dashboard.service`), Port 8080 |
-| **Android Bridge (Nova Assist)** | 🟢 接続中 (SSE clients: 1) | フォアグラウンドサービス常駐中 |
-| **Android APK** | 🟢 ビルド成功 (3.1MB) | `android_bridge/app/build/outputs/apk/debug/app-debug.apk` |
-| **E2E テストスイート** | 🟢 ALL TESTS PASSED | `python3 test_notifications_e2e.py` |
-| **Git ブランチ** | 🟢 main (up to date with origin/main) | 最新コミット反映可能状態 |
+| **Android Bridge (Nova Assist)** | 🟢 接続準備完了 | デフォルト合言葉 `Tamago1341` 適用済み |
+| **Android APK (Release)** | 🟢 ビルド成功 (2.5MB) | `android_bridge/app/build/outputs/apk/release/app-release.apk` (v1.0.3) |
+| **Android APK (Debug)** | 🟢 ビルド成功 (3.1MB) | `android_bridge/app/build/outputs/apk/debug/app-debug.apk` (v1.0.3) |
+| **認証テスト** | 🟢 PASS | `X-Access-Key` 外部経由認証 PASS |
+| **Git ブランチ** | 🟢 main | コミット反映可能状態 |
 
 ---
 

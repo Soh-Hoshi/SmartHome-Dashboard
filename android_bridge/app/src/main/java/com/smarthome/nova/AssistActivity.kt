@@ -270,7 +270,7 @@ class AssistActivity : AppCompatActivity() {
 
             speechRecognizer?.startListening(intent)
         } catch (e: Exception) {
-            etCommand.hint = "話しかけるか、入力..."
+            etCommand.hint = "Novaに話しかける..."
         }
     }
 
@@ -291,20 +291,13 @@ class AssistActivity : AppCompatActivity() {
     }
 
     private fun updateActionButtonUi() {
-        val hasText = etCommand.text.toString().trim().isNotEmpty()
-        if (hasText) {
-            iconAction.setImageResource(R.drawable.ic_arrow_upward)
-            iconAction.setColorFilter(Color.WHITE)
-            btnAction.setBackgroundResource(R.drawable.bg_mic_button_send)
+        iconAction.setImageResource(R.drawable.ic_mic)
+        if (isListening) {
+            btnAction.setBackgroundResource(R.drawable.bg_mic_button_listening)
+            iconAction.setColorFilter(Color.parseColor("#fb7185"))
         } else {
-            iconAction.setImageResource(R.drawable.ic_mic)
-            if (isListening) {
-                btnAction.setBackgroundResource(R.drawable.bg_mic_button_listening)
-                iconAction.setColorFilter(Color.parseColor("#fb7185"))
-            } else {
-                btnAction.setBackgroundResource(R.drawable.bg_mic_button_idle)
-                iconAction.setColorFilter(Color.parseColor("#e2e8f0"))
-            }
+            btnAction.setBackgroundResource(R.drawable.bg_mic_button_idle)
+            iconAction.setColorFilter(Color.parseColor("#e2e8f0"))
         }
     }
 

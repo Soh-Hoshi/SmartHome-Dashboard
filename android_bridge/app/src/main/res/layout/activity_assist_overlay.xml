@@ -84,25 +84,34 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- Gemini Floating Search / Input Pill (Taller Pill matching Nova bar) -->
+        <!-- Gemini Floating Search / Input Pill (Matching Dashboard Nova bar) -->
         <LinearLayout
             android:id="@+id/searchPill"
             android:layout_width="match_parent"
-            android:layout_height="62dp"
+            android:layout_height="58dp"
             android:background="@drawable/bg_search_bar"
             android:gravity="center_vertical"
-            android:paddingStart="14dp"
-            android:paddingEnd="10dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:orientation="horizontal"
             android:clickable="true"
             android:focusable="true">
 
-            <ImageView
-                android:id="@+id/iconSparkle"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_sparkle"
-                app:tint="#3b82f6" />
+            <!-- Nova アイコン (Gemini風 キラキラ) - ダッシュボード完全準拠の40dp円形コンテナ -->
+            <FrameLayout
+                android:id="@+id/sparkleContainer"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_sparkle_container">
+
+                <ImageView
+                    android:id="@+id/iconSparkle"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_sparkle"
+                    app:tint="#2196f3" />
+            </FrameLayout>
 
             <EditText
                 android:id="@+id/etCommand"
@@ -112,18 +121,19 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="8dp"
                 android:background="@null"
-                android:hint="話しかけるか、入力..."
+                android:hint="Novaに話しかける..."
                 android:textColor="#ffffff"
-                android:textColorHint="#64748b"
+                android:textColorHint="#94a3b8"
                 android:textSize="16sp"
                 android:imeOptions="actionSend"
                 android:inputType="text"
                 android:singleLine="true" />
 
+            <!-- マイクボタン - ダッシュボード完全準拠の40dp円形ダークボタン -->
             <FrameLayout
                 android:id="@+id/btnAction"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="@drawable/bg_mic_button_idle"
                 android:clickable="true"
                 android:focusable="true">

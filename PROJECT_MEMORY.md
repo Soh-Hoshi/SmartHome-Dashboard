@@ -163,8 +163,27 @@
   - `sw.js`: キャッシュバージョンを `v10` に更新し、maskable アイコンもキャッシュ対象に追加。
   - `index.html`: `<head>` 内に 512x512 アイコンリンクを追加。
 
-### 4.7 現在の稼働状態
-- **systemd サービス**: `dashboard.service`（Active: running, port 8080、合言葉認証＆クローラー遮断有効）。
-- **PWA**: PWA インストール要件完備（Nova Assist 統一デザイン、v10 キャッシュ）。
-- **Android APK**: `android_bridge/app/build/outputs/apk/debug/app-debug.apk` ビルド完了。
+### 4.8 Nova Assist HTTPエラー解消 ＆ ダッシュボードUI完全一致改修 (2026-09-08)
+- **背景と課題**:
+  1. Nova Assist アプリからコマンド（音声・テキスト）を送信しようとすると HTTP エラー（HTTP 403 Forbidden）が発生。
+  2. アシスタントオーバーレイのUIがダッシュボードのスマホ版 Nova バーとデザインが異なり、特に文字入力時に青く目立つ送信ボタン（全面 `#2196f3`）に変化してしまうのが不快。
+- **原因と改修内容**:
+  1. **HTTP エラー（403 Forbidden）の解消**:
+     - **原因**: 外部回線・Tailscale Funnel 経由でのアクセス時、サーバー側のクローラー遮断ホワイトリスト（`auth_service.py`）により、合言葉（`Tamago1341`）またはセッションCookie（`sh_auth`）のないリクエストがクローラーと判定され 403 遮断されていた。アプリ側に合言葉が初期値として定義されていなかったため、未認証状態で通信していた。
+     - **対策 (`NetworkUtils.kt`, `MainActivity.kt`)**:
+       - `DEFAULT_ACCESS_KEY = "Tamago1341"` を導入。
+       - `getAccessKey(context)` で SharedPreferences 保存キー、またはデフォルトキーを確実に取得。
+       - `applyAuthHeaders` で `X-Access-Key` ヘッダーおよび `User-Agent: NovaAssist-Android/1.0` を常時付与。
+       - `MainActivity.kt` で起動時にキーを SharedPreferences に同期し、CookieManager の受取・フラッシュ（ディスク同期）を完備。
+  2. **ダッシュボード スマホ版 Nova バーとのデザイン完全統一 ＆ 青い目立つボタンの全廃**:
+     - **左側アイコン**: ダッシュボード完全準拠の 40dp 円形コンテナ（`bg-white/[0.05]` = `@drawable/bg_sparkle_container`）＋中央キラキラアイコン（22dp、`#2196f3`）を新設。
+     - **カプセル本体**: 縦幅 58dp、左右パディング 8dp、ヒント文字 `Novaに話しかける...`（色 `#94a3b8`）に統一。
+     - **青い目立つ送信ボタンの完全廃止**: 文字入力時に全面青（`#2196f3`）の円形ボタンに変化する処理を撤廃。文字入力中もダッシュボードと全く同じダークグレー（`#1e2128`、ボーダー `#0Dffffff`）のマイクボタンを維持。
+     - **操作性の両立**: 見た目はダッシュボードと100%同一のまま、文字入力時はキーボードの Enter / Send だけでなく、右端ボタンのタップでも直感的に送信（`submitCommand`）されるスマートな設計。
+     - **バージョン更新**: `1.0.3` (code 9)。Debug (3.1MB) / Release (2.5MB) ともにビルド成功。
+
+### 4.9 現在の稼働状態
+- **systemd サービス**: `dashboard.service`（Active: running, port 8080）。
+- **Android APK**: `android_bridge/app/build/outputs/apk/release/app-release.apk` (v1.0.3, 2.5MB ビルド成功)。
 - **Git リポジトリ**: `origin/main` にプッシュ可能状態。
+

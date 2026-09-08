@@ -43,12 +43,22 @@ class MainActivity : AppCompatActivity() {
                 allowContentAccess = true
             }
 
-            webViewClient = WebViewClient()
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest?) {
                     request?.grant(request.resources)
                 }
             }
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    android.webkit.CookieManager.getInstance().flush()
+                }
+            }
+        }
+
+        android.webkit.CookieManager.getInstance().apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(webView, true)
         }
 
         setContentView(webView)
@@ -60,6 +70,10 @@ class MainActivity : AppCompatActivity() {
         NotificationService.start(this)
 
         val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+        if (!sharedPref.contains("access_key")) {
+            sharedPref.edit().putString("access_key", NetworkUtils.DEFAULT_ACCESS_KEY).apply()
+        }
+
         val defaultUrl = "https://home.sohhoshi.com"
         var url = sharedPref.getString("dashboard_url", defaultUrl) ?: defaultUrl
         if (url.contains("tail52d127.ts.net")) {
@@ -69,7 +83,21 @@ class MainActivity : AppCompatActivity() {
 
         val targetUrl = intent?.getStringExtra("TARGET_URL") ?: url
         saveKeyFromUrlIfPresent(targetUrl)
-        webView.loadUrl(targetUrl)
+
+        val finalUrl = try {
+            val cookie = android.webkit.CookieManager.getInstance().getCookie(targetUrl)
+            val key = sharedPref.getString("access_key", NetworkUtils.DEFAULT_ACCESS_KEY) ?: NetworkUtils.DEFAULT_ACCESS_KEY
+            if ((cookie.isNullOrEmpty() || !cookie.contains("sh_auth")) && !targetUrl.contains("key=")) {
+                val sep = if (targetUrl.contains("?")) "&" else "?"
+                "$targetUrl${sep}key=$key"
+            } else {
+                targetUrl
+            }
+        } catch (e: Exception) {
+            targetUrl
+        }
+
+        webView.loadUrl(finalUrl)
     }
 
     override fun onNewIntent(intent: Intent?) {
