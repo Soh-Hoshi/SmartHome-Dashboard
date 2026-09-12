@@ -12,6 +12,7 @@
 6. **クローラー遮断**: HMAC Cookie(`sh_auth`) + `DEFAULT_ACCESS_KEY="Tamago1341"` / 宅内LAN・Tailscale VPNは無条件パス / 外部クローラー→403
 7. **PWAアイコン整備**: `icon-maskable-*.png`追加 / `manifest.json` `id`/`scope`=`/dashboard/` / `sw.js` v10
 8. **Nova Assist v1.0.4 (2026-09-08)**: HTTP 403解消(`X-Access-Key`常時送信) / 録音アイコン→`graphic_eq`(波形`#fb7185`) / 送信ボタン→`send`アイコン(`#1b222c`+`#60a5fa`) / `AssistActivity.kt`で入力中/通常/録音中の3状態をダッシュボードと1:1同期
+9. **起動OS USBスイッチ仕様変更 (2026-09-12)**: 複雑な永続化設定(`pcTargetOs`)を全廃し、UI表示・起動OS判定を100%「USBスイッチ実機(デバイス)の電源状態」(ON=Bazzite, OFF=Windows)に準拠するシンプルな構成へ改修
 
 ## 稼働状態
 
