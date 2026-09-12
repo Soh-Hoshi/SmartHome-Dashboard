@@ -253,7 +253,7 @@ def dispatch_internal_api(endpoint: str, payload: dict):
             power = usb_service.set_usb_power(bool(payload['power']))
         else:
             power = usb_service.toggle_usb_power()
-        return {"status": "success", "power": power, "state": state_manager.load_state()}
+        return {"status": "success", "power": power, "target_os": "Bazzite" if power else "Windows", "state": state_manager.load_state()}
     elif endpoint in ('/api/pc', '/api/pc/boot', '/api/pc/shutdown', '/api/pc/sleep', '/api/pc/restart', '/api/pc/os'):
         action = payload.get('action')
         target_os = payload.get('target_os') or payload.get('os')

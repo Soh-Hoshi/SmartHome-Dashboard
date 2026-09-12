@@ -1838,8 +1838,7 @@
       pcOnline: false,
       pcBooting: false,
       pcShuttingDown: false,
-      pcOs: 'オフライン',
-      pcTargetOs: 'Windows'
+      pcOs: 'オフライン'
     };
 
     // ファンモード用の統一アイコン
@@ -2869,6 +2868,7 @@
         if (data.status === 'success' && typeof data.power === 'boolean') {
           state.usbPower = data.power;
           updateUsbUi();
+          applyPcOsSelection(data.power ? 'Bazzite' : 'Windows', false);
         }
       })
       .catch(err => console.error('[USB Sync Failed]', err));
@@ -2907,11 +2907,11 @@
           if (data.status === 'success' && typeof data.power === 'boolean') {
             state.usbPower = data.power;
             updateUsbUi();
-            // target_osをAPIから直接受け取る（永続保存値優先）。なければUSB状態から推定。
-            const targetOs = data.target_os || (data.power ? 'Bazzite' : 'Windows');
+            // UI表示は必ずUSBスイッチデバイスに準拠 (ON: Bazzite, OFF: Windows)
+            const targetOs = data.power ? 'Bazzite' : 'Windows';
             const dropup = document.getElementById('pc-os-dropup-menu');
             const isDropupOpen = dropup && dropup.classList.contains('open');
-            if (!isDropupOpen && state.pcTargetOs !== targetOs) {
+            if (!isDropupOpen) {
               applyPcOsSelection(targetOs, false);
             }
           }
@@ -2972,7 +2972,13 @@
           state.pcBooting = !!data.booting;
           state.pcShuttingDown = !!data.shutting_down;
           if (data.os) state.pcOs = data.os;
-          if (data.target_os) state.pcTargetOs = data.target_os;
+          if (typeof data.usb_power === 'boolean') {
+            state.usbPower = data.usb_power;
+            applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
+          } else if (data.target_os) {
+            state.usbPower = (data.target_os === 'Bazzite');
+            applyPcOsSelection(data.target_os, false);
+          }
           updatePcUi();
           // トランジェント中は2秒後にステータス確認
           if (state.pcBooting || state.pcShuttingDown) {
@@ -3024,8 +3030,8 @@
     }
 
     function applyPcOsSelection(os, sendCommand = false) {
-      state.pcTargetOs = os;
       state.usbPower = (os === 'Bazzite');
+      updateUsbUi();
 
       // チェックマークの切り替え (Windows: #4a88e8, Bazzite: #c084fc)
       const checkWin = document.getElementById('check-pc-os-windows');
@@ -3033,7 +3039,7 @@
       if (checkWin) checkWin.className = (os === 'Windows') ? "text-[#4a88e8] flex items-center" : "hidden text-[#4a88e8] flex items-center";
       if (checkBaz) checkBaz.className = (os === 'Bazzite') ? "text-[#c084fc] flex items-center" : "hidden text-[#c084fc] flex items-center";
 
-      // トリガーボタンの表示切り替え (次回起動OSドロップダウンのみ更新)
+      // トリガーボタンの表示切り替え (起動OSドロップダウン更新)
       const labelEl = document.getElementById('detail-pc-os-label');
       const iconWrap = document.getElementById('detail-pc-os-icon');
       const iconSpan = document.getElementById('detail-pc-os-icon-span');
@@ -3056,9 +3062,18 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'set_os', target_os: os })
-        }).catch(err => console.error('[PC Set OS Error]', err));
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data.usb_power === 'boolean') {
+            state.usbPower = data.usb_power;
+            updateUsbUi();
+            applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
+          }
+        })
+        .catch(err => console.error('[PC Set OS Error]', err));
 
-        showAssistantToast(`次回起動OSを ${os} に設定しました (USB: ${isBazzite ? 'オン' : 'オフ'})`, isBazzite ? 'sports_esports' : 'desktop_windows');
+        showAssistantToast(`起動OSを ${os} に設定しました (USB: ${isBazzite ? 'オン' : 'オフ'})`, isBazzite ? 'sports_esports' : 'desktop_windows');
       }
     }
 
@@ -3078,8 +3093,8 @@
       const detailBlock = document.getElementById('pc-detail-block');
       const iconWrapEl = document.getElementById('pc-detail-icon-wrap');
 
-      // ターゲットOS（次回起動OS / USBスイッチの状態）
-      const targetOs = state.pcTargetOs || (state.usbPower ? 'Bazzite' : 'Windows');
+      // ターゲットOS（次回起動OS / USBスイッチの実機物理状態に準拠）
+      const targetOs = state.usbPower ? 'Bazzite' : 'Windows';
       const isTargetBazzite = (targetOs === 'Bazzite');
 
       const isBooting = !!(state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...');
@@ -3247,10 +3262,17 @@
             state.pcBooting = !!data.booting;
             state.pcShuttingDown = !!data.shutting_down;
             state.pcOs = data.os || (state.pcOnline ? '起動中' : 'オフライン');
-            if (data.target_os) {
+            if (typeof data.usb_power === 'boolean') {
+              state.usbPower = data.usb_power;
               const dropup = document.getElementById('pc-os-dropup-menu');
               const isDropupOpen = dropup && dropup.classList.contains('open');
-              if (!isDropupOpen && state.pcTargetOs !== data.target_os) {
+              if (!isDropupOpen) {
+                applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
+              }
+            } else if (data.target_os) {
+              const dropup = document.getElementById('pc-os-dropup-menu');
+              const isDropupOpen = dropup && dropup.classList.contains('open');
+              if (!isDropupOpen) {
                 applyPcOsSelection(data.target_os, false);
               }
             }
@@ -3559,8 +3581,8 @@
             updateLightUi();
             updateCleanerUi();
             updateUsbUi();
-            if (state.pcTargetOs) {
-              applyPcOsSelection(state.pcTargetOs, false);
+            if (typeof state.usbPower === 'boolean') {
+              applyPcOsSelection(state.usbPower ? 'Bazzite' : 'Windows', false);
             }
             updatePcUi();
           }
@@ -3998,7 +4020,7 @@
       updateLightUi();
       updateCleanerUi();
       updateUsbUi();
-      applyPcOsSelection(state.pcTargetOs || 'Windows', false);
+      applyPcOsSelection(state.usbPower ? 'Bazzite' : 'Windows', false);
       updatePcUi();
       loadInitialState();
       fetchWeatherData();
@@ -4007,6 +4029,8 @@
 
       // クリーナーの定期状態同期 (10秒ごと)
       setInterval(syncCleanerStatus, 10000);
+      // USBスイッチの定期状態同期 (10秒ごと・物理デバイス同期)
+      setInterval(syncUsbStatus, 10000);
       // デスクトップPCの定期状態同期 (10秒ごと)
       setInterval(syncPcStatus, 10000);
       // 在宅センサーの定期同期 (2秒ごと・リアルタイム帰宅/外出反映)
