@@ -26,7 +26,6 @@
 
 ```bash
 systemctl --user status dashboard.service
-python3 /home/soh/dashboard/test_notifications_e2e.py
-/home/soh/dashboard/smarthome notify --test-away
-/home/soh/dashboard/smarthome cleaner start
+systemctl --user restart dashboard.service
+journalctl --user -u dashboard.service -n 50 --no-pager
 ```
