@@ -1080,31 +1080,34 @@
       <!-- 最下部コントロールエリア (1段目: 全灯 & 常夜灯、2段目: 明るさ［ー］［＋］) -->
       <div class="relative space-y-2.5 pt-1">
         
-        <!-- 1段目: 全灯 & 常夜灯 (単発トリガーボタン) -->
-        <div class="grid grid-cols-2 gap-3">
-          
-          <!-- 全灯 ボタン (押すだけ) -->
-          <button onclick="pressLightFull()" 
-                  id="btn-light-full"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-            <div id="detail-light-full-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
+        <!-- 1段目: アクション ドロップアップ -->
+        <div class="relative">
+          <!-- アクション ドロップアップ ポップオーバー -->
+          <div id="light-action-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+            <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">アクション</div>
+            <div class="space-y-0.5">
+              <button onclick="selectLightAction('full')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                <span class="material-symbols-rounded text-xl text-neutral-300">light_mode</span>
+                <span class="text-white">全灯</span>
+              </button>
+              <button onclick="selectLightAction('night')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                <span class="material-symbols-rounded text-xl text-neutral-300">bedtime</span>
+                <span class="text-white">常夜灯</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- アクション トリガーボタン (フル幅) -->
+          <button id="btn-trigger-light-action" onclick="toggleDropup('light-action-dropup-menu', event)" 
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
+                  aria-label="アクションを選択">
+            <div id="detail-light-action-icon" class="text-neutral-400 shrink-0 flex items-center justify-center">
               <span class="material-symbols-rounded text-2xl">light_mode</span>
             </div>
             <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-[14px] font-semibold text-white truncate">全灯</div>
+              <div class="text-[14px] font-semibold text-white truncate">アクション</div>
             </div>
-          </button>
-
-          <!-- 常夜灯 ボタン (押すだけ) -->
-          <button onclick="pressLightNight()" 
-                  id="btn-light-night"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-            <div id="detail-light-night-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-              <span class="material-symbols-rounded text-2xl">bedtime</span>
-            </div>
-            <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-[14px] font-semibold text-white truncate">常夜灯</div>
-            </div>
+            <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
           </button>
         </div>
 
@@ -1361,7 +1364,7 @@
             <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">アクション</div>
             <div class="space-y-0.5">
               <button onclick="selectCleanerAction('start')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-                <span class="material-symbols-rounded text-xl text-[#38bdf8]">play_arrow</span>
+                <span class="material-symbols-rounded text-xl text-neutral-300">play_arrow</span>
                 <span class="text-white">開始</span>
               </button>
               <button onclick="selectCleanerAction('pause')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
@@ -1377,14 +1380,13 @@
 
           <!-- アクション トリガーボタン (フル幅) -->
           <button id="btn-trigger-cleaner-action" onclick="toggleDropup('cleaner-action-dropup-menu', event)" 
-                  class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
                   aria-label="アクションを選択">
-            <div id="detail-cleaner-action-icon" class="text-sky-400 shrink-0 flex items-center justify-center">
+            <div id="detail-cleaner-action-icon" class="text-neutral-400 shrink-0 flex items-center justify-center">
               <span class="material-symbols-rounded text-2xl">play_circle</span>
             </div>
             <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-xs text-neutral-400 font-normal">アクション</div>
-              <div id="detail-cleaner-action-label" class="text-[14px] font-semibold text-white truncate mt-0.5">操作を選択</div>
+              <div class="text-[14px] font-semibold text-white truncate">アクション</div>
             </div>
             <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
           </button>
@@ -1395,7 +1397,7 @@
           <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">吸引力</div>
           <div class="space-y-0.5">
             <button onclick="selectCleanerSpeed('Standard')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-[#2196f3]">
+              <div class="flex items-center space-x-3 text-neutral-300">
                 <span class="material-symbols-rounded text-xl">air</span>
                 <span class="text-white">標準</span>
               </div>
@@ -1422,8 +1424,8 @@
         <div class="grid grid-cols-2 gap-3">
           <!-- 吸引力 ドロップアップ トリガーボタン -->
           <button id="btn-trigger-cleaner-speed" onclick="toggleDropup('cleaner-speed-dropup-menu', event)" 
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-            <div id="detail-cleaner-speed-icon" class="text-[#2196f3] shrink-0 flex items-center justify-center">
+                  class="h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+            <div id="detail-cleaner-speed-icon" class="text-neutral-400 shrink-0 flex items-center justify-center">
               <span class="material-symbols-rounded text-2xl">air</span>
             </div>
             <div class="overflow-hidden leading-tight flex-1">
@@ -1436,7 +1438,7 @@
           <!-- Find Me ボタン (押すだけ、通常色アイコン) -->
           <button onclick="pressCleanerFindMe()" 
                   id="btn-cleaner-find-me"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+                  class="h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
             <div class="text-neutral-400 shrink-0 flex items-center justify-center">
               <span class="material-symbols-rounded text-2xl">notifications_active</span>
             </div>
@@ -1730,33 +1732,34 @@
       <!-- 最下部コントロールエリア (1段目: スリープ & 再起動、2段目: OS選択) -->
       <div class="relative space-y-2.5 pt-1 shrink-0">
         
-        <!-- 1段目: スリープ & 再起動 (単発トリガーボタン) -->
-        <div class="grid grid-cols-2 gap-3">
-          
-          <!-- スリープ ボタン -->
-          <button onclick="pressPcSleep(event)" 
-                  id="btn-pc-sleep"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-                  aria-label="PCをスリープ">
-            <div id="detail-pc-sleep-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-              <span class="material-symbols-rounded text-2xl">bedtime</span>
+        <!-- 1段目: 電源オプション ドロップアップ -->
+        <div class="relative">
+          <!-- 電源オプション ドロップアップ ポップオーバー -->
+          <div id="pc-power-options-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+            <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">電源オプション</div>
+            <div class="space-y-0.5">
+              <button onclick="selectPcPowerOption('sleep')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                <span class="material-symbols-rounded text-xl text-neutral-300">bedtime</span>
+                <span class="text-white">スリープ</span>
+              </button>
+              <button onclick="selectPcPowerOption('restart')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                <span class="material-symbols-rounded text-xl text-neutral-300">restart_alt</span>
+                <span class="text-white">再起動</span>
+              </button>
             </div>
-            <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-[14px] font-semibold text-white truncate">スリープ</div>
-            </div>
-          </button>
+          </div>
 
-          <!-- 再起動 ボタン -->
-          <button onclick="pressPcRestart(event)" 
-                  id="btn-pc-restart"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-                  aria-label="PCを再起動">
-            <div id="detail-pc-restart-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-              <span class="material-symbols-rounded text-2xl">restart_alt</span>
+          <!-- 電源オプション トリガーボタン (フル幅) -->
+          <button id="btn-trigger-pc-power-options" onclick="toggleDropup('pc-power-options-dropup-menu', event)" 
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
+                  aria-label="電源オプションを選択">
+            <div id="detail-pc-power-options-icon" class="text-neutral-400 shrink-0 flex items-center justify-center">
+              <span class="material-symbols-rounded text-2xl">power_settings_new</span>
             </div>
             <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-[14px] font-semibold text-white truncate">再起動</div>
+              <div class="text-[14px] font-semibold text-white truncate">電源オプション</div>
             </div>
+            <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
           </button>
         </div>
 
@@ -1785,7 +1788,7 @@
 
           <!-- OS選択 トリガーボタン -->
           <button id="btn-trigger-pc-os" onclick="toggleDropup('pc-os-dropup-menu', event)" 
-                  class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
                   aria-label="起動OSを選択">
             <div id="detail-pc-os-icon" class="text-[#4a88e8] shrink-0 flex items-center justify-center">
               <span id="detail-pc-os-icon-span" class="material-symbols-rounded text-2xl">desktop_windows</span>
@@ -2173,12 +2176,7 @@
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.dropup-menu') && 
-          !e.target.closest('#btn-trigger-mode') && 
-          !e.target.closest('#btn-trigger-fan') &&
-          !e.target.closest('#btn-trigger-heater-mode') &&
-          !e.target.closest('#btn-trigger-cleaner-action') &&
-          !e.target.closest('#btn-trigger-cleaner-speed') &&
-          !e.target.closest('#btn-trigger-pc-os')) {
+          !e.target.closest('[id^="btn-trigger-"]')) {
         closeAllDropups();
       }
     });
@@ -2757,6 +2755,20 @@
     }
 
     /**
+     * ライト詳細: アクション選択 (ドロップアップ) ＆ 実行
+     */
+    function selectLightAction(action) {
+      closeAllDropups();
+      if (action === 'full') {
+        pressLightFull();
+        showAssistantToast('リビング照明を全灯に設定しました', 'light_mode');
+      } else if (action === 'night') {
+        pressLightNight();
+        showAssistantToast('リビング照明を常夜灯に設定しました', 'bedtime');
+      }
+    }
+
+    /**
      * 全灯ボタン (単発プッシュ: オンにして全灯コマンド送信)
      */
     function pressLightFull() {
@@ -3056,6 +3068,18 @@
       updatePcUi();
       showAssistantToast('PCへ再起動を指示しました', 'restart_alt');
       sendPcCommand('restart');
+    }
+
+    /**
+     * PC詳細: 電源オプション選択 (ドロップアップ) ＆ 実行
+     */
+    function selectPcPowerOption(action) {
+      closeAllDropups();
+      if (action === 'sleep') {
+        pressPcSleep();
+      } else if (action === 'restart') {
+        pressPcRestart();
+      }
     }
 
     function applyPcOsSelection(os, sendCommand = false) {
