@@ -41,6 +41,8 @@
 - ヒーター: スマートプラグ/赤外線 (暖房/オフ、エコ、パワー)
 - 照明: リモコンAPI (全灯、常夜灯、明るさ上下)
 - クリーナー: Eufy RoboVac G30 (開始/一時停止/帰還/探す)
+- デスクトップPC: IP `192.168.0.20` / MAC `a8:a1:59:60:6f:c0` / WoLブート / SSH電源制御
+- 起動OS (USBスイッチ): Sinilink USB (ESPHome Native API, IP `192.168.0.210`:6053, Key `2653998163`) / ON=Bazzite, OFF=Windows / `pcTargetOs`二重永続化 ＆ PC電源オフ時の瞬断リセットに対するON自動復旧(セルフヒーリング)
 
 **Nova Assist (Android):**
 - パス: `android_bridge/` (Kotlin 1.9, Java 17, minSdk 26, targetSdk 34)

@@ -1835,6 +1835,7 @@
       cleanerStatus: 'charging',            // 'running' | 'standby' | 'charging' | 'sleeping' | 'recharge' | 'completed'
       cleanerPlay: false,
       usbPower: false,
+      pcTargetOs: 'Windows',
       pcOnline: false,
       pcBooting: false,
       pcShuttingDown: false,
@@ -2865,10 +2866,17 @@
       })
       .then(res => res.json())
       .then(data => {
-        if (data.status === 'success' && typeof data.power === 'boolean') {
-          state.usbPower = data.power;
-          updateUsbUi();
-          applyPcOsSelection(data.power ? 'Bazzite' : 'Windows', false);
+        if (data.status === 'success') {
+          if (typeof data.power === 'boolean') {
+            state.usbPower = data.power;
+            updateUsbUi();
+          }
+          if (data.target_os) {
+            state.pcTargetOs = data.target_os;
+            applyPcOsSelection(data.target_os, false);
+          } else if (typeof data.power === 'boolean') {
+            applyPcOsSelection(data.power ? 'Bazzite' : 'Windows', false);
+          }
         }
       })
       .catch(err => console.error('[USB Sync Failed]', err));
@@ -2904,15 +2912,24 @@
         const res = await fetch(`${apiBasePath}/api/usb`);
         if (res.ok) {
           const data = await res.json();
-          if (data.status === 'success' && typeof data.power === 'boolean') {
-            state.usbPower = data.power;
-            updateUsbUi();
-            // UI表示は必ずUSBスイッチデバイスに準拠 (ON: Bazzite, OFF: Windows)
-            const targetOs = data.power ? 'Bazzite' : 'Windows';
-            const dropup = document.getElementById('pc-os-dropup-menu');
-            const isDropupOpen = dropup && dropup.classList.contains('open');
-            if (!isDropupOpen) {
-              applyPcOsSelection(targetOs, false);
+          if (data.status === 'success') {
+            if (typeof data.power === 'boolean') {
+              state.usbPower = data.power;
+              updateUsbUi();
+            }
+            if (data.target_os) {
+              state.pcTargetOs = data.target_os;
+              const dropup = document.getElementById('pc-os-dropup-menu');
+              const isDropupOpen = dropup && dropup.classList.contains('open');
+              if (!isDropupOpen) {
+                applyPcOsSelection(data.target_os, false);
+              }
+            } else if (typeof data.power === 'boolean') {
+              const dropup = document.getElementById('pc-os-dropup-menu');
+              const isDropupOpen = dropup && dropup.classList.contains('open');
+              if (!isDropupOpen) {
+                applyPcOsSelection(data.power ? 'Bazzite' : 'Windows', false);
+              }
             }
           }
         }
@@ -2974,10 +2991,12 @@
           if (data.os) state.pcOs = data.os;
           if (typeof data.usb_power === 'boolean') {
             state.usbPower = data.usb_power;
-            applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
-          } else if (data.target_os) {
-            state.usbPower = (data.target_os === 'Bazzite');
+          }
+          if (data.target_os) {
+            state.pcTargetOs = data.target_os;
             applyPcOsSelection(data.target_os, false);
+          } else if (typeof data.usb_power === 'boolean') {
+            applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
           }
           updatePcUi();
           // トランジェント中は2秒後にステータス確認
@@ -3030,6 +3049,7 @@
     }
 
     function applyPcOsSelection(os, sendCommand = false) {
+      state.pcTargetOs = os;
       state.usbPower = (os === 'Bazzite');
       updateUsbUi();
 
@@ -3065,10 +3085,16 @@
         })
         .then(res => res.json())
         .then(data => {
-          if (data && typeof data.usb_power === 'boolean') {
-            state.usbPower = data.usb_power;
+          if (data && data.target_os) {
+            state.pcTargetOs = data.target_os;
+            state.usbPower = (data.target_os === 'Bazzite');
             updateUsbUi();
-            applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
+            applyPcOsSelection(data.target_os, false);
+          } else if (data && typeof data.usb_power === 'boolean') {
+            state.usbPower = data.usb_power;
+            state.pcTargetOs = data.usb_power ? 'Bazzite' : 'Windows';
+            updateUsbUi();
+            applyPcOsSelection(state.pcTargetOs, false);
           }
         })
         .catch(err => console.error('[PC Set OS Error]', err));
@@ -3093,8 +3119,8 @@
       const detailBlock = document.getElementById('pc-detail-block');
       const iconWrapEl = document.getElementById('pc-detail-icon-wrap');
 
-      // ターゲットOS（次回起動OS / USBスイッチの実機物理状態に準拠）
-      const targetOs = state.usbPower ? 'Bazzite' : 'Windows';
+      // ターゲットOS（次回起動OS / state.pcTargetOs を優先、未定義時は state.usbPower にフォールバック）
+      const targetOs = state.pcTargetOs || (state.usbPower ? 'Bazzite' : 'Windows');
       const isTargetBazzite = (targetOs === 'Bazzite');
 
       const isBooting = !!(state.pcBooting || state.pcOs === '起動中' || state.pcOs === '起動中...');
@@ -3264,16 +3290,19 @@
             state.pcOs = data.os || (state.pcOnline ? '起動中' : 'オフライン');
             if (typeof data.usb_power === 'boolean') {
               state.usbPower = data.usb_power;
-              const dropup = document.getElementById('pc-os-dropup-menu');
-              const isDropupOpen = dropup && dropup.classList.contains('open');
-              if (!isDropupOpen) {
-                applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
-              }
-            } else if (data.target_os) {
+            }
+            if (data.target_os) {
+              state.pcTargetOs = data.target_os;
               const dropup = document.getElementById('pc-os-dropup-menu');
               const isDropupOpen = dropup && dropup.classList.contains('open');
               if (!isDropupOpen) {
                 applyPcOsSelection(data.target_os, false);
+              }
+            } else if (typeof data.usb_power === 'boolean') {
+              const dropup = document.getElementById('pc-os-dropup-menu');
+              const isDropupOpen = dropup && dropup.classList.contains('open');
+              if (!isDropupOpen) {
+                applyPcOsSelection(data.usb_power ? 'Bazzite' : 'Windows', false);
               }
             }
             updatePcUi();
@@ -3581,7 +3610,9 @@
             updateLightUi();
             updateCleanerUi();
             updateUsbUi();
-            if (typeof state.usbPower === 'boolean') {
+            if (state.pcTargetOs) {
+              applyPcOsSelection(state.pcTargetOs, false);
+            } else if (typeof state.usbPower === 'boolean') {
               applyPcOsSelection(state.usbPower ? 'Bazzite' : 'Windows', false);
             }
             updatePcUi();
@@ -4020,7 +4051,7 @@
       updateLightUi();
       updateCleanerUi();
       updateUsbUi();
-      applyPcOsSelection(state.usbPower ? 'Bazzite' : 'Windows', false);
+      applyPcOsSelection(state.pcTargetOs || (state.usbPower ? 'Bazzite' : 'Windows'), false);
       updatePcUi();
       loadInitialState();
       fetchWeatherData();

@@ -76,7 +76,13 @@ def get_usb_power(force_refresh=False) -> bool:
             st = asyncio.run(_fetch_state_async())
             _cached_state = st
             _last_fetch_time = now
-            state_manager.update_state(usbPower=st)
+            # target_osがBazziteなのに実機がOFFの場合(PC電源断に伴う瞬断リセット等)、
+            # state_managerのusbPowerをOFFで上書きせず、pc_serviceの復旧処理に委ねる
+            current_target = state_manager.load_state().get("pcTargetOs")
+            if current_target == "Bazzite" and not st:
+                pass
+            else:
+                state_manager.update_state(usbPower=st)
             return st
         except Exception as e:
             print(f"[USB Service] Fetch error: {e}")
@@ -86,15 +92,16 @@ def get_usb_power(force_refresh=False) -> bool:
 def set_usb_power(power: bool) -> bool:
     global _last_fetch_time, _cached_state
     with _lock:
+        target_os = "Bazzite" if power else "Windows"
         try:
             st = asyncio.run(_set_power_async(power))
             _cached_state = st
             _last_fetch_time = time.time()
-            state_manager.update_state(usbPower=st)
+            state_manager.update_state(usbPower=st, pcTargetOs=target_os)
             return st
         except Exception as e:
             print(f"[USB Service] Set power error: {e}")
-            state_manager.update_state(usbPower=power)
+            state_manager.update_state(usbPower=power, pcTargetOs=target_os)
             _cached_state = power
             return power
 

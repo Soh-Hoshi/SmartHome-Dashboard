@@ -1,8 +1,8 @@
-# SmartHome Dashboard - セッション引き継ぎ (2026-09-08)
+# SmartHome Dashboard - セッション引き継ぎ (2026-09-13)
 
 詳細仕様: [`PROJECT_MEMORY.md`](file:///home/soh/dashboard/PROJECT_MEMORY.md)
 
-## 直近の変更 (2026-09-04〜08)
+## 直近の変更 (2026-09-04〜13)
 
 1. **Android通知Hardening**: `onNewIntent`実装 / SSE空通知抑止(server_time同期) / `readTimeout=45000` / `last_poll_ts`永続化 / `setOnlyAlertOnce` / ID正規化(2000〜101999) / `/dashboard`サブパス保持 / `contentIntent`+`SecurityException`保護 / SSEキュー`maxsize=100` / LiveReload keepalive 20秒 / E2Eテスト全8項目PASS
 2. **オートメーション追加**: `weekday_morning_cleaner`(平日09:00 JST、Eufy RoboVac G30起動+通知) を`automations_config.json`に登録
@@ -12,7 +12,9 @@
 6. **クローラー遮断**: HMAC Cookie(`sh_auth`) + `DEFAULT_ACCESS_KEY="Tamago1341"` / 宅内LAN・Tailscale VPNは無条件パス / 外部クローラー→403
 7. **PWAアイコン整備**: `icon-maskable-*.png`追加 / `manifest.json` `id`/`scope`=`/dashboard/` / `sw.js` v10
 8. **Nova Assist v1.0.4 (2026-09-08)**: HTTP 403解消(`X-Access-Key`常時送信) / 録音アイコン→`graphic_eq`(波形`#fb7185`) / 送信ボタン→`send`アイコン(`#1b222c`+`#60a5fa`) / `AssistActivity.kt`で入力中/通常/録音中の3状態をダッシュボードと1:1同期
-9. **起動OS USBスイッチ仕様変更 (2026-09-12)**: 複雑な永続化設定(`pcTargetOs`)を全廃し、UI表示・起動OS判定を100%「USBスイッチ実機(デバイス)の電源状態」(ON=Bazzite, OFF=Windows)に準拠するシンプルな構成へ改修
+9. **起動OS（USBスイッチ）二重永続化・実機自動復旧 (2026-09-13)**:
+   - **原因**: PC電源オフ時(ATX S0→S5)のUSB 5V瞬断によりSinilink USB(ESP8266)がリセットされ、リレーがOFF(Windows)に戻っていた上、`pcTargetOs`永続化の削除によりUIもWindowsへ戻っていた。
+   - **対策**: `state_manager.py`に`pcTargetOs`を復帰しUI選択を永続化。`usb_service.py`で電源瞬断時の不要なOFF上書きを防止。`pc_service.py`でPC電源オフ時やオフライン検出時に`target_os`がBazziteならUSBスイッチ実機をONへ自動復旧するセルフヒーリングを実装。WoL送信直前にも実機状態の一致を強制検証。UI(`index.html`)も`pcTargetOs`を最優先参照し、実機とUIの完全同期・電源切断後の状態保持を実現。
 
 ## 稼働状態
 

@@ -33,15 +33,21 @@ _transient_state = None
 _transient_timestamp = 0.0
 
 def get_target_os() -> str:
-    """USBスイッチ実機の物理状態に準拠してターゲットOSを返却 (ON=Bazzite, OFF=Windows)"""
+    """永続化された pcTargetOs を優先返却。未設定時のみ USBスイッチ実機状態にフォールバック。"""
+    saved = state_manager.load_state().get("pcTargetOs")
+    if saved in ("Windows", "Bazzite"):
+        return saved
+    # フォールバック: USBスイッチの物理状態から推定
     return "Bazzite" if usb_service.get_usb_power() else "Windows"
 
 def set_target_os(target_os: str) -> dict:
-    """ターゲットOSに合わせてUSBスイッチを設定 (Bazzite=ON, Windows=OFF)"""
+    """ターゲットOSに合わせて永続化およびUSBスイッチ実機を設定 (Bazzite=ON, Windows=OFF)"""
     is_bazzite = (target_os.lower() == "bazzite")
+    actual_os = "Bazzite" if is_bazzite else "Windows"
+    # 1. ユーザーの選択を確実に永続保存
+    state_manager.update_state(pcTargetOs=actual_os, usbPower=is_bazzite)
+    # 2. USBスイッチ実機に反映
     power = usb_service.set_usb_power(is_bazzite)
-    actual_os = "Bazzite" if power else "Windows"
-    state_manager.update_state(usbPower=power)
     return {
         "status": "success",
         "target_os": actual_os,
@@ -163,15 +169,24 @@ def _monitor_boot():
                 # SSHの応答が確認できた！OS確定
                 with _lock:
                     _transient_state = None
+                    target_os = get_target_os()
+                    desired_power = (target_os == "Bazzite")
                     _cached_status = {
                         "online": True,
                         "booting": False,
                         "shutting_down": False,
                         "os": os_name,
+                        "target_os": target_os,
+                        "usb_power": desired_power,
                         "ip": PC_IP
                     }
                     try:
-                        state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                        state_manager.save_state({
+                            "pcOnline": True,
+                            "pcOs": os_name,
+                            "pcTargetOs": target_os,
+                            "usbPower": desired_power
+                        })
                     except Exception:
                         pass
                 print(f"[PC Monitor] PC booted with verified SSH: {os_name}")
@@ -183,6 +198,8 @@ def _monitor_boot():
     with _lock:
         if _transient_state == 'booting':
             _transient_state = None
+            target_os = get_target_os()
+            desired_power = (target_os == "Bazzite")
             if is_pc_online():
                 # Pingは通っているのでPC自体は稼働中だが、SSHバナー未確認
                 _cached_status = {
@@ -190,12 +207,17 @@ def _monitor_boot():
                     "booting": False,
                     "shutting_down": False,
                     "os": "Unknown",
-                    "target_os": get_target_os(),
-                    "usb_power": usb_service.get_usb_power(),
+                    "target_os": target_os,
+                    "usb_power": desired_power,
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": True, "pcOs": "Unknown"})
+                    state_manager.save_state({
+                        "pcOnline": True,
+                        "pcOs": "Unknown",
+                        "pcTargetOs": target_os,
+                        "usbPower": desired_power
+                    })
                 except Exception:
                     pass
                 print("[PC Monitor] PC is online via ping, SSH unverified (Unknown)")
@@ -205,12 +227,17 @@ def _monitor_boot():
                     "booting": False,
                     "shutting_down": False,
                     "os": "オフライン",
-                    "target_os": get_target_os(),
-                    "usb_power": usb_service.get_usb_power(),
+                    "target_os": target_os,
+                    "usb_power": desired_power,
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+                    state_manager.save_state({
+                        "pcOnline": False,
+                        "pcOs": "オフライン",
+                        "pcTargetOs": target_os,
+                        "usbPower": desired_power
+                    })
                 except Exception:
                     pass
                 print("[PC Monitor] PC boot timed out.")
@@ -225,23 +252,37 @@ def _monitor_shutdown():
             if _transient_state != 'shutting_down':
                 return
         if not is_pc_online():
+            target_os = get_target_os()
+            desired_power = (target_os == "Bazzite")
+            # PC電源切断時のATX 5V瞬断によりESP8266がリセットされてOFFになる場合があるため、
+            # 安定待ち(1.5秒)の後にBazziteなら確実にONへ再設定
+            if desired_power:
+                try:
+                    time.sleep(1.5)
+                    usb_service.set_usb_power(True)
+                except Exception as e:
+                    print(f"[PC Monitor] Restore USB switch error: {e}")
             with _lock:
                 _transient_state = None
-                target_os = get_target_os()
                 _cached_status = {
                     "online": False,
                     "booting": False,
                     "shutting_down": False,
                     "os": "オフライン",
                     "target_os": target_os,
-                    "usb_power": (target_os == "Bazzite"),
+                    "usb_power": desired_power,
                     "ip": PC_IP
                 }
                 try:
-                    state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+                    state_manager.save_state({
+                        "pcOnline": False,
+                        "pcOs": "オフライン",
+                        "pcTargetOs": target_os,
+                        "usbPower": desired_power
+                    })
                 except Exception:
                     pass
-            print("[PC Monitor] PC shutdown confirmed.")
+            print(f"[PC Monitor] PC shutdown confirmed. Preserved target_os={target_os}")
             return
 
     # タイムアウト
@@ -287,7 +328,12 @@ def _monitor_restart():
                         "ip": PC_IP
                     }
                     try:
-                        state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                        state_manager.save_state({
+                            "pcOnline": True,
+                            "pcOs": os_name,
+                            "pcTargetOs": target_os,
+                            "usbPower": (target_os == "Bazzite")
+                        })
                     except Exception:
                         pass
                 print(f"[PC Monitor] PC reboot completed with verified SSH: {os_name}")
@@ -312,7 +358,12 @@ def _monitor_restart():
                 "ip": PC_IP
             }
             try:
-                state_manager.save_state({"pcOnline": online, "pcOs": os_name})
+                state_manager.save_state({
+                    "pcOnline": online,
+                    "pcOs": os_name,
+                    "pcTargetOs": target_os,
+                    "usbPower": (target_os == "Bazzite")
+                })
             except Exception:
                 pass
             print(f"[PC Monitor] PC reboot monitor finished (online={online}, os={os_name})")
@@ -341,7 +392,12 @@ def get_pc_status(force_refresh=False):
                             "ip": PC_IP
                         }
                         try:
-                            state_manager.save_state({"pcOnline": True, "pcOs": os_name})
+                            state_manager.save_state({
+                                "pcOnline": True,
+                                "pcOs": os_name,
+                                "pcTargetOs": target_os,
+                                "usbPower": usb_power
+                            })
                         except Exception:
                             pass
                         return _cached_status
@@ -364,6 +420,11 @@ def get_pc_status(force_refresh=False):
             if now - _transient_timestamp < SHUTDOWN_TIMEOUT:
                 if not is_pc_online():
                     _transient_state = None
+                    if usb_power:
+                        try:
+                            usb_service.set_usb_power(True)
+                        except Exception:
+                            pass
                     _cached_status = {
                         "online": False,
                         "booting": False,
@@ -374,7 +435,12 @@ def get_pc_status(force_refresh=False):
                         "ip": PC_IP
                     }
                     try:
-                        state_manager.save_state({"pcOnline": False, "pcOs": "オフライン"})
+                        state_manager.save_state({
+                            "pcOnline": False,
+                            "pcOs": "オフライン",
+                            "pcTargetOs": target_os,
+                            "usbPower": usb_power
+                        })
                     except Exception:
                         pass
                     return _cached_status
@@ -401,6 +467,14 @@ def get_pc_status(force_refresh=False):
         online = is_pc_online()
         os_name = detect_os_from_banner() if online else "オフライン"
 
+        # PCがオフライン時、もしtarget_osがBazziteなのにUSBスイッチ実機がOFFなら
+        # (PC手動電源切断時の瞬断リセット)、実機をBazzite(ON)へ自動修復・保存
+        if not online and usb_power:
+            current_power = usb_service.get_usb_power()
+            if not current_power:
+                print("[PC Service] Restoring USB switch to ON (PC offline, target_os=Bazzite)")
+                usb_service.set_usb_power(True)
+
         _cached_status = {
             "online": online,
             "booting": False,
@@ -412,16 +486,29 @@ def get_pc_status(force_refresh=False):
         }
         _last_check = now
         try:
-            state_manager.save_state({"pcOnline": online, "pcOs": os_name})
+            state_manager.save_state({
+                "pcOnline": online,
+                "pcOs": os_name,
+                "pcTargetOs": target_os,
+                "usbPower": usb_power
+            })
         except Exception:
             pass
         return _cached_status
 
-def boot_pc():
+def boot_pc(target_os: str = None):
     """Wake-on-LAN を送信し、楽観的起動ステートを開始"""
     global _transient_state, _transient_timestamp, _cached_status
 
+    if target_os:
+        set_target_os(target_os)
+
     current_target = get_target_os()
+    desired_power = (current_target == "Bazzite")
+
+    # 起動前に実機の物理スイッチ状態を確実に目的のOSと一致させる
+    if usb_service.get_usb_power() != desired_power:
+        usb_service.set_usb_power(desired_power)
 
     st = get_pc_status(force_refresh=True)
     if st["online"] and not st.get("booting") and not st.get("shutting_down"):
@@ -450,11 +537,16 @@ def boot_pc():
             "shutting_down": False,
             "os": "起動中",
             "target_os": current_target,
-            "usb_power": (current_target == "Bazzite"),
+            "usb_power": desired_power,
             "ip": PC_IP
         }
         try:
-            state_manager.save_state({"pcOnline": True, "pcOs": "起動中"})
+            state_manager.save_state({
+                "pcOnline": True,
+                "pcOs": "起動中",
+                "pcTargetOs": current_target,
+                "usbPower": desired_power
+            })
         except Exception:
             pass
 
@@ -462,7 +554,7 @@ def boot_pc():
 
     return {
         "status": "success",
-        "message": "起動シグナル(WoL)を送信しました。起動中",
+        "message": f"起動シグナル(WoL)を送信しました ({current_target}で起動中)",
         "online": True,
         "booting": True,
         "os": "起動中",
@@ -552,7 +644,12 @@ def shutdown_pc():
                 "ip": PC_IP
             }
             try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "終了中"})
+                state_manager.save_state({
+                    "pcOnline": False,
+                    "pcOs": "終了中",
+                    "pcTargetOs": target_os,
+                    "usbPower": (target_os == "Bazzite")
+                })
             except Exception:
                 pass
 
@@ -603,7 +700,12 @@ def sleep_pc():
                 "ip": PC_IP
             }
             try:
-                state_manager.save_state({"pcOnline": False, "pcOs": "終了中"})
+                state_manager.save_state({
+                    "pcOnline": False,
+                    "pcOs": "終了中",
+                    "pcTargetOs": target_os,
+                    "usbPower": (target_os == "Bazzite")
+                })
             except Exception:
                 pass
 
@@ -654,7 +756,12 @@ def restart_pc():
                 "ip": PC_IP
             }
             try:
-                state_manager.save_state({"pcOnline": True, "pcOs": "起動中"})
+                state_manager.save_state({
+                    "pcOnline": True,
+                    "pcOs": "起動中",
+                    "pcTargetOs": target_os,
+                    "usbPower": (target_os == "Bazzite")
+                })
             except Exception:
                 pass
 

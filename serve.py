@@ -260,7 +260,7 @@ def dispatch_internal_api(endpoint: str, payload: dict):
         if endpoint == '/api/pc/os' or action in ('set_os', 'select_os'):
             return pc_service.set_target_os(target_os or 'Windows')
         elif endpoint == '/api/pc/boot' or action in ('boot', 'on', 'start'):
-            return pc_service.boot_pc()
+            return pc_service.boot_pc(target_os=target_os)
         elif endpoint == '/api/pc/shutdown' or action in ('shutdown', 'off', 'stop'):
             return pc_service.shutdown_pc()
         elif endpoint == '/api/pc/sleep' or action in ('sleep', 'suspend'):
