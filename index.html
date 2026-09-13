@@ -914,37 +914,37 @@
       <div class="relative grid grid-cols-2 gap-3 pt-2">
         
         <!-- モード ドロップアップ ポップオーバー -->
-        <div id="mode-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-60 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+        <div id="mode-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
           <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">モード</div>
           <div class="space-y-0.5">
-            <button onclick="selectAcMode('cool')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectAcMode('cool')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-[#2196f3]">
                 <span class="material-symbols-rounded text-xl">ac_unit</span>
                 <span class="text-white">冷房</span>
               </div>
-              <span id="check-mode-cool" class="text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-mode-cool" class="text-[#2196f3] flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
-            <button onclick="selectAcMode('dry')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectAcMode('dry')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-[#00bcd4]">
                 <span class="material-symbols-rounded symbol-fill text-xl">water_drop</span>
                 <span class="text-white">除湿</span>
               </div>
-              <span id="check-mode-dry" class="hidden text-[#00bcd4] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-mode-dry" class="hidden text-[#00bcd4] flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
             <div class="h-px bg-white/10 my-1"></div>
-            <button onclick="selectAcMode('off')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectAcMode('off')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-neutral-400">
                 <span class="material-symbols-rounded text-xl">power_settings_new</span>
                 <span class="text-neutral-300">オフ</span>
               </div>
-              <span id="check-mode-off" class="hidden text-neutral-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-mode-off" class="hidden text-neutral-400 flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
           </div>
         </div>
 
         <!-- モード トリガーボタン -->
         <button id="btn-trigger-mode" onclick="toggleDropup('mode-dropup-menu', event)" 
-                class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-colors shadow-sm border border-white/[0.04]">
+                class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
           <div id="detail-mode-icon" class="text-[#2196f3] shrink-0 flex items-center justify-center">
             <span class="material-symbols-rounded text-2xl">ac_unit</span>
           </div>
@@ -956,11 +956,11 @@
         </button>
 
         <!-- ファンモード ドロップアップ ポップオーバー -->
-        <div id="fan-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 right-0 w-60 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+        <div id="fan-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 right-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
           <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">ファンモード</div>
           <div class="space-y-0.5">
             <!-- 自動 -->
-            <button onclick="selectFanMode('auto')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectFanMode('auto')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-neutral-200">
                 <div class="w-5 h-5 flex items-center justify-center shrink-0">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -969,10 +969,10 @@
                 </div>
                 <span>自動</span>
               </div>
-              <span id="check-fan-auto" class="text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-fan-auto" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
             <!-- 弱 -->
-            <button onclick="selectFanMode('low')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectFanMode('low')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-neutral-200">
                 <div class="w-5 h-5 flex items-center justify-center shrink-0">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -983,10 +983,10 @@
                 </div>
                 <span>弱</span>
               </div>
-              <span id="check-fan-low" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-fan-low" class="hidden text-sky-400 flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
             <!-- 中 -->
-            <button onclick="selectFanMode('medium')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectFanMode('medium')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-neutral-200">
                 <div class="w-5 h-5 flex items-center justify-center shrink-0">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -998,10 +998,10 @@
                 </div>
                 <span>中</span>
               </div>
-              <span id="check-fan-medium" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-fan-medium" class="hidden text-sky-400 flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
             <!-- 強 -->
-            <button onclick="selectFanMode('high')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectFanMode('high')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-neutral-200">
                 <div class="w-5 h-5 flex items-center justify-center shrink-0">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -1014,14 +1014,14 @@
                 </div>
                 <span>強</span>
               </div>
-              <span id="check-fan-high" class="hidden text-sky-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-fan-high" class="hidden text-sky-400 flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
           </div>
         </div>
 
         <!-- ファンモード トリガーボタン -->
         <button id="btn-trigger-fan" onclick="toggleDropup('fan-dropup-menu', event)" 
-                class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-colors shadow-sm border border-white/[0.04]">
+                class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
           <div id="detail-fan-icon" class="text-neutral-200 shrink-0 flex items-center justify-center">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 11a1 1 0 1 0 1 1 1 1 0 0 0-1-1zm0-9a4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 4 0c0 1.5-1.5 2.5-2 3.5v.5h1.5c1.5 0 2.5-1.5 3.5-2a4 4 0 0 0-5-6zm-6 9a2 2 0 0 1 0-4 4 4 0 0 0-4 4 1 1 0 0 0 2 0 2 2 0 0 1 2 0zm14.5 4h-1.1l-.4 1.2h-1.3l1.8-5h1.4l1.8 5h-1.3zm-.4-1.2l-.4-1.4-.4 1.4zM12 15a4 4 0 0 0 4-4 1 1 0 0 0-2 0 2 2 0 0 1-4 0c0-1.5 1.5-2.5 2-3.5v-.5h-1.5c-1.5 0-2.5 1.5-3.5 2a4 4 0 0 0 5 6z"/>
@@ -1086,11 +1086,11 @@
           <div id="light-action-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
             <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">アクション</div>
             <div class="space-y-0.5">
-              <button onclick="selectLightAction('full')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectLightAction('full')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">light_mode</span>
                 <span class="text-white">全灯</span>
               </button>
-              <button onclick="selectLightAction('night')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectLightAction('night')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">bedtime</span>
                 <span class="text-white">常夜灯</span>
               </button>
@@ -1112,7 +1112,7 @@
         </div>
 
         <!-- 2段目: 明るさ ［ー］ ［＋］ (数値なしスピンボックス) -->
-        <div class="w-full bg-[#2a2d36] rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm border border-white/[0.04]">
+        <div class="w-full h-[58px] bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between shadow-sm border border-white/[0.04]">
           <div class="flex items-center space-x-3">
             <span id="detail-light-brightness-icon" class="material-symbols-rounded text-2xl text-neutral-400 shrink-0 transition-colors">brightness_medium</span>
             <div class="overflow-hidden leading-tight flex-1">
@@ -1221,27 +1221,27 @@
         <div id="heater-mode-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
           <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">モード</div>
           <div class="space-y-0.5">
-            <button onclick="selectHeaterMode('heat')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectHeaterMode('heat')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-[#f57c00]">
                 <span class="material-symbols-rounded text-xl">mode_heat</span>
                 <span class="text-white">暖房</span>
               </div>
-              <span id="check-heater-heat" class="text-[#f57c00] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-heater-heat" class="text-[#f57c00] flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
             <div class="h-px bg-white/10 my-1"></div>
-            <button onclick="selectHeaterMode('off')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+            <button onclick="selectHeaterMode('off')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
               <div class="flex items-center space-x-3 text-neutral-400">
                 <span class="material-symbols-rounded text-xl">power_settings_new</span>
                 <span class="text-neutral-300">オフ</span>
               </div>
-              <span id="check-heater-off" class="hidden text-neutral-400 flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+              <span id="check-heater-off" class="hidden text-neutral-400 flex items-center justify-center shrink-0 w-5 h-5"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
             </button>
           </div>
         </div>
 
         <!-- 1段目: モード トリガーボタン (フル幅) -->
         <button id="btn-trigger-heater-mode" onclick="toggleDropup('heater-mode-dropup-menu', event)" 
-                class="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-colors shadow-sm border border-white/[0.04]">
+                class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
           <div id="detail-heater-mode-icon" class="text-[#f57c00] shrink-0 flex items-center justify-center">
             <span class="material-symbols-rounded text-2xl">mode_heat</span>
           </div>
@@ -1257,7 +1257,7 @@
           <!-- エコ ボタン (押すだけ) -->
           <button onclick="pressHeaterEco()" 
                   id="btn-heater-eco"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
             <div id="detail-heater-eco-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
               <span class="material-symbols-rounded text-2xl">eco</span>
             </div>
@@ -1269,7 +1269,7 @@
           <!-- パワー ボタン (押すだけ) -->
           <button onclick="pressHeaterPower()" 
                   id="btn-heater-power"
-                  class="flex items-center space-x-3 px-4 py-3.5 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
             <div id="detail-heater-power-icon" class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
               <span class="material-symbols-rounded text-2xl">bolt</span>
             </div>
@@ -1363,15 +1363,15 @@
           <div id="cleaner-action-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
             <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">アクション</div>
             <div class="space-y-0.5">
-              <button onclick="selectCleanerAction('start')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectCleanerAction('start')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">play_arrow</span>
                 <span class="text-white">開始</span>
               </button>
-              <button onclick="selectCleanerAction('pause')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectCleanerAction('pause')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">pause</span>
                 <span class="text-white">停止</span>
               </button>
-              <button onclick="selectCleanerAction('stop')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectCleanerAction('stop')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">home</span>
                 <span class="text-white">ホーム</span>
               </button>
@@ -1392,53 +1392,56 @@
           </button>
         </div>
 
-        <!-- 吸引力 ドロップアップ ポップオーバー (3段階: 標準 / BoostIQ / 最大) -->
-        <div id="cleaner-speed-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
-          <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">吸引力</div>
-          <div class="space-y-0.5">
-            <button onclick="selectCleanerSpeed('Standard')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-neutral-300">
-                <span class="material-symbols-rounded text-xl">air</span>
-                <span class="text-white">標準</span>
-              </div>
-              <span id="check-cleaner-speed-standard" class="text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
-            </button>
-            <button onclick="selectCleanerSpeed('Boost_IQ')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-neutral-300">
-                <span class="material-symbols-rounded text-xl">speed</span>
-                <span class="text-white">BoostIQ</span>
-              </div>
-              <span id="check-cleaner-speed-boostiq" class="hidden text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
-            </button>
-            <button onclick="selectCleanerSpeed('Max')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
-              <div class="flex items-center space-x-3 text-neutral-300">
-                <span class="material-symbols-rounded text-xl">rocket_launch</span>
-                <span class="text-white">最大</span>
-              </div>
-              <span id="check-cleaner-speed-max" class="hidden text-[#2196f3] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
-            </button>
-          </div>
-        </div>
-
         <!-- 2段目: 吸引力 & Find Me ボタン (他シートと同一の標準サイズ) -->
         <div class="grid grid-cols-2 gap-3">
-          <!-- 吸引力 ドロップアップ トリガーボタン -->
-          <button id="btn-trigger-cleaner-speed" onclick="toggleDropup('cleaner-speed-dropup-menu', event)" 
-                  class="h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
-            <div id="detail-cleaner-speed-icon" class="text-neutral-400 shrink-0 flex items-center justify-center">
-              <span class="material-symbols-rounded text-2xl">air</span>
+          <!-- 吸引力 ドロップアップ コンテナ -->
+          <div class="relative">
+            <!-- 吸引力 ドロップアップ ポップオーバー (3段階: 標準 / BoostIQ / 最大) -->
+            <div id="cleaner-speed-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+              <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">吸引力</div>
+              <div class="space-y-0.5">
+                <button onclick="selectCleanerSpeed('Standard')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                  <div class="flex items-center space-x-3 text-neutral-300">
+                    <span class="material-symbols-rounded text-xl">air</span>
+                    <span class="text-white">標準</span>
+                  </div>
+                  <span id="check-cleaner-speed-standard" class="text-[#2196f3] shrink-0 w-5 h-5 flex items-center justify-center"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
+                </button>
+                <button onclick="selectCleanerSpeed('Boost_IQ')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                  <div class="flex items-center space-x-3 text-neutral-300">
+                    <span class="material-symbols-rounded text-xl">speed</span>
+                    <span class="text-white">BoostIQ</span>
+                  </div>
+                  <span id="check-cleaner-speed-boostiq" class="hidden text-[#2196f3] shrink-0 w-5 h-5 flex items-center justify-center"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
+                </button>
+                <button onclick="selectCleanerSpeed('Max')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+                  <div class="flex items-center space-x-3 text-neutral-300">
+                    <span class="material-symbols-rounded text-xl">rocket_launch</span>
+                    <span class="text-white">最大</span>
+                  </div>
+                  <span id="check-cleaner-speed-max" class="hidden text-[#2196f3] shrink-0 w-5 h-5 flex items-center justify-center"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
+                </button>
+              </div>
             </div>
-            <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-xs text-neutral-400 font-normal">吸引力</div>
-              <div id="detail-cleaner-speed-label" class="text-[14px] font-semibold text-white truncate mt-0.5">標準</div>
-            </div>
-            <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
-          </button>
+
+            <!-- 吸引力 ドロップアップ トリガーボタン -->
+            <button id="btn-trigger-cleaner-speed" onclick="toggleDropup('cleaner-speed-dropup-menu', event)" 
+                    class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+              <div id="detail-cleaner-speed-icon" class="text-neutral-400 shrink-0 flex items-center justify-center">
+                <span class="material-symbols-rounded text-2xl">air</span>
+              </div>
+              <div class="overflow-hidden leading-tight flex-1">
+                <div class="text-xs text-neutral-400 font-normal">吸引力</div>
+                <div id="detail-cleaner-speed-label" class="text-[14px] font-semibold text-white truncate mt-0.5">標準</div>
+              </div>
+              <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+            </button>
+          </div>
 
           <!-- Find Me ボタン (押すだけ、通常色アイコン) -->
           <button onclick="pressCleanerFindMe()" 
                   id="btn-cleaner-find-me"
-                  class="h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
+                  class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]">
             <div class="text-neutral-400 shrink-0 flex items-center justify-center">
               <span class="material-symbols-rounded text-2xl">notifications_active</span>
             </div>
@@ -1738,11 +1741,11 @@
           <div id="pc-power-options-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
             <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">電源オプション</div>
             <div class="space-y-0.5">
-              <button onclick="selectPcPowerOption('sleep')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectPcPowerOption('sleep')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">bedtime</span>
                 <span class="text-white">スリープ</span>
               </button>
-              <button onclick="selectPcPowerOption('restart')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectPcPowerOption('restart')" class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <span class="material-symbols-rounded text-xl text-neutral-300">restart_alt</span>
                 <span class="text-white">再起動</span>
               </button>
@@ -1766,22 +1769,22 @@
         <!-- 2段目: OS選択 ドロップアップ -->
         <div class="relative">
           <!-- OS選択 ドロップアップ ポップオーバー -->
-          <div id="pc-os-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-64 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
+          <div id="pc-os-dropup-menu" class="dropup-menu closed absolute bottom-full mb-3 left-0 w-56 bg-[#262932] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-30 backdrop-blur-xl">
             <div class="text-[11px] font-semibold text-neutral-400 px-3 py-1.5 uppercase tracking-wider">起動OS</div>
             <div class="space-y-0.5">
-              <button onclick="selectPcOs('Windows')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectPcOs('Windows')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <div class="flex items-center space-x-3 text-[#4a88e8]">
                   <span class="material-symbols-rounded text-xl">desktop_windows</span>
                   <span class="text-white">Windows</span>
                 </div>
-                <span id="check-pc-os-windows" class="text-[#4a88e8] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+                <span id="check-pc-os-windows" class="text-[#4a88e8] shrink-0 w-5 h-5 flex items-center justify-center"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
               </button>
-              <button onclick="selectPcOs('Bazzite')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
+              <button onclick="selectPcOs('Bazzite')" class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium">
                 <div class="flex items-center space-x-3 text-[#c084fc]">
                   <span class="material-symbols-rounded text-xl">sports_esports</span>
                   <span class="text-white">Bazzite</span>
                 </div>
-                <span id="check-pc-os-bazzite" class="hidden text-[#c084fc] flex items-center"><span class="material-symbols-rounded symbol-bold text-lg">check</span></span>
+                <span id="check-pc-os-bazzite" class="hidden text-[#c084fc] shrink-0 w-5 h-5 flex items-center justify-center"><span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span></span>
               </button>
             </div>
           </div>
