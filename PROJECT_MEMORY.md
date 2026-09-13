@@ -40,7 +40,7 @@
 - エアコン: SwitchBot API (冷房/除湿/オフ、22〜28℃)
 - ヒーター: スマートプラグ/赤外線 (暖房/オフ、エコ、パワー)
 - 照明: リモコンAPI (全灯、常夜灯、明るさ上下)
-- クリーナー: Eufy RoboVac G30 (開始/一時停止/帰還/探す)
+- クリーナー: Eufy RoboVac G30 (開始/一時停止/帰還/探す) / 詳細シート(`cleaner-sheet`)は他シートと統一されたアクションドロップアップ(開始/停止/ホーム、トリガーは「アクション - 操作を選択」固定表示)
 - デスクトップPC: IP `192.168.0.20` / MAC `a8:a1:59:60:6f:c0` / WoLブート / SSH電源制御
 - 起動OS (USBスイッチ): Sinilink USB (ESPHome Native API, IP `192.168.0.210`:6053, Key `2653998163`) / ON=Bazzite, OFF=Windows / `pcTargetOs`二重永続化 ＆ PC電源オフ時の瞬断リセットに対するON自動復旧(セルフヒーリング)
 
@@ -76,9 +76,9 @@
 - テスト通過後: `git commit & push` (`Soh-Hoshi/SmartHome-Dashboard`)
 - 常駐: `systemctl --user restart dashboard.service`
 
-## 4. 現在の稼働状態 (2026-09-08)
+## 4. 現在の稼働状態 (2026-09-13)
 
 - `dashboard.service`: Active running, Port 8080
-- `index.html`: 構文テストPASS / 送信ボタン切替・イコライザー波形連動
+- `index.html`: 構文テストPASS / クリーナー詳細アクションドロップアップ統合 / 送信ボタン切替・イコライザー波形連動
 - APK: `android_bridge/app/build/outputs/apk/release/app-release.apk` v1.0.4 (2.5MB)
 - Git: `origin/main` プッシュ可能状態
