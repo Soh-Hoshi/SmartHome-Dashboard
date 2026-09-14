@@ -16,13 +16,24 @@ const props = withDefaults(defineProps<{
   weight: 400
 })
 
-// MDI by default for power and cleaner as requested by user
+// MDI by default for power, cleaner, and fan speeds as requested by user
 const defaultMdiIcons = new Set([
   'power',
   'power_settings_new',
   'vacuum',
   'robot_vacuum',
-  'cleaner'
+  'cleaner',
+  'fan_auto',
+  'fan_speed_1',
+  'fan_speed_2',
+  'fan_speed_3',
+  'fan-auto',
+  'fan-speed-1',
+  'fan-speed-2',
+  'fan-speed-3',
+  'fan1',
+  'fan2',
+  'fan3'
 ])
 
 const isMdi = computed(() => {
@@ -30,7 +41,7 @@ const isMdi = computed(() => {
   if (props.type === 'mdi') return true
   if (props.type === 'material') return false
   const n = props.name || ''
-  if (n.startsWith('mdi:') || n.startsWith('mdi-')) return true
+  if (n.startsWith('mdi:') || n.startsWith('mdi-') || n.startsWith('fan_') || n.startsWith('fan-')) return true
   return defaultMdiIcons.has(n)
 })
 

@@ -52,10 +52,10 @@ const fanLabel = computed(() => {
 
 const fanIconName = computed(() => {
   switch (props.fan) {
-    case 'low': return 'air'
-    case 'medium': return 'mode_fan'
-    case 'high': return 'cyclone'
-    default: return 'autorenew'
+    case 'low': return 'fan_speed_1'
+    case 'medium': return 'fan_speed_2'
+    case 'high': return 'fan_speed_3'
+    default: return 'fan_auto'
   }
 })
 
@@ -321,7 +321,7 @@ function updateFromPointer(e: PointerEvent) {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-neutral-300">
-                <AppIcon name="autorenew" :size="20" />
+                <AppIcon name="fan_auto" :size="20" />
                 <span class="text-white">自動</span>
               </div>
               <span v-if="fan === 'auto'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
@@ -336,7 +336,7 @@ function updateFromPointer(e: PointerEvent) {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-neutral-300">
-                <AppIcon name="air" :size="20" />
+                <AppIcon name="fan_speed_1" :size="20" />
                 <span class="text-white">弱</span>
               </div>
               <span v-if="fan === 'low'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
@@ -351,7 +351,7 @@ function updateFromPointer(e: PointerEvent) {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-neutral-300">
-                <AppIcon name="mode_fan" :size="20" />
+                <AppIcon name="fan_speed_2" :size="20" />
                 <span class="text-white">中</span>
               </div>
               <span v-if="fan === 'medium'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
@@ -366,7 +366,7 @@ function updateFromPointer(e: PointerEvent) {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-neutral-300">
-                <AppIcon name="cyclone" :size="20" />
+                <AppIcon name="fan_speed_3" :size="20" />
                 <span class="text-white">強</span>
               </div>
               <span v-if="fan === 'high'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
