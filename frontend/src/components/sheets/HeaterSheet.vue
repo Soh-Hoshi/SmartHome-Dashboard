@@ -114,7 +114,7 @@ function handleSelectMode(m: 'heat' | 'off') {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-[#f57c00]">
-                <AppIcon name="hvac" :size="20" />
+                <AppIcon name="mode_heat" :size="20" />
                 <span class="text-white">暖房</span>
               </div>
               <span v-if="mode === 'heat'" class="text-[#f57c00] flex items-center justify-center shrink-0 w-5 h-5">
@@ -144,7 +144,7 @@ function handleSelectMode(m: 'heat' | 'off') {
         <SheetButton
           sublabel="モード"
           :label="mode === 'heat' ? '暖房' : 'オフ'"
-          :icon="mode === 'heat' ? 'hvac' : 'power'"
+          :icon="mode === 'heat' ? 'mode_heat' : 'power'"
           :iconColor="mode === 'heat' ? 'text-[#f57c00]' : 'text-neutral-400'"
           :hasDropdown="true"
           @click.stop="openModeDropup = !openModeDropup"
