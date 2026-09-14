@@ -53,7 +53,8 @@
 - Hardening(2026-09): `readTimeout=45000` / `last_poll_ts` SharedPreferences永続化 / `setOnlyAlertOnce(true)` / ID正規化(2000〜101999、常駐ID1001と衝突防止) / `getBaseUrl()`で`/dashboard`サブパス保持 / SSEキュー`maxsize=100`
 - CLI: `smarthome notification [タイトル] <メッセージ>` / `smarthome notify <メッセージ> [--title, --progress, --action, --reply, --test-away, --test-progress]`
 - テスト: `python3 test_notifications_e2e.py`(全8項目PASS)
-- 自動ビルド: GitHub Actions `.github/workflows/build_apk.yml` → Release `android-latest` に `NovaAssist.apk`
+- 自動ビルド: GitHub Actions `.github/workflows/build_apk.yml` → Release `v${VERSION}` に `NovaAssist.apk`（`RELEASE_NOTES.md` からチェンジログを反映）
+- リリース運用: 過度な装飾は廃止。基本仕様は `README.md`、各バージョンの差分・固有変更点は `RELEASE_NOTES.md` に記載してリリース
 
 **認証(クローラー遮断):**
 - `auth_service.py`: `config.json`の`access_key`をHMAC-SHA256署名Cookie(`sh_auth`、10年、HttpOnly,Secure)で管理
@@ -83,7 +84,7 @@
 - `dashboard.service`: Active running, Port 8080 (本番URL: `https://home.sohhoshi.com/` ルート直下配信、Vue 3 新フロントエンドを本番デプロイ済み)
 - `dev.sohhoshi.com`: 新フロントエンド開発環境（Vite 8 + Vue 3 + Tailwind + TS、必要時に `npm run dev` で FRP port 15173 -> 5173 経由で利用可能）
 - ブランチ: `main` に一本化（`feature/modern-frontend` マージ済み）
-- APK: `android_bridge/app/build/outputs/apk/release/app-release.apk` v1.0.4 (2.5MB)
+- APK: `Nova Assist v1.0` (versionCode 12, versionName "1.0", 単一統合クライアント)
 - Git: `origin/main` プッシュ済み
 
 

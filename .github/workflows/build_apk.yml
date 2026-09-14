@@ -5,6 +5,7 @@ on:
     paths:
       - 'android_bridge/**'
       - '.github/workflows/build_apk.yml'
+      - 'RELEASE_NOTES.md'
   workflow_dispatch:
 
 permissions:
@@ -67,21 +68,7 @@ jobs:
         with:
           tag_name: v${{ env.VERSION }}
           name: "Nova Assist v${{ env.VERSION }}"
-          body: |
-            ### 🤖 Nova Assist Android Bridge (v${{ env.VERSION }})
-            Androidの「デフォルトのデジタルアシスタントアプリ」＋「サーバー通知受信」対応の超軽量ブリッジアプリです。
-
-            **主な機能**:
-            - ✨ **Gemini風ミニマルフローティングUI**: 余計なシートやボタンを排除し、画面下部に検索カプセルだけが浮遊する極限のミニマル設計
-            - ⊞ **フロート式ダッシュボードボタン**: 検索バー上部に小さくフロートするボタンから全画面ダッシュボードへワンタップ移行
-            - 🎙️ **即時音声認識＆ステータス表示**: マイクボタンのステータス変化と音声入力
-            - ↩️ **自動復帰**: コマンド実行成功時は自動クローズ（外側タップや下フリックでも即終了）
-
-            **インストール手順**:
-            1. 下記の Assets から `NovaAssist.apk` をスマホでダウンロードしてインストール
-            2. 初回起動時に通知とマイクの権限を許可
-            3. Androidの **「設定 ➔ アプリ ➔ デフォルトアプリ ➔ デジタルアシスタントアプリ」** で **「Nova Assist」** を選択
-            4. 電源ボタン長押しや画面下端スワイプで即座にNovaが音声入力待機状態で起動します！
+          body_path: RELEASE_NOTES.md
           files: build_output/NovaAssist.apk
           make_latest: true
         env:

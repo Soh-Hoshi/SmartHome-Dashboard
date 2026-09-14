@@ -1,66 +1,66 @@
-# SmartHome Dashboard & Assistant (NOVA)
+# SmartHome Dashboard & Assistant (Nova)
 
-Apple/Google Home風ダークテーマUI。家電・PC電源・センサー統合スマートホームダッシュボード。
+ダークテーマUIを採用した、家電・PC電源・センサー統合スマートホームシステムおよび専用クライアント。
 
-## 機能
+## 概要
 
-**ダッシュボード（カテゴリ制Masonryレイアウト）**
-- PC: Wake-on-LAN起動、SSH経由スリープ/再起動/シャットダウン、デュアルブート(Win/Bazzite)OS切替
-- 家電: リビング照明(5段階)・エアコン(SwitchBot API)・ヒーター・クリーナー(Eufy RoboVac G30)
-- センサー: 気象(川崎市中原区木月/Open-Meteo JMA)・在宅確認(ARP/ICMP 2秒間隔)・鍵トラッカー(Tile Mate BLE)
+本システムは、自宅サーバーで稼働するバックエンド（Python）と、モダンWeb技術で構築されたダッシュボード（Vue 3 + TypeScript + Tailwind CSS）、およびAndroid統合アプリ「Nova Assist」で構成されています。
 
-**オートメーション**
-- 平日06:30: リビング照明自動点灯
-- 平日09:00: クリーナー自動起動
-- 外出時消し忘れ防止: 照明/エアコン稼働中のみ通知送信→「いってきます」ワンタップで一括停止
+## 主な機能
 
-**スマートシーン**: おはよう/おやすみ/いってきます/ただいま
+### 1. ダッシュボード
+- **PC電源管理**: Wake-on-LANによる起動、SSH経由のスリープ・再起動・シャットダウン、デュアルブートOS切替（Windows / Bazzite）
+- **家電操作**: リビング照明（明るさ5段階・常夜灯）、エアコン（冷房/除湿/暖房/オフ・風量・温度設定）、ヒーター（暖房/オフ・エコ/パワー）、ロボット掃除機（開始/一時停止/ホーム/吸引力設定/探す）
+- **センサー監視**: 気象情報（川崎市中原区木月 / Open-Meteo JMA）、在宅確認（スマートフォンARP/ICMP監視による在宅・外出判定）、鍵トラッカー（Tile Mate BLEリアルタイム検知）
+- **スマートシーン**: おはよう、おやすみ、いってきます、ただいまの一括制御
+- **オートメーション**: 日本の祝日を考慮した平日自動制御（照明点灯、掃除機起動、外出時の消し忘れ検知など）
 
-**アシスタント「NOVA」**: ルールベース(0ms) + Gemini 2.0 Flash(無料枠) + Ollamaフォールバック
+### 2. 音声アシスタント「NOVA」
+- ルールベース高速応答（0ms）とGemini 2.0 Flash（LLM）のハイブリッド構成（Ollamaローカルフォールバック対応）
+- 音声入力による家電操作、PC電源操作、室内状態確認
 
-**PWA & Nova Assist**: Android常駐ネイティブアプリによるプッシュ通知
+### 3. Android 統合クライアント「Nova Assist」
+ダッシュボード閲覧、常駐プッシュ通知、デジタルアシスタントを1つのアプリに統合しています。
 
-## ファイル構成
+- **フルスクリーンダッシュボード**: アプリ起動で即座にダッシュボードを表示
+- **デジタルアシスタント**: Androidの「デフォルトのデジタルアシスタントアプリ」に設定可能。電源ボタン長押しやナビゲーションジェスチャーから即座にNova音声入力が起動
+- **常駐通知**: サーバーからのSSE接続によるリアルタイム通知。外出時の消し忘れ警告（「いってきます」「Novaへ指示」のインライン操作）や各種ステータス通知を受信
 
-| ファイル | 役割 |
-| :--- | :--- |
-| `index.html` | Tailwind CSS + Material Symbols フロントエンド |
-| `serve.py` | HTTP & REST API / SSE サーバー (Port: 8080) |
-| `pc_service.py` | PC電源管理 (WoL, SSH非同期制御, OS状態監視) |
-| `usb_service.py` | USBリレースイッチ制御 (デュアルブートOS選択) |
-| `auth_service.py` | HMAC署名Cookie認証 & クローラー遮断 |
-| `state_manager.py` | 家電/PC/センサー状態管理 & JSON永続化 |
-| `push_service.py` | Nova Assist通知キューイング & 配信 |
-| `weather_service.py` | 気象データ取得・キャッシュ (Open-Meteo JMA) |
-| `presence_service.py` | スマートフォンLAN検知 (2秒間隔プローブ) |
-| `tile_service.py` | Tile Mate BLEリアルタイムスキャン |
-| `automation_service.py` | 日本祝日判定 & オートメーション |
-| `assistant_engine.py` | NOVAエンジン (Gemini 2.0 Flashハイブリッド) |
-| `switchbot_client.py` | SwitchBot APIクライアント |
-| `eufy_client.py` | Eufy RoboVac G30ローカルプロトコル |
-| `PROJECT_MEMORY.md` | プロジェクト記憶・設計規約・引き継ぎ |
+#### Nova Assist インストール手順
+1. 本リポジトリの [Releases](../../releases) から最新の `NovaAssist.apk` をダウンロードしてインストール
+2. 初回起動時にマイクおよび通知の権限を許可
+3. Androidの「設定」→「アプリ」→「デフォルトアプリ」→「デジタルアシスタントアプリ」で「Nova Assist」を選択
+4. 電源ボタン長押し等のショートカットでアシスタントが起動可能になります
 
-## ネットワーク構成
+## アーキテクチャ・ネットワーク構成
 
 ```
-クライアント → HTTPS → Cloudflare → Oracle Cloud VPS(168.110.50.171)
-→ Nginx → FRP Server(18080) → FRP Tunnel → 自宅frpc(192.168.0.10)
-→ Port 8080 → serve.py
-自宅LAN(192.168.0.0/24): PC(192.168.0.20), SwitchBot, Eufy, Tile, Phone
+クライアント（Webブラウザ / Nova Assist APK）
+    ↓ HTTPS (home.sohhoshi.com)
+Cloudflare
+    ↓
+Oracle Cloud VPS
+    ↓ FRP Tunnel
+自宅サーバー (Port 8080 / serve.py)
+    ├─ frontend/dist (Vue 3 フロントエンド)
+    ├─ 各種センサー・機器制御 API
+    └─ 自宅LAN (PC, SwitchBot, Eufy, Tile, Android)
 ```
 
-- Web: `https://home.sohhoshi.com`
-- ストリーミング: `https://stream.sohhoshi.com` (Sunshine/Moonlight)
-
-## 起動
+## サーバー起動・管理
 
 ```bash
+# サービスのステータス確認
 systemctl --user status dashboard.service
+
+# サービスの再起動
 systemctl --user restart dashboard.service
+
+# ログの確認
 journalctl --user -u dashboard.service -f
 ```
 
-## CLIコマンド (`/home/soh/dashboard/smarthome`)
+## CLIコマンド (`smarthome`)
 
 ```bash
 smarthome pc status|on|sleep|restart|off
