@@ -164,7 +164,7 @@ onUnmounted(() => {
       <Sidebar :activeTab="activeTab" @switchTab="switchTab" />
 
       <!-- メインコンテンツ表示エリア -->
-      <div class="flex-1 min-w-0 pt-24 md:pt-6 pb-28 flex flex-col">
+      <div class="flex-1 min-w-0 pt-[calc(env(safe-area-inset-top,0px)+5.5rem)] md:pt-6 pb-28 flex flex-col">
         <div id="tab-viewport" class="tab-viewport relative w-full overflow-x-clip">
           <!-- タブ1: メインダッシュボード -->
           <DashboardView

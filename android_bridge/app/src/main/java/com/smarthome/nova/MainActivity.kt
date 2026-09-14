@@ -16,6 +16,8 @@ import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 @SuppressLint("NewApi")
 class MainActivity : AppCompatActivity() {
@@ -28,8 +30,14 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
-        window.statusBarColor = Color.parseColor("#0d0f12")
+        // フルスクリーン（Edge-to-Edge）表示でヘッダーとステータスバーを一体化
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.parseColor("#0d0f12")
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false // ダーク背景に合わせてアイコンを白に
+            isAppearanceLightNavigationBars = false
+        }
 
         webView = WebView(this).apply {
             setBackgroundColor(Color.parseColor("#0d0f12"))
