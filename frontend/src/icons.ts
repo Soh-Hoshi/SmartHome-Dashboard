@@ -125,6 +125,7 @@ export const iconMap: Record<string, string> = {
   // Robot Vacuum
   vacuum: mdiRobotVacuum,
   robot_vacuum: mdiRobotVacuum,
+  cleaner: mdiRobotVacuum,
   play: mdiPlay,
   play_arrow: mdiPlay,
   play_circle: mdiPlayCircle,

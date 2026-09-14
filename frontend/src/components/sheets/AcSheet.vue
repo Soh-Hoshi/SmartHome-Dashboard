@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
 import AppIcon from '../common/AppIcon.vue'
+import SheetButton from '../common/SheetButton.vue'
 
 const props = defineProps<{
   temp: number
@@ -15,6 +16,48 @@ const emit = defineEmits<{
   (e: 'selectMode', mode: 'cool' | 'dry' | 'off'): void
   (e: 'selectFan', fan: 'auto' | 'low' | 'medium' | 'high'): void
 }>()
+
+const modeLabel = computed(() => {
+  switch (props.mode) {
+    case 'cool': return '冷房'
+    case 'dry': return '除湿'
+    default: return 'オフ'
+  }
+})
+
+const modeIconName = computed(() => {
+  switch (props.mode) {
+    case 'cool': return 'mode_cool'
+    case 'dry': return 'water_drop'
+    default: return 'power'
+  }
+})
+
+const modeIconColor = computed(() => {
+  switch (props.mode) {
+    case 'cool': return 'text-[#2196f3]'
+    case 'dry': return 'text-[#00bcd4]'
+    default: return 'text-neutral-400'
+  }
+})
+
+const fanLabel = computed(() => {
+  switch (props.fan) {
+    case 'low': return '弱'
+    case 'medium': return '中'
+    case 'high': return '強'
+    default: return '自動'
+  }
+})
+
+const fanIconName = computed(() => {
+  switch (props.fan) {
+    case 'low': return 'air'
+    case 'medium': return 'mode_fan'
+    case 'high': return 'cyclone'
+    default: return 'autorenew'
+  }
+})
 
 // --- ドロップアップ状態 ---
 const openDropup = ref<'mode' | 'fan' | null>(null)
@@ -251,26 +294,15 @@ function updateFromPointer(e: PointerEvent) {
           </div>
         </div>
 
-        <!-- モード トリガーボタン (統一高さ h-[58px]) -->
-        <button
-          type="button"
+        <!-- モード トリガーボタン -->
+        <SheetButton
+          sublabel="モード"
+          :label="modeLabel"
+          :icon="modeIconName"
+          :iconColor="modeIconColor"
+          :hasDropdown="true"
           @click="toggleDropup('mode', $event)"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-        >
-          <div class="shrink-0 flex items-center justify-center" :class="mode === 'cool' ? 'text-[#2196f3]' : mode === 'dry' ? 'text-[#00bcd4]' : 'text-neutral-400'">
-            <AppIcon
-              :name="mode === 'cool' ? 'mode_cool' : mode === 'dry' ? 'water_drop' : 'power'"
-              :size="24"
-            />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[10px] text-neutral-400 font-medium tracking-wide">モード</div>
-            <div class="text-[14px] font-semibold text-white truncate mt-0.5">
-              {{ mode === 'cool' ? '冷房' : mode === 'dry' ? '除湿' : 'オフ' }}
-            </div>
-          </div>
-          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-        </button>
+        />
       </div>
 
       <!-- ファンモード ドロップアップ -->
@@ -288,9 +320,9 @@ function updateFromPointer(e: PointerEvent) {
               @click="handleSelectFan('auto')"
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <div class="flex items-center space-x-3 text-neutral-200">
+              <div class="flex items-center space-x-3 text-neutral-300">
                 <AppIcon name="autorenew" :size="20" />
-                <span>自動</span>
+                <span class="text-white">自動</span>
               </div>
               <span v-if="fan === 'auto'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
                 <AppIcon name="check" :size="18" />
@@ -303,9 +335,9 @@ function updateFromPointer(e: PointerEvent) {
               @click="handleSelectFan('low')"
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <div class="flex items-center space-x-3 text-neutral-200">
+              <div class="flex items-center space-x-3 text-neutral-300">
                 <AppIcon name="air" :size="20" />
-                <span>弱</span>
+                <span class="text-white">弱</span>
               </div>
               <span v-if="fan === 'low'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
                 <AppIcon name="check" :size="18" />
@@ -318,9 +350,9 @@ function updateFromPointer(e: PointerEvent) {
               @click="handleSelectFan('medium')"
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <div class="flex items-center space-x-3 text-neutral-200">
+              <div class="flex items-center space-x-3 text-neutral-300">
                 <AppIcon name="mode_fan" :size="20" />
-                <span>中</span>
+                <span class="text-white">中</span>
               </div>
               <span v-if="fan === 'medium'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
                 <AppIcon name="check" :size="18" />
@@ -333,9 +365,9 @@ function updateFromPointer(e: PointerEvent) {
               @click="handleSelectFan('high')"
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <div class="flex items-center space-x-3 text-neutral-200">
+              <div class="flex items-center space-x-3 text-neutral-300">
                 <AppIcon name="cyclone" :size="20" />
-                <span>強</span>
+                <span class="text-white">強</span>
               </div>
               <span v-if="fan === 'high'" class="text-sky-400 flex items-center justify-center shrink-0 w-5 h-5">
                 <AppIcon name="check" :size="18" />
@@ -344,26 +376,15 @@ function updateFromPointer(e: PointerEvent) {
           </div>
         </div>
 
-        <!-- ファンモード トリガーボタン (統一高さ h-[58px]) -->
-        <button
-          type="button"
+        <!-- ファンモード トリガーボタン -->
+        <SheetButton
+          sublabel="ファンモード"
+          :label="fanLabel"
+          :icon="fanIconName"
+          iconColor="text-neutral-400"
+          :hasDropdown="true"
           @click="toggleDropup('fan', $event)"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-        >
-          <div class="text-neutral-200 shrink-0 flex items-center justify-center">
-            <AppIcon
-              :name="fan === 'auto' ? 'autorenew' : fan === 'low' ? 'air' : fan === 'medium' ? 'mode_fan' : 'cyclone'"
-              :size="24"
-            />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[10px] text-neutral-400 font-medium tracking-wide">ファンモード</div>
-            <div class="text-[14px] font-semibold text-white truncate mt-0.5">
-              {{ fan === 'auto' ? '自動' : fan === 'low' ? '弱' : fan === 'medium' ? '中' : '強' }}
-            </div>
-          </div>
-          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-        </button>
+        />
       </div>
     </div>
   </SheetModal>

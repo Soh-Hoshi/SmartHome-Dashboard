@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
 import AppIcon from '../common/AppIcon.vue'
+import SheetButton from '../common/SheetButton.vue'
 
 const props = defineProps<{
   online: boolean
@@ -128,21 +129,13 @@ const sliderTrackBg = computed(() => {
           </div>
         </div>
 
-        <!-- 電源オプション トリガーボタン (統一高さ h-[58px]) -->
-        <button
-          type="button"
+        <!-- 電源オプション トリガーボタン -->
+        <SheetButton
+          label="電源オプション"
+          icon="power"
+          :hasDropdown="true"
           @click="toggleDropup('power', $event)"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-          aria-label="電源オプションを選択"
-        >
-          <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <AppIcon name="power" :size="24" />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[14px] font-semibold text-white truncate">電源オプション</div>
-          </div>
-          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-        </button>
+        />
       </div>
 
       <!-- 2段目: 起動OS ドロップアップ -->
@@ -184,30 +177,15 @@ const sliderTrackBg = computed(() => {
           </div>
         </div>
 
-        <!-- 起動OS トリガーボタン (統一高さ h-[58px]) -->
-        <button
-          type="button"
+        <!-- 起動OS トリガーボタン -->
+        <SheetButton
+          sublabel="起動OS"
+          :label="targetOs"
+          :icon="targetOs === 'Windows' ? 'desktop_windows' : 'sports_esports'"
+          :iconColor="targetOs === 'Windows' ? 'text-[#4a88e8]' : 'text-[#c084fc]'"
+          :hasDropdown="true"
           @click="toggleDropup('os', $event)"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-          aria-label="起動OSを選択"
-        >
-          <div
-            class="shrink-0 flex items-center justify-center"
-            :class="targetOs === 'Windows' ? 'text-[#4a88e8]' : 'text-[#c084fc]'"
-          >
-            <AppIcon
-              :name="targetOs === 'Windows' ? 'desktop_windows' : 'sports_esports'"
-              :size="24"
-            />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[10px] text-neutral-400 font-medium tracking-wide">起動OS</div>
-            <div class="text-[14px] font-semibold text-white truncate mt-0.5">
-              {{ targetOs }}
-            </div>
-          </div>
-          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-        </button>
+        />
       </div>
     </div>
   </SheetModal>

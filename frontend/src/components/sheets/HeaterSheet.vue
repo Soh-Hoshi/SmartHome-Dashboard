@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
 import AppIcon from '../common/AppIcon.vue'
+import SheetButton from '../common/SheetButton.vue'
 
 const props = defineProps<{
   temp: number
@@ -139,54 +140,32 @@ function handleSelectMode(m: 'heat' | 'off') {
           </div>
         </div>
 
-        <!-- モード トリガーボタン (統一高さ h-[58px]) -->
-        <button
-          type="button"
+        <!-- モード トリガーボタン -->
+        <SheetButton
+          sublabel="モード"
+          :label="mode === 'heat' ? '暖房' : 'オフ'"
+          :icon="mode === 'heat' ? 'mode_heat' : 'power'"
+          :iconColor="mode === 'heat' ? 'text-[#f57c00]' : 'text-neutral-400'"
+          :hasDropdown="true"
           @click.stop="openModeDropup = !openModeDropup"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-        >
-          <div class="shrink-0 flex items-center justify-center" :class="mode === 'heat' ? 'text-[#f57c00]' : 'text-neutral-400'">
-            <AppIcon :name="mode === 'heat' ? 'mode_heat' : 'power'" :size="24" />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[10px] text-neutral-400 font-medium tracking-wide">モード</div>
-            <div class="text-[14px] font-semibold text-white truncate mt-0.5">
-              {{ mode === 'heat' ? '暖房' : 'オフ' }}
-            </div>
-          </div>
-          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-        </button>
+        />
       </div>
 
-      <!-- 2段目: エコ & パワー ボタン (統一高さ h-[58px]) -->
+      <!-- 2段目: エコ & パワー ボタン -->
       <div class="grid grid-cols-2 gap-3">
-        <button
-          type="button"
+        <SheetButton
+          label="エコ"
+          icon="eco"
           :disabled="mode === 'off'"
           @click.stop="emit('pressEco')"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
-        >
-          <div class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-            <AppIcon name="eco" :size="24" />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[14px] font-semibold text-white truncate">エコ</div>
-          </div>
-        </button>
+        />
 
-        <button
-          type="button"
+        <SheetButton
+          label="パワー"
+          icon="bolt"
           :disabled="mode === 'off'"
           @click.stop="emit('pressPower')"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
-        >
-          <div class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-            <AppIcon name="bolt" :size="24" />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[14px] font-semibold text-white truncate">パワー</div>
-          </div>
-        </button>
+        />
       </div>
     </div>
   </SheetModal>

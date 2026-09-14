@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
 import AppIcon from '../common/AppIcon.vue'
+import SheetButton from '../common/SheetButton.vue'
 
 const props = defineProps<{
   status: string
@@ -28,47 +29,45 @@ function toggleDropup(menu: 'action' | 'speed', e: MouseEvent) {
 }
 
 function handleSelectAction(action: 'start' | 'pause' | 'stop') {
-  openDropup.value = null
   emit('selectAction', action)
+  openDropup.value = null
 }
 
 function handleSelectSpeed(s: 'Standard' | 'Boost_IQ' | 'Max') {
-  openDropup.value = null
   emit('selectSpeed', s)
+  openDropup.value = null
 }
 
 function getStatusText() {
-  const st = (props.status || '').toLowerCase()
-  if (st === 'running' && props.play) return '清掃中'
-  if (st === 'charging') return '充電中'
-  if (st === 'recharge') return '帰還中'
-  if (st === 'standby') return '一時停止中'
-  if (st === 'completed') return '充電完了'
-  return '待機中'
+  switch (props.status) {
+    case 'running': return '清掃中'
+    case 'charging': return '充電中'
+    case 'standby': return '待機中'
+    case 'sleeping': return 'スリープ'
+    case 'recharge': return '帰還中'
+    case 'completed': return '完了'
+    default: return '待機中'
+  }
 }
 
 function isRunning() {
-  return (props.status || '').toLowerCase() === 'running' && props.play
-}
-
-function isRecharging() {
-  return (props.status || '').toLowerCase() === 'recharge'
+  return props.status === 'running'
 }
 
 function isCharging() {
-  return (props.status || '').toLowerCase() === 'charging'
+  return props.status === 'charging'
 }
 
 const speedLabelMap = {
   Standard: '標準',
-  Boost_IQ: 'BoostIQ',
-  Max: '最大',
+  Boost_IQ: '自動',
+  Max: '最大'
 }
 </script>
 
 <template>
-  <SheetModal title="クリーナー" @close="emit('close')">
-    <!-- 中央: ロボット掃除機ステータスビジュアル -->
+  <SheetModal title="ロボット掃除機" :scrollable="true" @close="emit('close')">
+    <!-- 中央: ステータスリング ＆ アナリティクス -->
     <div class="flex-1 flex flex-col items-center justify-center my-auto relative space-y-4 py-2 shrink-0">
       <!-- 円形ステータスカード -->
       <div class="relative w-48 h-48 rounded-full bg-[#242730] border border-white/[0.05] flex flex-col items-center justify-center shadow-xl overflow-hidden shrink-0">
@@ -76,12 +75,12 @@ const speedLabelMap = {
         <div
           class="relative z-10 transition-colors duration-300"
           :class="[
-            isRunning() ? 'text-[#38bdf8] animate-cleaner-moving' :
-            isRecharging() ? 'text-neutral-400 animate-cleaner-moving' :
+            isRunning() ? 'text-[#2196f3] animate-pulse' :
+            isCharging() ? 'text-amber-400' :
             'text-neutral-400'
           ]"
         >
-          <AppIcon name="vacuum" :size="78" />
+          <AppIcon name="vacuum" :size="64" />
         </div>
 
         <!-- 中央ステータステキスト ＆ バッテリー残量 -->
@@ -173,20 +172,12 @@ const speedLabelMap = {
           </div>
         </div>
 
-        <button
-          type="button"
+        <SheetButton
+          label="アクション"
+          icon="play_circle"
+          :hasDropdown="true"
           @click="toggleDropup('action', $event)"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-          aria-label="アクションを選択"
-        >
-          <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <AppIcon name="play_circle" :size="24" />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[14px] font-semibold text-white truncate">アクション</div>
-          </div>
-          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-        </button>
+        />
       </div>
 
       <!-- 2段目: 吸引力 & Find Me ボタン -->
@@ -244,38 +235,22 @@ const speedLabelMap = {
             </div>
           </div>
 
-          <!-- 吸引力 トリガーボタン (統一高さ h-[58px]) -->
-          <button
-            type="button"
+          <!-- 吸引力 トリガーボタン -->
+          <SheetButton
+            sublabel="吸引力"
+            :label="speedLabelMap[speed] || '標準'"
+            icon="air"
+            :hasDropdown="true"
             @click="toggleDropup('speed', $event)"
-            class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-          >
-            <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-              <AppIcon name="air" :size="24" />
-            </div>
-            <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-[10px] text-neutral-400 font-medium tracking-wide">吸引力</div>
-              <div class="text-[14px] font-semibold text-white truncate mt-0.5">
-                {{ speedLabelMap[speed] || '標準' }}
-              </div>
-            </div>
-            <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
-          </button>
+          />
         </div>
 
-        <!-- Find Me ボタン (統一高さ h-[58px]) -->
-        <button
-          type="button"
-          @click.stop="emit('pressFindMe')"
-          class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
-        >
-          <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <AppIcon name="notifications_active" :size="24" />
-          </div>
-          <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-[14px] font-semibold text-white truncate">探す</div>
-          </div>
-        </button>
+        <!-- Find Me ボタン -->
+        <SheetButton
+          label="探す"
+          icon="notifications_active"
+          @click="emit('pressFindMe')"
+        />
       </div>
     </div>
   </SheetModal>

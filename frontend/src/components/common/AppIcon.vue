@@ -1,27 +1,51 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { getIconPath } from '../../icons'
 
 const props = withDefaults(defineProps<{
   name?: string
   size?: number | string
+  type?: 'material' | 'mdi' | 'auto'
+  path?: string
   fill?: boolean
   weight?: number
 }>(), {
   size: 24,
+  type: 'auto',
   fill: false,
   weight: 400
 })
 
+// MDI by default for power and cleaner as requested by user
+const defaultMdiIcons = new Set([
+  'power',
+  'power_settings_new',
+  'vacuum',
+  'robot_vacuum',
+  'cleaner'
+])
+
+const isMdi = computed(() => {
+  if (props.path) return true
+  if (props.type === 'mdi') return true
+  if (props.type === 'material') return false
+  const n = props.name || ''
+  if (n.startsWith('mdi:') || n.startsWith('mdi-')) return true
+  return defaultMdiIcons.has(n)
+})
+
+const mdiSvgPath = computed(() => {
+  if (props.path) return props.path
+  const n = (props.name || '').replace(/^mdi[:-]/, '')
+  return getIconPath(n)
+})
+
 // Normalize icon names to Google Material Symbols Rounded
-const iconName = computed(() => {
+const materialIconName = computed(() => {
   const n = props.name || 'help'
   switch (n) {
-    case 'power':
-      return 'power_settings_new'
     case 'play':
       return 'play_arrow'
-    case 'robot_vacuum':
-      return 'vacuum'
     case 'windows':
       return 'desktop_windows'
     case 'controller':
@@ -44,48 +68,43 @@ const iconName = computed(() => {
   }
 })
 
-const numericSize = computed(() => {
-  if (typeof props.size === 'number') return props.size
-  return parseInt(props.size as string, 10) || 24
-})
-
 const computedSize = computed(() => {
   if (typeof props.size === 'number') return `${props.size}px`
   return props.size
 })
 
-// Optical size & weight adjustment for power_settings_new:
-// In Material Symbols, power_settings_new has a large outer circle that fills 100% of the box.
-// Scaling it down 2-3px and softening weight to 350 makes it visually match adjacent icons like water_drop / ac_unit.
-const fontSize = computed(() => {
-  if (iconName.value === 'power_settings_new') {
-    const s = numericSize.value
-    if (s <= 20) return `${s - 2}px`
-    if (s <= 24) return `${s - 2}px`
-    return `${s - 4}px`
-  }
-  return computedSize.value
+const numericSize = computed(() => {
+  if (typeof props.size === 'number') return props.size
+  return parseInt(props.size as string, 10) || 24
 })
 
 const fontVariation = computed(() => {
-  const isFilled = props.fill || iconName.value === 'water_drop' || iconName.value === 'bedtime'
+  const isFilled = props.fill || materialIconName.value === 'water_drop' || materialIconName.value === 'bedtime'
   const fillVal = isFilled ? 1 : 0
-  if (iconName.value === 'power_settings_new') {
-    return `'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 20`
-  }
   return `'FILL' ${fillVal}, 'wght' ${props.weight}, 'GRAD' 0, 'opsz' ${numericSize.value}`
 })
 </script>
 
 <template>
+  <svg
+    v-if="isMdi"
+    viewBox="0 0 24 24"
+    :width="computedSize"
+    :height="computedSize"
+    class="inline-block shrink-0 fill-current align-middle select-none transition-colors"
+    aria-hidden="true"
+  >
+    <path :d="mdiSvgPath" />
+  </svg>
   <span
+    v-else
     class="material-symbols-rounded select-none inline-flex items-center justify-center shrink-0 leading-none align-middle"
     :style="{
-      fontSize: fontSize,
+      fontSize: computedSize,
       width: computedSize,
       height: computedSize,
       fontVariationSettings: fontVariation
     }"
     aria-hidden="true"
-  >{{ iconName }}</span>
+  >{{ materialIconName }}</span>
 </template>

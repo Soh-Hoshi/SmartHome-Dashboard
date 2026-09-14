@@ -18,7 +18,7 @@ const emit = defineEmits<{
     <!-- 中央メインヒーロー: 現在の天気・気温 -->
     <div class="my-auto py-4 flex flex-col items-center justify-center text-center select-none shrink-0">
       <div class="w-32 h-32 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-4 shadow-inner">
-        <AppIcon :name="weather.weather_icon || 'partly_cloudy_day'" :size="76" />
+        <AppIcon :name="weather.weather_icon || 'partly_cloudy_day'" :size="64" />
       </div>
       <div class="text-base sm:text-lg font-bold text-neutral-200 mb-0.5">{{ weather.weather }}</div>
       <div class="flex items-start justify-center">
