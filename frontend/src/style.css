@@ -3,10 +3,252 @@
 @tailwind utilities;
 
 html, body {
-  background-color: #0d0f12;
+  background-color: #0d0f12 !important;
+  background: #0d0f12 !important;
   color: #fff;
   font-family: 'Outfit', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+body.transparent-mode, body.transparent-mode html {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* Material Symbols スタイル定義 */
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.symbol-fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.symbol-bold {
+  font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+}
+
+/* 数字用の洗練された等幅タイポグラフィ */
+.font-num {
+  font-family: 'Outfit', sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* スクロールバー完全非表示 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ボトムシート & モーダル トランジション */
+.sheet-backdrop {
+  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.3s;
+}
+.sheet-backdrop.hidden-sheet {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.sheet-backdrop.visible-sheet {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.bottom-sheet {
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  will-change: transform, opacity;
+}
+.hidden-sheet .bottom-sheet {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.visible-sheet .bottom-sheet {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ドロップアップ メニュー */
+.dropup-menu {
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+  transform-origin: bottom center;
+}
+.dropup-menu.closed {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.95);
+  pointer-events: none;
+}
+.dropup-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* 縦型スライダートラック & ブロックの滑らかなトランジション */
+.slider-track {
+  transition: background-color 0.35s ease;
+}
+.slider-thumb {
+  transition: transform 0.38s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.35s ease, box-shadow 0.35s ease;
+  will-change: transform;
+}
+
+/* スイッチノブ 穏やかな呼吸（スローパルス）アニメーション */
+@keyframes thumb-slow-pulse {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.65;
+    filter: brightness(0.88);
+  }
+}
+.animate-slow-pulse {
+  animation: thumb-slow-pulse 3.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ロボット掃除機 稼働中アニメーション */
+@keyframes cleaner-wobble-spin {
+  0% {
+    transform: rotate(0deg) scale(1) translate(0, 0);
+  }
+  20% {
+    transform: rotate(72deg) scale(1.03) translate(1.5px, -1px);
+  }
+  40% {
+    transform: rotate(144deg) scale(0.98) translate(-1px, 1.5px);
+  }
+  60% {
+    transform: rotate(216deg) scale(1.03) translate(-1.5px, -1px);
+  }
+  80% {
+    transform: rotate(288deg) scale(0.99) translate(1px, 1px);
+  }
+  100% {
+    transform: rotate(360deg) scale(1) translate(0, 0);
+  }
+}
+.animate-cleaner-moving {
+  animation: cleaner-wobble-spin 8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transform-origin: center center;
+}
+
+/* 音声認識 録音中パルスアニメーション */
+@keyframes voice-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.45);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
+    transform: scale(1.06);
+  }
+}
+.voice-listening {
+  animation: voice-pulse 1.3s infinite ease-in-out !important;
+  background-color: rgba(244, 63, 94, 0.25) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.6) !important;
+}
+
+/* タブ切り替え スライド＆フェード トランジション */
+.tab-viewport {
+  position: relative;
+  width: 100%;
+  overflow-x: clip;
+}
+.tab-view {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes tabSlideOutToLeft {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+
+@keyframes tabSlideInFromRight {
+  0% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tabSlideOutToRight {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+@keyframes tabSlideInFromLeft {
+  0% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.tab-anim-out-left {
+  animation: tabSlideOutToLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+.tab-anim-in-right {
+  animation: tabSlideInFromRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tab-anim-out-right {
+  animation: tabSlideOutToRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+.tab-anim-in-left {
+  animation: tabSlideInFromLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
