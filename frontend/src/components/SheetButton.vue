@@ -31,7 +31,7 @@ const emit = defineEmits<{
     </div>
 
     <div class="overflow-hidden leading-tight flex-1">
-      <div v-if="sublabel" class="text-xs text-neutral-400 font-normal">
+      <div v-if="sublabel" class="text-[10px] text-neutral-400 font-medium tracking-wide">
         {{ sublabel }}
       </div>
       <div

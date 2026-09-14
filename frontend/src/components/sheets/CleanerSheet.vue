@@ -72,7 +72,7 @@ const speedLabelMap = {
     <div class="flex-1 flex flex-col items-center justify-center my-auto relative space-y-4 py-2 shrink-0">
       <!-- 円形ステータスカード -->
       <div class="relative w-48 h-48 rounded-full bg-[#242730] border border-white/[0.05] flex flex-col items-center justify-center shadow-xl overflow-hidden shrink-0">
-        <!-- ロボット掃除機アイコン (MDI: vacuum) -->
+        <!-- ロボット掃除機アイコン (Material Symbols: vacuum) -->
         <div
           class="relative z-10 transition-colors duration-300"
           :class="[
@@ -81,7 +81,7 @@ const speedLabelMap = {
             'text-neutral-400'
           ]"
         >
-          <AppIcon name="vacuum" :size="64" />
+          <AppIcon name="vacuum" :size="78" />
         </div>
 
         <!-- 中央ステータステキスト ＆ バッテリー残量 -->
@@ -89,11 +89,11 @@ const speedLabelMap = {
           <div class="text-2xl font-bold text-white tracking-wide">
             {{ getStatusText() }}
           </div>
-          <div class="flex items-center justify-center space-x-1.5 text-sm font-semibold text-neutral-300 font-num pt-0.5">
+          <div class="flex items-center justify-center space-x-1 text-sm font-semibold text-neutral-300 font-num pt-0.5">
             <AppIcon
               :name="isCharging() ? 'battery_charging_full' : 'battery_full'"
-              :size="18"
-              :class="isCharging() ? 'text-[#2196f3]' : 'text-neutral-300'"
+              :size="14"
+              :class="isCharging() ? 'text-[#2196f3]' : 'text-neutral-400'"
             />
             <span>{{ battery }}%</span>
           </div>
@@ -254,7 +254,7 @@ const speedLabelMap = {
               <AppIcon name="air" :size="24" />
             </div>
             <div class="overflow-hidden leading-tight flex-1">
-              <div class="text-xs text-neutral-400 font-normal">吸引力</div>
+              <div class="text-[10px] text-neutral-400 font-medium tracking-wide">吸引力</div>
               <div class="text-[14px] font-semibold text-white truncate mt-0.5">
                 {{ speedLabelMap[speed] || '標準' }}
               </div>

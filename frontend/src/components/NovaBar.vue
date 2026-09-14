@@ -37,7 +37,7 @@ function handleVoiceOrSubmit() {
 </script>
 
 <template>
-  <div class="fixed bottom-[max(4.5rem,calc(env(safe-area-inset-bottom)+4rem))] md:bottom-6 inset-x-0 z-40 flex flex-col items-center justify-end px-4 pointer-events-none">
+  <div class="fixed top-0 md:top-auto md:bottom-6 inset-x-0 z-40 flex flex-col items-center pointer-events-none pt-[env(safe-area-inset-top,0.25rem)] md:pt-0 pb-2 md:pb-0 px-3 sm:px-6 bg-[#0d0f12]/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-white/[0.04] md:border-b-0 shadow-lg md:shadow-none">
     
     <!-- アシスタント トースト通知 (フィードバック表示) -->
     <transition

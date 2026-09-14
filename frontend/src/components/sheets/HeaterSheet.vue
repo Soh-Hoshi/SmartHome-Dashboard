@@ -149,7 +149,7 @@ function handleSelectMode(m: 'heat' | 'off') {
             <AppIcon :name="mode === 'heat' ? 'mode_heat' : 'power'" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-xs text-neutral-400 font-normal">モード</div>
+            <div class="text-[10px] text-neutral-400 font-medium tracking-wide">モード</div>
             <div class="text-[14px] font-semibold text-white truncate mt-0.5">
               {{ mode === 'heat' ? '暖房' : 'オフ' }}
             </div>

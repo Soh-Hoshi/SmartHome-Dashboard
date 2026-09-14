@@ -21,7 +21,7 @@ const emit = defineEmits<{
         class="w-32 h-32 rounded-full flex items-center justify-center mb-4 shadow-inner border transition-colors"
         :class="presence.is_home ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/[0.04] border-white/[0.06] text-neutral-400'"
       >
-        <AppIcon name="home_pin" :size="64" />
+        <AppIcon name="home_pin" :size="76" />
       </div>
       <div class="text-3xl font-bold text-white">
         {{ presence.is_home ? '在宅' : '不在' }}

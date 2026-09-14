@@ -201,7 +201,7 @@ const sliderTrackBg = computed(() => {
             />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
-            <div class="text-xs text-neutral-400 font-normal">起動OS</div>
+            <div class="text-[10px] text-neutral-400 font-medium tracking-wide">起動OS</div>
             <div class="text-[14px] font-semibold text-white truncate mt-0.5">
               {{ targetOs }}
             </div>
