@@ -1,16 +1,16 @@
 // SmartHome Dashboard PWA Service Worker
-// Dedicated Scope: /dashboard
+// Scope: /
 
-const CACHE_NAME = 'smarthome-dashboard-v25';
+const CACHE_NAME = 'smarthome-dashboard-v26';
 const STATIC_ASSETS = [
-  '/dashboard',
-  '/dashboard/',
-  '/dashboard/manifest.json',
-  '/dashboard/icon-192.png',
-  '/dashboard/icon-512.png',
-  '/dashboard/icon-maskable-192.png',
-  '/dashboard/icon-maskable-512.png',
-  '/dashboard/icon.svg',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-192.png',
+  '/icon-maskable-512.png',
+  '/icon.svg',
   './',
   './index.html',
   './manifest.json',
@@ -75,7 +75,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           // オフライン時のみキャッシュへフォールバック
           return caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || caches.match('/dashboard') || caches.match('./index.html');
+            return cachedResponse || caches.match('/') || caches.match('./index.html');
           });
         })
     );

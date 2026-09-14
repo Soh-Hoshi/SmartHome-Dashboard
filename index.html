@@ -7,16 +7,16 @@
 
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <!-- PWA (Progressive Web App) 設定: Home Assistantとの競合を防ぐ絶対パス指定 -->
-  <link id="pwa-manifest" rel="manifest" href="/dashboard/manifest.json" crossorigin="use-credentials">
+  <link id="pwa-manifest" rel="manifest" href="/manifest.json" crossorigin="use-credentials">
   <meta name="theme-color" content="#0d0f12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SmartHome">
-  <link rel="apple-touch-icon" href="/dashboard/apple-touch-icon.png">
-  <link rel="icon" type="image/svg+xml" href="/dashboard/icon.svg">
-  <link rel="icon" type="image/png" sizes="192x192" href="/dashboard/icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/dashboard/icon-512.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
   
   <!-- Google Fonts: 幾何学的で洗練された Outfit (数字・英字) + Noto Sans JP (日本語) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4163,16 +4163,9 @@
       // PWA Service Worker 登録 (スコープを /dashboard/ に明示指定 / 通知はNovaAssistアプリに一本化)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          const basePath = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
-          const swUrl = (basePath || '') + '/sw.js?v=25';
-          const scopeUrl = (basePath || '') + '/';
+          const swUrl = '/sw.js?v=26';
+          const scopeUrl = '/';
           
-          // ローカルアクセス時はマニフェストパスを調整
-          const manifestEl = document.getElementById('pwa-manifest');
-          if (manifestEl && !basePath) {
-            manifestEl.setAttribute('href', '/manifest.json');
-          }
-
           navigator.serviceWorker.register(swUrl, { scope: scopeUrl })
             .then(async (reg) => {
               console.log('[PWA] Service Worker registered for scope:', reg.scope);

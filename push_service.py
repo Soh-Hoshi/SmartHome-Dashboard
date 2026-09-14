@@ -253,7 +253,7 @@ def push_notification(title: str, body: str, actions=None, tag=None, data=None, 
         "tag": tag or "smarthome-alert",
         "timestamp": time.time(),
         "actions": actions or [],
-        "data": data or {"url": "/dashboard"},
+        "data": data or {"url": "/"},
         "ongoing": ongoing,
         "auto_cancel": auto_cancel
     }
@@ -324,7 +324,7 @@ def send_away_device_warning(active_devices_str=None):
         actions=actions,
         notif_id=f"away_{now_ts}",
         tag="away-device-warning",
-        data={"url": "/dashboard", "scene": "leaving"}
+        data={"url": "/", "scene": "leaving"}
     )
 
 def send_progress_notification(title: str, body: str, current: int, max_val: int = 100,
