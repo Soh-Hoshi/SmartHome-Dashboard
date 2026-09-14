@@ -127,7 +127,7 @@ function getPcStatusText() {
               ]"
               aria-label="エアコンのオン/オフ切り替え"
             >
-              <AppIcon :name="acMode === 'dry' ? 'water_drop' : 'mode_cool'" :size="24" />
+              <AppIcon name="mode_fan" :size="24" />
             </button>
             <div class="flex-1">
               <div class="text-[15px] font-semibold text-white leading-tight">エアコン</div>
@@ -176,7 +176,7 @@ function getPcStatusText() {
           </div>
         </div>
 
-        <!-- ヒータータイル (統一 Material Symbols: mode_heat) -->
+        <!-- ヒータータイル (統一 Material Symbols: hvac) -->
         <div
           @click="emit('openSheet', 'heater-sheet')"
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]"
@@ -188,7 +188,7 @@ function getPcStatusText() {
             :class="heaterMode === 'heat' ? 'bg-[#3a2c24] text-[#ea7a1e]' : 'bg-[#272a31] text-neutral-400'"
             aria-label="ヒーターのオン/オフ切り替え"
           >
-            <AppIcon name="mode_heat" :size="24" />
+            <AppIcon name="hvac" :size="24" />
           </button>
 
           <div class="flex-1">

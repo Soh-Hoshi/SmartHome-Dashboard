@@ -57,6 +57,13 @@ const materialInfo = computed(() => {
       return { icon: 'bedtime', badge: props.badge }
     case 'restart':
       return { icon: 'restart_alt', badge: props.badge }
+    case 'mode_heat':
+    case 'heater':
+    case 'hvac':
+      return { icon: 'hvac', badge: props.badge }
+    case 'air_conditioner':
+    case 'ac':
+      return { icon: 'mode_fan', badge: props.badge }
     case 'speed_standard':
       return { icon: 'air', badge: props.badge }
     case 'speed_boost':

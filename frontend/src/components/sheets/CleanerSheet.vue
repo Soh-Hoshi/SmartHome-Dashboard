@@ -248,7 +248,7 @@ const speedLabelMap = {
         <!-- Find Me ボタン -->
         <SheetButton
           label="探す"
-          icon="missing_controller"
+          icon="notifications_active"
           @click="emit('pressFindMe')"
         />
       </div>
