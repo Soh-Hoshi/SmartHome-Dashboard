@@ -29,17 +29,11 @@ const emit = defineEmits<{
           </button>
         </div>
 
-        <!-- オートメーション2: 平日 9:00 -->
+        <!-- オートメーション2: 平日 9:00 (Material Symbols: vacuum) -->
         <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
           <div class="flex items-center space-x-3.5 min-w-0">
             <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] flex items-center justify-center shrink-0">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.2A8.2 8.2 0 1 1 20.2 12 8.21 8.21 0 0 1 12 20.2z"/>
-                <path d="M4.8 9.2a8 8 0 0 1 14.4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                <circle cx="12" cy="6.2" r="1.4"/>
-                <circle cx="12" cy="13.5" r="2.6"/>
-                <circle cx="12" cy="13.5" r="1.1" fill="#1c1e23"/>
-              </svg>
+              <span class="material-symbols-rounded text-2xl">vacuum</span>
             </div>
             <div class="text-[15px] font-semibold text-white leading-tight truncate">平日 9:00</div>
           </div>

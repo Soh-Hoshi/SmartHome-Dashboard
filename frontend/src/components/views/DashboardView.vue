@@ -113,7 +113,7 @@ function getPcStatusText() {
           @click="emit('openSheet', 'ac-sheet')"
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]"
         >
-          <!-- 上部情報 -->
+          <!-- 上部情報 (統一 Material Symbols: mode_cool / water_drop) -->
           <div class="flex items-center space-x-3.5">
             <button
               type="button"
@@ -126,12 +126,9 @@ function getPcStatusText() {
               ]"
               aria-label="エアコンのオン/オフ切り替え"
             >
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 4H5c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 6H5V6h14v4z"/>
-                <rect x="17" y="7.5" width="1.5" height="1.5" rx="0.75" />
-                <path d="M6 15c.8-.5 1.7-.5 2.5 0 .8.5 1.7.5 2.5 0 .8.5 1.7.5 2.5 0 .8.5 1.7.5 2.5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M4.5 18c1.1-.6 2.4-.6 3.5 0 1.1.6 2.4.6 3.5 0 1.1.6 2.4.6 3.5 0 1.1.6 2.4.6 3.5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
+              <span class="material-symbols-rounded text-2xl">
+                {{ acMode === 'dry' ? 'water_drop' : 'mode_cool' }}
+              </span>
             </button>
             <div class="flex-1">
               <div class="text-[15px] font-semibold text-white leading-tight">エアコン</div>
@@ -177,7 +174,7 @@ function getPcStatusText() {
           </div>
         </div>
 
-        <!-- ヒータータイル -->
+        <!-- ヒータータイル (統一 Material Symbols: mode_heat) -->
         <div
           @click="emit('openSheet', 'heater-sheet')"
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]"
@@ -189,13 +186,7 @@ function getPcStatusText() {
             :class="heaterMode === 'heat' ? 'bg-[#3a2c24] text-[#ea7a1e]' : 'bg-[#272a31] text-neutral-400'"
             aria-label="ヒーターのオン/オフ切り替え"
           >
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h1v1a1 1 0 0 0 2 0v-1h10v1a1 1 0 0 0 2 0v-1h1c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2H4zm0 2h16v9H4V8z"/>
-              <rect x="6" y="10" width="2" height="5" rx="1"/>
-              <rect x="9.5" y="10" width="2" height="5" rx="1"/>
-              <rect x="13" y="10" width="2" height="5" rx="1"/>
-              <rect x="16.5" y="10" width="2" height="5" rx="1"/>
-            </svg>
+            <span class="material-symbols-rounded text-2xl">mode_heat</span>
           </button>
 
           <div class="flex-1">
@@ -214,7 +205,7 @@ function getPcStatusText() {
       <h2 class="text-base font-bold text-white px-1">掃除</h2>
       
       <div class="flex flex-col gap-3.5">
-        <!-- クリーナータイル -->
+        <!-- クリーナータイル (統一 Material Symbols: vacuum) -->
         <div
           @click="emit('openSheet', 'cleaner-sheet')"
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]"
@@ -227,13 +218,7 @@ function getPcStatusText() {
               :class="isCleanerRunning() ? 'bg-[#253546] text-[#2196f3] shadow-sm' : 'bg-[#272a31] text-neutral-400'"
               aria-label="クリーナーの開始/停止切り替え"
             >
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18.2A8.2 8.2 0 1 1 20.2 12 8.21 8.21 0 0 1 12 20.2z"/>
-                <path d="M4.8 9.2a8 8 0 0 1 14.4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                <circle cx="12" cy="6.2" r="1.4"/>
-                <circle cx="12" cy="13.5" r="2.6"/>
-                <circle cx="12" cy="13.5" r="1.1" fill="#1c1e23"/>
-              </svg>
+              <span class="material-symbols-rounded text-2xl">vacuum</span>
             </button>
             <div class="flex-1">
               <div class="text-[15px] font-semibold text-white leading-tight">クリーナー</div>
