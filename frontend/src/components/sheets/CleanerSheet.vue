@@ -73,10 +73,10 @@ const speedLabelMap = {
       <div class="relative w-48 h-48 rounded-full bg-[#242730] border border-white/[0.05] flex flex-col items-center justify-center shadow-xl overflow-hidden shrink-0">
         <!-- ロボット掃除機アイコン (Material Symbols: vacuum_2) -->
         <div
-          class="relative z-10 transition-colors duration-300"
+          class="relative z-10 flex items-center justify-center w-16 h-16 transition-colors duration-300"
           :class="[
-            isRunning() ? 'text-[#2196f3] animate-pulse' :
-            isCharging() ? 'text-amber-400' :
+            isRunning() ? 'text-[#38bdf8] animate-cleaner-moving' :
+            status === 'recharge' ? 'text-neutral-400 animate-cleaner-moving' :
             'text-neutral-400'
           ]"
         >
@@ -92,7 +92,7 @@ const speedLabelMap = {
             <AppIcon
               :name="isCharging() ? 'battery_charging_full' : 'battery_full'"
               :size="14"
-              :class="isCharging() ? 'text-[#2196f3]' : 'text-neutral-400'"
+              :class="isCharging() ? 'text-sky-400' : 'text-neutral-400'"
             />
             <span>{{ battery }}%</span>
           </div>

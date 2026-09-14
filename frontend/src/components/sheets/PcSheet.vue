@@ -52,16 +52,18 @@ const sheetBackgroundStyle = computed(() => {
   if (isSwitchActive.value && isBazziteActive.value) {
     return 'radial-gradient(ellipse at 50% 0%, rgba(192, 132, 252, 0.12) 0%, rgba(30, 32, 37, 1) 75%)'
   } else if (isSwitchActive.value) {
-    return 'radial-gradient(ellipse at 50% 0%, rgba(74, 136, 232, 0.10) 0%, rgba(30, 32, 37, 1) 75%)'
+    return 'radial-gradient(ellipse at 50% 0%, rgba(0, 120, 212, 0.14) 0%, rgba(30, 32, 37, 1) 75%)'
   } else if (props.targetOs === 'Bazzite') {
     return 'radial-gradient(ellipse at 50% 0%, rgba(192, 132, 252, 0.05) 0%, rgba(30, 32, 37, 1) 75%)'
+  } else if (props.targetOs === 'Windows') {
+    return 'radial-gradient(ellipse at 50% 0%, rgba(0, 120, 212, 0.06) 0%, rgba(30, 32, 37, 1) 75%)'
   }
   return undefined
 })
 
 const sliderTrackBg = computed(() => {
   if (!isSwitchActive.value) return '#282b32'
-  return isBazziteActive.value ? '#311f4d' : '#192e4d'
+  return isBazziteActive.value ? '#311f4d' : '#0b2342'
 })
 </script>
 
@@ -86,7 +88,7 @@ const sliderTrackBg = computed(() => {
           class="slider-thumb absolute inset-x-2 bottom-2 h-[112px] rounded-[26px] flex items-center justify-center text-white transition-all duration-300"
           :class="[
             isSwitchActive
-              ? (isBazziteActive ? 'translate-y-[-112px] bg-[#c084fc] shadow-lg shadow-purple-500/30' : 'translate-y-[-112px] bg-[#4a88e8] shadow-lg shadow-blue-500/25')
+              ? (isBazziteActive ? 'translate-y-[-112px] bg-[#c084fc] shadow-lg shadow-purple-500/30' : 'translate-y-[-112px] bg-[#0078d4] shadow-lg shadow-[#0078d4]/35')
               : 'translate-y-0 bg-[#434752] shadow-md',
             (isBooting || isShuttingDown) ? 'animate-slow-pulse' : ''
           ]"
@@ -152,11 +154,11 @@ const sliderTrackBg = computed(() => {
               @click="handleSelectOs('Windows')"
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <div class="flex items-center space-x-3 text-[#4a88e8]">
+              <div class="flex items-center space-x-3 text-[#0078d4]">
                 <AppIcon name="desktop_windows" :size="20" />
                 <span class="text-white">Windows</span>
               </div>
-              <span v-if="targetOs === 'Windows'" class="text-[#4a88e8] shrink-0 w-5 h-5 flex items-center justify-center">
+              <span v-if="targetOs === 'Windows'" class="text-[#0078d4] shrink-0 w-5 h-5 flex items-center justify-center">
                 <AppIcon name="check" :size="18" />
               </span>
             </button>
@@ -182,7 +184,7 @@ const sliderTrackBg = computed(() => {
           sublabel="起動OS"
           :label="targetOs"
           :icon="targetOs === 'Windows' ? 'desktop_windows' : 'sports_esports'"
-          :iconColor="targetOs === 'Windows' ? 'text-[#4a88e8]' : 'text-[#c084fc]'"
+          :iconColor="targetOs === 'Windows' ? 'text-[#0078d4]' : 'text-[#c084fc]'"
           :hasDropdown="true"
           @click="toggleDropup('os', $event)"
         />

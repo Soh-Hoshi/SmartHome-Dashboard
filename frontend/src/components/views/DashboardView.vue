@@ -220,7 +220,9 @@ function getPcStatusText() {
               :class="isCleanerRunning() ? 'bg-[#253546] text-[#2196f3] shadow-sm' : 'bg-[#272a31] text-neutral-400'"
               aria-label="クリーナーの開始/停止切り替え"
             >
-              <AppIcon name="vacuum" :size="24" />
+              <div :class="(isCleanerRunning() || cleanerStatus === 'recharge') ? 'animate-cleaner-moving flex items-center justify-center' : 'flex items-center justify-center'">
+                <AppIcon name="vacuum" :size="24" />
+              </div>
             </button>
             <div class="flex-1">
               <div class="text-[15px] font-semibold text-white leading-tight">クリーナー</div>
@@ -284,9 +286,9 @@ function getPcStatusText() {
             @click.stop="emit('togglePcPower')"
             class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
             :class="[
-              pcBooting ? (pcTargetOs === 'Bazzite' ? 'bg-[#251f35] text-[#c084fc] animate-slow-pulse' : 'bg-[#1e293b] text-[#4a88e8] animate-slow-pulse') :
+              pcBooting ? (pcTargetOs === 'Bazzite' ? 'bg-[#251f35] text-[#c084fc] animate-slow-pulse' : 'bg-[#0078d4]/20 text-[#0078d4] animate-slow-pulse') :
               pcShuttingDown ? 'bg-[#272a31] text-neutral-400 animate-slow-pulse' :
-              pcOnline ? (pcOs === 'Bazzite' || pcTargetOs === 'Bazzite' ? 'bg-[#251f35] text-[#c084fc]' : 'bg-[#1e293b] text-[#4a88e8]') :
+              pcOnline ? (pcOs === 'Bazzite' || pcTargetOs === 'Bazzite' ? 'bg-[#251f35] text-[#c084fc]' : 'bg-[#0078d4]/20 text-[#0078d4]') :
               'bg-[#272a31] text-neutral-400'
             ]"
             aria-label="デスクトップPCの電源オン/オフ切り替え"
