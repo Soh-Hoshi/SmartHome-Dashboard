@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import AppIcon from './common/AppIcon.vue'
 
 const emit = defineEmits<{
   (e: 'loginSuccess'): void
@@ -44,7 +45,7 @@ async function handleLogin() {
     <div class="w-full max-w-xs bg-[#131518]/95 backdrop-blur-xl border border-white/[0.08] rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center">
       <!-- Nova アイコン -->
       <div class="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.06] flex items-center justify-center text-neutral-300 mb-3 select-none">
-        <span class="material-symbols-rounded text-2xl text-[#2196f3]">auto_awesome</span>
+        <AppIcon name="auto_awesome" :size="24" class="text-[#2196f3]" />
       </div>
 
       <h1 class="text-lg font-bold tracking-tight text-white mb-5">SmartHome</h1>
@@ -54,7 +55,7 @@ async function handleLogin() {
         v-if="error"
         class="w-full mb-3 px-3 py-2 rounded-2xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs flex items-center gap-2"
       >
-        <span class="material-symbols-rounded text-base shrink-0">error</span>
+        <AppIcon name="error" :size="16" class="shrink-0" />
         <span>{{ error }}</span>
       </div>
 
@@ -75,9 +76,7 @@ async function handleLogin() {
             class="text-neutral-400 hover:text-white p-1 transition-colors flex items-center justify-center shrink-0"
             tabindex="-1"
           >
-            <span class="material-symbols-rounded text-[20px]">
-              {{ showPassword ? 'visibility_off' : 'visibility' }}
-            </span>
+            <AppIcon :name="showPassword ? 'visibility_off' : 'visibility'" :size="20" />
           </button>
         </div>
 
@@ -87,7 +86,7 @@ async function handleLogin() {
           class="w-full bg-[#2196f3] hover:bg-[#1e88e5] active:scale-[0.99] text-white font-medium text-sm py-3 rounded-2xl transition-all shadow-[0_4px_16px_rgba(33,150,243,0.3)] flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <span>{{ loading ? '認証中...' : 'ログイン' }}</span>
-          <span v-if="loading" class="material-symbols-rounded text-sm animate-spin">progress_activity</span>
+          <AppIcon v-if="loading" name="progress_activity" :size="16" class="animate-spin" />
         </button>
       </form>
     </div>

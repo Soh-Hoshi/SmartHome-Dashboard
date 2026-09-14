@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from './common/AppIcon.vue'
+
 export interface DropupItem {
   id: string
   label: string
@@ -47,7 +49,7 @@ const emit = defineEmits<{
         @click="emit('select', item.id)"
       >
         <div class="flex items-center space-x-3" :class="item.iconColor || 'text-neutral-300'">
-          <span v-if="item.icon" class="material-symbols-rounded text-xl">{{ item.icon }}</span>
+          <AppIcon v-if="item.icon" :name="item.icon" :size="20" />
           <span class="text-white">{{ item.label }}</span>
         </div>
 
@@ -56,7 +58,7 @@ const emit = defineEmits<{
           class="shrink-0 w-5 h-5 flex items-center justify-center"
           :class="item.iconColor || 'text-[#2196f3]'"
         >
-          <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+          <AppIcon name="check" :size="18" />
         </span>
       </button>
     </div>

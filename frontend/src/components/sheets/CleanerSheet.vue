@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
+import AppIcon from '../common/AppIcon.vue'
 
 const props = defineProps<{
   status: string
@@ -71,7 +72,7 @@ const speedLabelMap = {
     <div class="flex-1 flex flex-col items-center justify-center my-auto relative space-y-4 py-2 shrink-0">
       <!-- 円形ステータスカード -->
       <div class="relative w-48 h-48 rounded-full bg-[#242730] border border-white/[0.05] flex flex-col items-center justify-center shadow-xl overflow-hidden shrink-0">
-        <!-- ロボット掃除機アイコン (Material Symbols: vacuum) -->
+        <!-- ロボット掃除機アイコン (MDI: vacuum) -->
         <div
           class="relative z-10 transition-colors duration-300"
           :class="[
@@ -80,7 +81,7 @@ const speedLabelMap = {
             'text-neutral-400'
           ]"
         >
-          <span class="material-symbols-rounded text-6xl">vacuum</span>
+          <AppIcon name="vacuum" :size="64" />
         </div>
 
         <!-- 中央ステータステキスト ＆ バッテリー残量 -->
@@ -89,12 +90,11 @@ const speedLabelMap = {
             {{ getStatusText() }}
           </div>
           <div class="flex items-center justify-center space-x-1.5 text-sm font-semibold text-neutral-300 font-num pt-0.5">
-            <span
-              class="material-symbols-rounded text-base"
+            <AppIcon
+              :name="isCharging() ? 'battery_charging_full' : 'battery_full'"
+              :size="18"
               :class="isCharging() ? 'text-[#2196f3]' : 'text-neutral-300'"
-            >
-              {{ isCharging() ? 'battery_charging_full' : 'battery_full' }}
-            </span>
+            />
             <span>{{ battery }}%</span>
           </div>
         </div>
@@ -151,7 +151,7 @@ const speedLabelMap = {
               @click="handleSelectAction('start')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">play_arrow</span>
+              <AppIcon name="play" :size="20" class="text-neutral-300" />
               <span class="text-white">開始</span>
             </button>
             <button
@@ -159,7 +159,7 @@ const speedLabelMap = {
               @click="handleSelectAction('pause')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">pause</span>
+              <AppIcon name="pause" :size="20" class="text-neutral-300" />
               <span class="text-white">停止</span>
             </button>
             <button
@@ -167,7 +167,7 @@ const speedLabelMap = {
               @click="handleSelectAction('stop')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">home</span>
+              <AppIcon name="home" :size="20" class="text-neutral-300" />
               <span class="text-white">ホーム</span>
             </button>
           </div>
@@ -180,12 +180,12 @@ const speedLabelMap = {
           aria-label="アクションを選択"
         >
           <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <span class="material-symbols-rounded text-2xl">play_circle</span>
+            <AppIcon name="play_circle" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white truncate">アクション</div>
           </div>
-          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
         </button>
       </div>
 
@@ -206,11 +206,11 @@ const speedLabelMap = {
                 class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
               >
                 <div class="flex items-center space-x-3 text-neutral-300">
-                  <span class="material-symbols-rounded text-xl">air</span>
+                  <AppIcon name="air" :size="20" />
                   <span class="text-white">標準</span>
                 </div>
                 <span v-if="speed === 'Standard'" class="text-[#2196f3] shrink-0 w-5 h-5 flex items-center justify-center">
-                  <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                  <AppIcon name="check" :size="18" />
                 </span>
               </button>
 
@@ -220,11 +220,11 @@ const speedLabelMap = {
                 class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
               >
                 <div class="flex items-center space-x-3 text-neutral-300">
-                  <span class="material-symbols-rounded text-xl">speed</span>
+                  <AppIcon name="speed_boost" :size="20" />
                   <span class="text-white">BoostIQ</span>
                 </div>
                 <span v-if="speed === 'Boost_IQ'" class="text-[#2196f3] shrink-0 w-5 h-5 flex items-center justify-center">
-                  <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                  <AppIcon name="check" :size="18" />
                 </span>
               </button>
 
@@ -234,11 +234,11 @@ const speedLabelMap = {
                 class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
               >
                 <div class="flex items-center space-x-3 text-neutral-300">
-                  <span class="material-symbols-rounded text-xl">rocket_launch</span>
+                  <AppIcon name="rocket_launch" :size="20" />
                   <span class="text-white">最大</span>
                 </div>
                 <span v-if="speed === 'Max'" class="text-[#2196f3] shrink-0 w-5 h-5 flex items-center justify-center">
-                  <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                  <AppIcon name="check" :size="18" />
                 </span>
               </button>
             </div>
@@ -251,7 +251,7 @@ const speedLabelMap = {
             class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
           >
             <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-              <span class="material-symbols-rounded text-2xl">air</span>
+              <AppIcon name="air" :size="24" />
             </div>
             <div class="overflow-hidden leading-tight flex-1">
               <div class="text-xs text-neutral-400 font-normal">吸引力</div>
@@ -259,7 +259,7 @@ const speedLabelMap = {
                 {{ speedLabelMap[speed] || '標準' }}
               </div>
             </div>
-            <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+            <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
           </button>
         </div>
 
@@ -270,7 +270,7 @@ const speedLabelMap = {
           class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
         >
           <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <span class="material-symbols-rounded text-2xl">notifications_active</span>
+            <AppIcon name="notifications_active" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white truncate">探す</div>

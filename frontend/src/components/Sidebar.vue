@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from './common/AppIcon.vue'
+
 defineProps<{
   activeTab: 'dashboard' | 'automations' | 'scenes'
 }>()
@@ -21,10 +23,9 @@ const emit = defineEmits<{
         class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 active:scale-98"
         :class="activeTab === 'dashboard' ? 'bg-[#253546] text-[#2196f3]' : 'bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white'"
       >
-        <span
-          class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0"
-          :class="activeTab === 'dashboard' ? 'symbol-fill' : ''"
-        >grid_view</span>
+        <div class="w-6 flex items-center justify-center shrink-0">
+          <AppIcon name="grid_view" :size="22" />
+        </div>
         <span
           class="sidebar-label text-sm whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3"
           :class="activeTab === 'dashboard' ? 'font-semibold text-[#2196f3]' : 'font-medium text-neutral-400'"
@@ -38,10 +39,9 @@ const emit = defineEmits<{
         class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 active:scale-98"
         :class="activeTab === 'automations' ? 'bg-[#253546] text-[#2196f3]' : 'bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white'"
       >
-        <span
-          class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0"
-          :class="activeTab === 'automations' ? 'symbol-fill' : ''"
-        >bolt</span>
+        <div class="w-6 flex items-center justify-center shrink-0">
+          <AppIcon name="bolt" :size="22" />
+        </div>
         <span
           class="sidebar-label text-sm whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3"
           :class="activeTab === 'automations' ? 'font-semibold text-[#2196f3]' : 'font-medium text-neutral-400'"
@@ -55,10 +55,9 @@ const emit = defineEmits<{
         class="nav-tab-btn w-full flex items-center px-2.5 py-2.5 rounded-2xl text-left transition-all duration-200 active:scale-98"
         :class="activeTab === 'scenes' ? 'bg-[#253546] text-[#2196f3]' : 'bg-transparent hover:bg-white/[0.04] text-neutral-400 hover:text-white'"
       >
-        <span
-          class="material-symbols-rounded text-[22px] w-6 flex items-center justify-center shrink-0"
-          :class="activeTab === 'scenes' ? 'symbol-fill' : ''"
-        >palette</span>
+        <div class="w-6 flex items-center justify-center shrink-0">
+          <AppIcon name="palette" :size="22" />
+        </div>
         <span
           class="sidebar-label text-sm whitespace-nowrap overflow-hidden transition-all duration-200 opacity-0 group-hover/sidebar:opacity-100 max-w-0 group-hover/sidebar:max-w-[140px] group-hover/sidebar:ml-3"
           :class="activeTab === 'scenes' ? 'font-semibold text-[#2196f3]' : 'font-medium text-neutral-400'"

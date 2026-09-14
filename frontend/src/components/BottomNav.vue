@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from './common/AppIcon.vue'
+
 defineProps<{
   activeTab: 'dashboard' | 'automations' | 'scenes'
 }>()
@@ -25,10 +27,7 @@ const emit = defineEmits<{
           class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200"
           :class="activeTab === 'dashboard' ? 'bg-[#253546] text-[#2196f3]' : 'bg-transparent text-neutral-400'"
         >
-          <span
-            class="material-symbols-rounded text-[22px]"
-            :class="activeTab === 'dashboard' ? 'symbol-fill' : ''"
-          >grid_view</span>
+          <AppIcon name="grid_view" :size="22" />
         </div>
         <span
           class="bottom-nav-label text-[11px] mt-1 tracking-tight"
@@ -47,10 +46,7 @@ const emit = defineEmits<{
           class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200"
           :class="activeTab === 'automations' ? 'bg-[#253546] text-[#2196f3]' : 'bg-transparent text-neutral-400'"
         >
-          <span
-            class="material-symbols-rounded text-[22px]"
-            :class="activeTab === 'automations' ? 'symbol-fill' : ''"
-          >bolt</span>
+          <AppIcon name="bolt" :size="22" />
         </div>
         <span
           class="bottom-nav-label text-[11px] mt-1 tracking-tight"
@@ -69,10 +65,7 @@ const emit = defineEmits<{
           class="bottom-nav-icon-wrap w-14 h-8 rounded-full flex items-center justify-center transition-all duration-200"
           :class="activeTab === 'scenes' ? 'bg-[#253546] text-[#2196f3]' : 'bg-transparent text-neutral-400'"
         >
-          <span
-            class="material-symbols-rounded text-[22px]"
-            :class="activeTab === 'scenes' ? 'symbol-fill' : ''"
-          >palette</span>
+          <AppIcon name="palette" :size="22" />
         </div>
         <span
           class="bottom-nav-label text-[11px] mt-1 tracking-tight"

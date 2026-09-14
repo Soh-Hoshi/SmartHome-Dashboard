@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../common/AppIcon.vue'
 import type { WeatherData, PresenceData, TileData } from '../../composables/useSmartHome'
 
 const props = defineProps<{
@@ -89,7 +90,7 @@ function getPcStatusText() {
             :class="lightOn ? 'bg-[#383226] text-amber-400' : 'bg-[#272a31] text-neutral-400'"
             aria-label="ライトのオン/オフ切り替え"
           >
-            <span class="material-symbols-rounded text-2xl">lightbulb</span>
+            <AppIcon name="lightbulb" :size="24" />
           </button>
 
           <!-- テキスト -->
@@ -113,7 +114,7 @@ function getPcStatusText() {
           @click="emit('openSheet', 'ac-sheet')"
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]"
         >
-          <!-- 上部情報 (統一 Material Symbols: mode_cool / water_drop) -->
+          <!-- 上部情報 (統一 MDI: mode_cool / water_drop) -->
           <div class="flex items-center space-x-3.5">
             <button
               type="button"
@@ -126,9 +127,7 @@ function getPcStatusText() {
               ]"
               aria-label="エアコンのオン/オフ切り替え"
             >
-              <span class="material-symbols-rounded text-2xl">
-                {{ acMode === 'dry' ? 'water_drop' : 'mode_cool' }}
-              </span>
+              <AppIcon :name="acMode === 'dry' ? 'water_drop' : 'mode_cool'" :size="24" />
             </button>
             <div class="flex-1">
               <div class="text-[15px] font-semibold text-white leading-tight">エアコン</div>
@@ -150,8 +149,9 @@ function getPcStatusText() {
               @click="emit('setAcMode', 'off')"
               class="h-11 rounded-2xl flex items-center justify-center transition-all"
               :class="acMode === 'off' ? 'bg-[#333741] hover:bg-[#3c414d] text-white' : 'bg-[#292c34] hover:bg-[#323640] text-neutral-400 hover:text-white'"
+              aria-label="オフ"
             >
-              <span class="material-symbols-rounded text-[22px]">power_settings_new</span>
+              <AppIcon name="power" :size="20" />
             </button>
 
             <button
@@ -159,8 +159,9 @@ function getPcStatusText() {
               @click="emit('setAcMode', 'dry')"
               class="h-11 rounded-2xl flex items-center justify-center transition-all"
               :class="acMode === 'dry' ? 'bg-[#213840] hover:bg-[#284550] text-[#00bcd4]' : 'bg-[#292c34] hover:bg-[#323640] text-neutral-300 hover:text-white'"
+              aria-label="除湿"
             >
-              <span class="material-symbols-rounded symbol-fill text-[22px]">water_drop</span>
+              <AppIcon name="water_drop" :size="20" />
             </button>
 
             <button
@@ -168,8 +169,9 @@ function getPcStatusText() {
               @click="emit('setAcMode', 'cool')"
               class="h-11 rounded-2xl flex items-center justify-center transition-all"
               :class="acMode === 'cool' ? 'bg-[#253546] hover:bg-[#2e4156] text-[#2196f3]' : 'bg-[#292c34] hover:bg-[#323640] text-neutral-400 hover:text-white'"
+              aria-label="冷房"
             >
-              <span class="material-symbols-rounded text-[22px]">ac_unit</span>
+              <AppIcon name="ac_unit" :size="20" />
             </button>
           </div>
         </div>
@@ -186,7 +188,7 @@ function getPcStatusText() {
             :class="heaterMode === 'heat' ? 'bg-[#3a2c24] text-[#ea7a1e]' : 'bg-[#272a31] text-neutral-400'"
             aria-label="ヒーターのオン/オフ切り替え"
           >
-            <span class="material-symbols-rounded text-2xl">mode_heat</span>
+            <AppIcon name="mode_heat" :size="24" />
           </button>
 
           <div class="flex-1">
@@ -205,7 +207,7 @@ function getPcStatusText() {
       <h2 class="text-base font-bold text-white px-1">掃除</h2>
       
       <div class="flex flex-col gap-3.5">
-        <!-- クリーナータイル (統一 Material Symbols: vacuum) -->
+        <!-- クリーナータイル (統一 MDI: vacuum) -->
         <div
           @click="emit('openSheet', 'cleaner-sheet')"
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03]"
@@ -218,7 +220,7 @@ function getPcStatusText() {
               :class="isCleanerRunning() ? 'bg-[#253546] text-[#2196f3] shadow-sm' : 'bg-[#272a31] text-neutral-400'"
               aria-label="クリーナーの開始/停止切り替え"
             >
-              <span class="material-symbols-rounded text-2xl">vacuum</span>
+              <AppIcon name="vacuum" :size="24" />
             </button>
             <div class="flex-1">
               <div class="text-[15px] font-semibold text-white leading-tight">クリーナー</div>
@@ -240,7 +242,7 @@ function getPcStatusText() {
               :class="isCleanerRunning() ? 'bg-[#253546] hover:bg-[#2e4156] text-[#2196f3]' : 'bg-[#292c34] hover:bg-[#323640] text-neutral-400 hover:text-white'"
               aria-label="起動"
             >
-              <span class="material-symbols-rounded text-[22px]">play_arrow</span>
+              <AppIcon name="play" :size="20" />
             </button>
 
             <button
@@ -250,7 +252,7 @@ function getPcStatusText() {
               :class="cleanerStatus === 'standby' ? 'bg-[#333741] hover:bg-[#3c414d] text-white' : 'bg-[#292c34] hover:bg-[#323640] text-neutral-400 hover:text-white'"
               aria-label="一時停止"
             >
-              <span class="material-symbols-rounded text-[22px]">pause</span>
+              <AppIcon name="pause" :size="20" />
             </button>
 
             <button
@@ -260,7 +262,7 @@ function getPcStatusText() {
               :class="cleanerStatus === 'recharge' ? 'bg-[#253546] hover:bg-[#2e4156] text-[#2196f3]' : 'bg-[#292c34] hover:bg-[#323640] text-neutral-400 hover:text-white'"
               aria-label="停止"
             >
-              <span class="material-symbols-rounded text-[22px]">home</span>
+              <AppIcon name="home" :size="20" />
             </button>
           </div>
         </div>
@@ -289,7 +291,7 @@ function getPcStatusText() {
             ]"
             aria-label="デスクトップPCの電源オン/オフ切り替え"
           >
-            <span class="material-symbols-rounded text-2xl">{{ getPcIcon() }}</span>
+            <AppIcon :name="getPcIcon()" :size="24" />
           </button>
 
           <div class="flex-1 select-none">
@@ -313,7 +315,7 @@ function getPcStatusText() {
           class="group relative bg-[#1c1e23] hover:bg-[#23262d] rounded-3xl p-3.5 flex items-center space-x-3.5 cursor-pointer transition-colors duration-150 shadow-md border border-white/[0.03] active:scale-[0.98]"
         >
           <div class="w-11 h-11 rounded-full bg-[#272a31] text-sky-400 flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0">
-            <span class="material-symbols-rounded text-2xl">{{ weather.weather_icon || 'partly_cloudy_day' }}</span>
+            <AppIcon :name="weather.weather_icon || 'partly_cloudy_day'" :size="24" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-[15px] font-semibold text-white leading-tight">気象</div>
@@ -332,7 +334,7 @@ function getPcStatusText() {
             class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0"
             :class="presence.is_home ? 'bg-[#1b332b] text-emerald-400' : 'bg-[#272a31] text-neutral-400'"
           >
-            <span class="material-symbols-rounded text-2xl">home_pin</span>
+            <AppIcon name="home_pin" :size="24" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-[15px] font-semibold text-white leading-tight">在宅確認</div>
@@ -351,7 +353,7 @@ function getPcStatusText() {
             class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0"
             :class="tile.in_home ? 'bg-[#3d2d1d] text-amber-400' : 'bg-[#272a31] text-neutral-400'"
           >
-            <span class="material-symbols-rounded text-2xl">{{ tile.in_home ? 'vpn_key_alert' : 'key' }}</span>
+            <AppIcon :name="tile.in_home ? 'vpn_key_alert' : 'key'" :size="24" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-[15px] font-semibold text-white leading-tight">鍵</div>

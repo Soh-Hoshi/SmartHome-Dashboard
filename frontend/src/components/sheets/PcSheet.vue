@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
+import AppIcon from '../common/AppIcon.vue'
 
 const props = defineProps<{
   online: boolean
@@ -90,7 +91,7 @@ const sliderTrackBg = computed(() => {
           ]"
         >
           <div class="transition-transform duration-300 flex items-center justify-center">
-            <span v-if="isSwitchActive" class="material-symbols-rounded text-2xl text-white">power_settings_new</span>
+            <AppIcon v-if="isSwitchActive" name="power" :size="24" class="text-white" />
             <div v-else class="w-5 h-5 rounded-full border-2 border-neutral-300"></div>
           </div>
         </div>
@@ -113,7 +114,7 @@ const sliderTrackBg = computed(() => {
               @click="handleSelectPowerOption('sleep')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">bedtime</span>
+              <AppIcon name="sleep" :size="20" class="text-neutral-300" />
               <span class="text-white">スリープ</span>
             </button>
             <button
@@ -121,7 +122,7 @@ const sliderTrackBg = computed(() => {
               @click="handleSelectPowerOption('restart')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">restart_alt</span>
+              <AppIcon name="restart" :size="20" class="text-neutral-300" />
               <span class="text-white">再起動</span>
             </button>
           </div>
@@ -135,12 +136,12 @@ const sliderTrackBg = computed(() => {
           aria-label="電源オプションを選択"
         >
           <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <span class="material-symbols-rounded text-2xl">power_settings_new</span>
+            <AppIcon name="power" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white truncate">電源オプション</div>
           </div>
-          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
         </button>
       </div>
 
@@ -159,11 +160,11 @@ const sliderTrackBg = computed(() => {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-[#4a88e8]">
-                <span class="material-symbols-rounded text-xl">desktop_windows</span>
+                <AppIcon name="desktop_windows" :size="20" />
                 <span class="text-white">Windows</span>
               </div>
               <span v-if="targetOs === 'Windows'" class="text-[#4a88e8] shrink-0 w-5 h-5 flex items-center justify-center">
-                <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                <AppIcon name="check" :size="18" />
               </span>
             </button>
 
@@ -173,11 +174,11 @@ const sliderTrackBg = computed(() => {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-[#c084fc]">
-                <span class="material-symbols-rounded text-xl">sports_esports</span>
+                <AppIcon name="sports_esports" :size="20" />
                 <span class="text-white">Bazzite</span>
               </div>
               <span v-if="targetOs === 'Bazzite'" class="text-[#c084fc] shrink-0 w-5 h-5 flex items-center justify-center">
-                <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                <AppIcon name="check" :size="18" />
               </span>
             </button>
           </div>
@@ -194,9 +195,10 @@ const sliderTrackBg = computed(() => {
             class="shrink-0 flex items-center justify-center"
             :class="targetOs === 'Windows' ? 'text-[#4a88e8]' : 'text-[#c084fc]'"
           >
-            <span class="material-symbols-rounded text-2xl">
-              {{ targetOs === 'Windows' ? 'desktop_windows' : 'sports_esports' }}
-            </span>
+            <AppIcon
+              :name="targetOs === 'Windows' ? 'desktop_windows' : 'sports_esports'"
+              :size="24"
+            />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-xs text-neutral-400 font-normal">起動OS</div>
@@ -204,7 +206,7 @@ const sliderTrackBg = computed(() => {
               {{ targetOs }}
             </div>
           </div>
-          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
         </button>
       </div>
     </div>

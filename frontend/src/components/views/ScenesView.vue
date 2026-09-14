@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '../common/AppIcon.vue'
+
 const emit = defineEmits<{
   (e: 'runScene', name: string): void
 }>()
@@ -15,7 +17,7 @@ const emit = defineEmits<{
         <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
           <div class="flex items-center space-x-3.5 min-w-0">
             <div class="w-11 h-11 rounded-full bg-[#272a31] text-amber-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">wb_sunny</span>
+              <AppIcon name="wb_sunny" :size="24" />
             </div>
             <div class="text-[15px] font-semibold text-white leading-tight truncate">おはよう</div>
           </div>
@@ -25,7 +27,7 @@ const emit = defineEmits<{
             class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
             aria-label="おはようを実行"
           >
-            <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+            <AppIcon name="play" :size="20" class="text-neutral-200" />
           </button>
         </div>
 
@@ -33,7 +35,7 @@ const emit = defineEmits<{
         <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
           <div class="flex items-center space-x-3.5 min-w-0">
             <div class="w-11 h-11 rounded-full bg-[#272a31] text-indigo-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">bedtime</span>
+              <AppIcon name="bedtime" :size="24" />
             </div>
             <div class="text-[15px] font-semibold text-white leading-tight truncate">おやすみ</div>
           </div>
@@ -43,7 +45,7 @@ const emit = defineEmits<{
             class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
             aria-label="おやすみを実行"
           >
-            <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+            <AppIcon name="play" :size="20" class="text-neutral-200" />
           </button>
         </div>
 
@@ -51,7 +53,7 @@ const emit = defineEmits<{
         <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
           <div class="flex items-center space-x-3.5 min-w-0">
             <div class="w-11 h-11 rounded-full bg-[#272a31] text-rose-400 flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">logout</span>
+              <AppIcon name="logout" :size="24" />
             </div>
             <div class="text-[15px] font-semibold text-white leading-tight truncate">いってきます</div>
           </div>
@@ -61,7 +63,7 @@ const emit = defineEmits<{
             class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
             aria-label="いってきますを実行"
           >
-            <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+            <AppIcon name="play" :size="20" class="text-neutral-200" />
           </button>
         </div>
 
@@ -69,7 +71,7 @@ const emit = defineEmits<{
         <div class="group relative bg-[#1c1e23] rounded-3xl p-3.5 flex items-center justify-between shadow-md border border-white/[0.03]">
           <div class="flex items-center space-x-3.5 min-w-0">
             <div class="w-11 h-11 rounded-full bg-[#272a31] text-[#2196f3] flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-2xl">home</span>
+              <AppIcon name="home" :size="24" />
             </div>
             <div class="text-[15px] font-semibold text-white leading-tight truncate">ただいま</div>
           </div>
@@ -79,7 +81,7 @@ const emit = defineEmits<{
             class="w-10 h-10 rounded-full bg-[#272a31] hover:bg-[#343842] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shrink-0 shadow-sm border border-white/[0.04]"
             aria-label="ただいまを実行"
           >
-            <span class="material-symbols-rounded text-xl text-neutral-200">play_arrow</span>
+            <AppIcon name="play" :size="20" class="text-neutral-200" />
           </button>
         </div>
       </div>

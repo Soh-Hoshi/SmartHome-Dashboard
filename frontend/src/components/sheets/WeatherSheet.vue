@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SheetModal from '../common/SheetModal.vue'
 import StatCard from '../common/StatCard.vue'
+import AppIcon from '../common/AppIcon.vue'
 import type { WeatherData } from '../../composables/useSmartHome'
 
 defineProps<{
@@ -17,7 +18,7 @@ const emit = defineEmits<{
     <!-- 中央メインヒーロー: 現在の天気・気温 -->
     <div class="my-auto py-4 flex flex-col items-center justify-center text-center select-none shrink-0">
       <div class="w-32 h-32 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-4 shadow-inner">
-        <span class="material-symbols-rounded text-6xl">{{ weather.weather_icon || 'partly_cloudy_day' }}</span>
+        <AppIcon :name="weather.weather_icon || 'partly_cloudy_day'" :size="64" />
       </div>
       <div class="text-base sm:text-lg font-bold text-neutral-200 mb-0.5">{{ weather.weather }}</div>
       <div class="flex items-start justify-center">
@@ -39,7 +40,7 @@ const emit = defineEmits<{
           class="flex flex-col items-center justify-between p-2.5 rounded-2xl bg-[#2a2d36] min-w-[70px] shrink-0 border border-white/[0.03]"
         >
           <span class="text-[11px] font-medium text-neutral-400 font-num">{{ h.time }}</span>
-          <span class="material-symbols-rounded text-2xl text-sky-400 my-1">{{ h.icon }}</span>
+          <AppIcon :name="h.icon" :size="24" class="text-sky-400 my-1" />
           <span class="text-xs font-bold text-white font-num">{{ h.temp }}℃</span>
           <span class="text-[10px] font-normal text-sky-300 font-num mt-0.5">{{ h.pop }}%</span>
         </div>

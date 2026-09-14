@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from './AppIcon.vue'
+
 defineProps<{
   title: string
   backgroundStyle?: string
@@ -30,7 +32,7 @@ const emit = defineEmits<{
             class="w-9 h-9 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors flex items-center justify-center"
             aria-label="閉じる"
           >
-            <span class="material-symbols-rounded text-2xl">close</span>
+            <AppIcon name="close" :size="20" />
           </button>
           <h2 class="text-xl font-bold text-white tracking-tight leading-tight">{{ title }}</h2>
         </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
+import AppIcon from '../common/AppIcon.vue'
 
 const props = defineProps<{
   lightOn: boolean
@@ -40,7 +41,7 @@ function handleSelectAction(action: 'full' | 'night') {
           :class="lightOn ? 'translate-y-[-112px] bg-[#fbc02d] shadow-[0_6px_18px_rgba(0,0,0,0.35)]' : 'translate-y-0 bg-[#434752] shadow-md'"
         >
           <div class="transition-transform duration-300 flex items-center justify-center">
-            <span v-if="lightOn" class="material-symbols-rounded text-2xl text-white">power_settings_new</span>
+            <AppIcon v-if="lightOn" name="power" :size="24" class="text-white" />
             <div v-else class="w-5 h-5 rounded-full border-2 border-neutral-300"></div>
           </div>
         </div>
@@ -63,7 +64,7 @@ function handleSelectAction(action: 'full' | 'night') {
               @click="handleSelectAction('full')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">light_mode</span>
+              <AppIcon name="light_mode" :size="20" class="text-neutral-300" />
               <span class="text-white">全灯</span>
             </button>
             <button
@@ -71,7 +72,7 @@ function handleSelectAction(action: 'full' | 'night') {
               @click="handleSelectAction('night')"
               class="w-full h-10 flex items-center space-x-3 px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
-              <span class="material-symbols-rounded text-xl text-neutral-300">bedtime</span>
+              <AppIcon name="nightlight" :size="20" class="text-neutral-300" />
               <span class="text-white">常夜灯</span>
             </button>
           </div>
@@ -85,22 +86,24 @@ function handleSelectAction(action: 'full' | 'night') {
           aria-label="アクションを選択"
         >
           <div class="text-neutral-400 shrink-0 flex items-center justify-center">
-            <span class="material-symbols-rounded text-2xl">light_mode</span>
+            <AppIcon name="light_mode" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white truncate">アクション</div>
           </div>
-          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
         </button>
       </div>
 
       <!-- 2段目: 明るさ ［ー］ ［＋］ (統一高さ h-[58px]) -->
       <div class="w-full h-[58px] bg-[#2a2d36] rounded-2xl px-4 flex items-center justify-between shadow-sm border border-white/[0.04]">
         <div class="flex items-center space-x-3">
-          <span
-            class="material-symbols-rounded text-2xl shrink-0 transition-colors"
+          <AppIcon
+            name="brightness_medium"
+            :size="24"
+            class="shrink-0 transition-colors"
             :class="lightOn ? 'text-amber-400' : 'text-neutral-400'"
-          >brightness_medium</span>
+          />
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white">明るさ</div>
           </div>
@@ -114,7 +117,7 @@ function handleSelectAction(action: 'full' | 'night') {
             class="w-9 h-9 rounded-lg bg-[#2b2e37] hover:bg-[#373b46] active:bg-[#404552] flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
             aria-label="明るさを下げる"
           >
-            <span class="material-symbols-rounded text-lg font-bold">remove</span>
+            <AppIcon name="remove" :size="18" class="font-bold" />
           </button>
 
           <button
@@ -124,7 +127,7 @@ function handleSelectAction(action: 'full' | 'night') {
             class="w-9 h-9 rounded-lg bg-[#2b2e37] hover:bg-[#373b46] active:bg-[#404552] flex items-center justify-center text-white transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
             aria-label="明るさを上げる"
           >
-            <span class="material-symbols-rounded text-lg font-bold">add</span>
+            <AppIcon name="add" :size="18" class="font-bold" />
           </button>
         </div>
       </div>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from './common/AppIcon.vue'
+
 defineProps<{
   label: string
   sublabel?: string
@@ -25,7 +27,7 @@ const emit = defineEmits<{
       class="shrink-0 flex items-center justify-center transition-colors"
       :class="iconColor || 'text-neutral-400'"
     >
-      <span class="material-symbols-rounded text-2xl">{{ icon }}</span>
+      <AppIcon :name="icon" :size="24" />
     </div>
 
     <div class="overflow-hidden leading-tight flex-1">
@@ -40,11 +42,11 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <span
+    <AppIcon
       v-if="hasDropdown"
-      class="material-symbols-rounded text-lg text-neutral-400 shrink-0 select-none"
-    >
-      expand_less
-    </span>
+      name="expand_less"
+      :size="18"
+      class="text-neutral-400 shrink-0 select-none"
+    />
   </button>
 </template>

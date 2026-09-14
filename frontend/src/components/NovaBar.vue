@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import AppIcon from './common/AppIcon.vue'
 
 const props = defineProps<{
   toast: {
@@ -27,7 +28,7 @@ function handleSubmit() {
 }
 
 function handleVoiceOrSubmit() {
-  if (inputText.value.trim() && !props.isRecording) {
+  if (inputText.value.trim()) {
     handleSubmit()
   } else {
     emit('toggleVoice')
@@ -36,26 +37,28 @@ function handleVoiceOrSubmit() {
 </script>
 
 <template>
-  <div class="fixed top-0 md:top-auto md:bottom-6 inset-x-0 z-40 flex flex-col items-center pointer-events-none pt-[env(safe-area-inset-top,0.25rem)] md:pt-0 pb-2 md:pb-0 px-3 sm:px-6 bg-[#0d0f12]/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-b border-white/[0.04] md:border-b-0 shadow-lg md:shadow-none">
+  <div class="fixed bottom-[max(4.5rem,calc(env(safe-area-inset-bottom)+4rem))] md:bottom-6 inset-x-0 z-40 flex flex-col items-center justify-end px-4 pointer-events-none">
     
-    <!-- アシスタント応答トースト吹き出し -->
+    <!-- アシスタント トースト通知 (フィードバック表示) -->
     <transition
-      enter-active-class="transition-all duration-300"
-      leave-active-class="transition-all duration-300"
-      enter-from-class="opacity-0 translate-y-2"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 translate-y-2"
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-3 scale-95"
+      enter-to-class="opacity-100 translate-y-0 scale-100"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0 scale-100"
+      leave-to-class="opacity-0 translate-y-2 scale-95"
     >
       <div
         v-if="toast.visible"
         id="assistant-toast"
         class="pointer-events-auto order-last md:order-first mt-2.5 md:mt-0 md:mb-2 max-w-xl bg-[#131518]/95 backdrop-blur-xl border border-white/[0.1] text-white text-sm px-4 py-2.5 rounded-2xl shadow-2xl flex items-center space-x-2.5 select-none"
       >
-        <span
-          class="material-symbols-rounded text-lg"
+        <AppIcon
+          :name="toast.icon"
+          :size="18"
+          class="shrink-0"
           :class="toast.isError ? 'text-rose-400' : 'text-[#2196f3]'"
-        >{{ toast.icon }}</span>
+        />
         <span class="font-medium tracking-wide">{{ toast.message }}</span>
       </div>
     </transition>
@@ -71,7 +74,7 @@ function handleVoiceOrSubmit() {
           class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/[0.05] flex items-center justify-center text-neutral-300 shrink-0 select-none ml-0.5 transition-transform duration-300"
           :class="{ 'animate-spin': isSubmitting }"
         >
-          <span class="material-symbols-rounded text-2xl sm:text-[26px] text-[#2196f3]">auto_awesome</span>
+          <AppIcon name="auto_awesome" :size="24" class="text-[#2196f3]" />
         </div>
 
         <!-- コマンド入力フォーム -->
@@ -98,9 +101,10 @@ function handleVoiceOrSubmit() {
           ]"
           :aria-label="isRecording ? '音声入力停止' : inputText.trim() ? 'コマンド送信' : 'Nova音声入力'"
         >
-          <span class="material-symbols-rounded text-2xl sm:text-[26px]">
-            {{ isRecording ? 'graphic_eq' : inputText.trim() ? 'send' : 'mic' }}
-          </span>
+          <AppIcon
+            :name="isRecording ? 'graphic_eq' : inputText.trim() ? 'send' : 'mic'"
+            :size="24"
+          />
         </button>
       </div>
     </div>

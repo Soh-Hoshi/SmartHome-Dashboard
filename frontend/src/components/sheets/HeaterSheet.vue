@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import SheetModal from '../common/SheetModal.vue'
+import AppIcon from '../common/AppIcon.vue'
 
 const props = defineProps<{
   temp: number
@@ -80,7 +81,7 @@ function handleSelectMode(m: 'heat' | 'off') {
             class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95 shrink-0"
             aria-label="温度を下げる"
           >
-            <span class="material-symbols-rounded text-2xl font-bold">remove</span>
+            <AppIcon name="remove" :size="24" />
           </button>
 
           <button
@@ -89,7 +90,7 @@ function handleSelectMode(m: 'heat' | 'off') {
             class="w-11 h-11 rounded-full bg-[#2a2d36] hover:bg-[#343844] border border-white/[0.05] flex items-center justify-center text-white transition-all shadow-sm active:scale-95 shrink-0"
             aria-label="温度を上げる"
           >
-            <span class="material-symbols-rounded text-2xl font-bold">add</span>
+            <AppIcon name="add" :size="24" />
           </button>
         </div>
       </div>
@@ -112,11 +113,11 @@ function handleSelectMode(m: 'heat' | 'off') {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-[#f57c00]">
-                <span class="material-symbols-rounded text-xl">mode_heat</span>
+                <AppIcon name="mode_heat" :size="20" />
                 <span class="text-white">暖房</span>
               </div>
               <span v-if="mode === 'heat'" class="text-[#f57c00] flex items-center justify-center shrink-0 w-5 h-5">
-                <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                <AppIcon name="check" :size="18" />
               </span>
             </button>
 
@@ -128,11 +129,11 @@ function handleSelectMode(m: 'heat' | 'off') {
               class="w-full h-10 flex items-center justify-between px-3 rounded-xl hover:bg-white/10 transition-colors text-left text-sm font-medium"
             >
               <div class="flex items-center space-x-3 text-neutral-400">
-                <span class="material-symbols-rounded text-xl">power_settings_new</span>
+                <AppIcon name="power" :size="20" />
                 <span class="text-neutral-300">オフ</span>
               </div>
               <span v-if="mode === 'off'" class="text-neutral-400 flex items-center justify-center shrink-0 w-5 h-5">
-                <span class="material-symbols-rounded symbol-bold text-lg leading-none">check</span>
+                <AppIcon name="check" :size="18" />
               </span>
             </button>
           </div>
@@ -145,7 +146,7 @@ function handleSelectMode(m: 'heat' | 'off') {
           class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98]"
         >
           <div class="shrink-0 flex items-center justify-center" :class="mode === 'heat' ? 'text-[#f57c00]' : 'text-neutral-400'">
-            <span class="material-symbols-rounded text-2xl">{{ mode === 'heat' ? 'mode_heat' : 'power_settings_new' }}</span>
+            <AppIcon :name="mode === 'heat' ? 'mode_heat' : 'power'" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-xs text-neutral-400 font-normal">モード</div>
@@ -153,7 +154,7 @@ function handleSelectMode(m: 'heat' | 'off') {
               {{ mode === 'heat' ? '暖房' : 'オフ' }}
             </div>
           </div>
-          <span class="material-symbols-rounded text-lg text-neutral-400 shrink-0">expand_less</span>
+          <AppIcon name="expand_less" :size="18" class="text-neutral-400 shrink-0" />
         </button>
       </div>
 
@@ -166,7 +167,7 @@ function handleSelectMode(m: 'heat' | 'off') {
           class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
         >
           <div class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-            <span class="material-symbols-rounded text-2xl">eco</span>
+            <AppIcon name="eco" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white truncate">エコ</div>
@@ -180,7 +181,7 @@ function handleSelectMode(m: 'heat' | 'off') {
           class="w-full h-[58px] flex items-center space-x-3 px-4 rounded-2xl bg-[#2a2d36] hover:bg-[#323640] text-left transition-all shadow-sm border border-white/[0.04] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
         >
           <div class="text-neutral-400 shrink-0 flex items-center justify-center transition-colors">
-            <span class="material-symbols-rounded text-2xl">bolt</span>
+            <AppIcon name="bolt" :size="24" />
           </div>
           <div class="overflow-hidden leading-tight flex-1">
             <div class="text-[14px] font-semibold text-white truncate">パワー</div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SheetModal from '../common/SheetModal.vue'
 import StatCard from '../common/StatCard.vue'
+import AppIcon from '../common/AppIcon.vue'
 import type { TileData } from '../../composables/useSmartHome'
 
 defineProps<{
@@ -20,7 +21,7 @@ const emit = defineEmits<{
         class="w-32 h-32 rounded-full flex items-center justify-center mb-4 shadow-inner border transition-colors"
         :class="tile.in_home ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-white/[0.04] border-white/[0.06] text-neutral-400'"
       >
-        <span class="material-symbols-rounded text-6xl">{{ tile.in_home ? 'vpn_key_alert' : 'key' }}</span>
+        <AppIcon :name="tile.in_home ? 'vpn_key_alert' : 'key'" :size="64" />
       </div>
       <div class="text-3xl font-bold text-white">
         {{ tile.in_home ? '検知' : '検知なし' }}
