@@ -1,0 +1,70 @@
+name: Populate Past Releases
+
+on:
+  push:
+    paths:
+      - '.github/workflows/recreate_releases.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  populate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Past Releases v0.1 to v0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          create_release() {
+            local tag="$1"
+            local title="$2"
+            local notes="$3"
+            echo "Creating release $tag: $title"
+            gh release create "$tag" \
+              --title "$title" \
+              --notes "$notes" || true
+          }
+
+          create_release "v0.1" "Nova Assist v0.1" "$(cat << 'EOF'
+          ### 変更点
+          - デジタルアシスタントUIの初期実装（Gemini風ミニマルフローティング検索カプセル）
+          - 検索バーからのワンタップでダッシュボードを表示する連携機能
+          - 音声入力による即時音声認識
+          EOF
+          )"
+
+          create_release "v0.2" "Nova Assist v0.2" "$(cat << 'EOF'
+          ### 変更点
+          - 恒久リリース署名キーストアの設定
+          - アプリ更新時の署名不一致を防ぎ、スムーズなアップデートに対応
+          EOF
+          )"
+
+          create_release "v0.3" "Nova Assist v0.3" "$(cat << 'EOF'
+          ### 変更点
+          - セキュリティ強化：アクセスキーのローテーションおよびハードコード記述の排除
+          - Webログインフォームの追加
+          - サーバーAPIリクエストにおける認証ヘッダーの必須化
+          EOF
+          )"
+
+          create_release "v0.4" "Nova Assist v0.4" "$(cat << 'EOF'
+          ### 変更点
+          - アプリ内通信時のアクセスキー自動埋め込みによる403エラーの解消
+          - アシスタント画面とダッシュボードのNovaバーのデザイン統一
+          - 送信UIの最適化
+          EOF
+          )"
+
+          create_release "v0.5" "Nova Assist v0.5" "$(cat << 'EOF'
+          ### 変更点
+          - 音声録音時のパルスアニメーションをダッシュボードのデザインと統一
+          - グラフィックEQおよび送信アイコンのリソース追加
+          - UIアニメーションのパフォーマンス改善
+          EOF
+          )"
