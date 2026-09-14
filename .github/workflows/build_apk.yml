@@ -19,6 +19,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Purge ALL existing releases (including drafts and untagged)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Fetching all releases (including drafts) ==="
+          gh api "repos/${{ github.repository }}/releases" --paginate | jq -c '.[]' | while read -r rel; do
+            rel_id=$(echo "$rel" | jq -r '.id')
+            tag=$(echo "$rel" | jq -r '.tag_name')
+            name=$(echo "$rel" | jq -r '.name')
+            draft=$(echo "$rel" | jq -r '.draft')
+            echo "Deleting release: id=$rel_id, tag=$tag, name=$name, draft=$draft"
+            gh api -X DELETE "repos/${{ github.repository }}/releases/$rel_id" || true
+          done
+          echo "=== All old releases purged ==="
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
