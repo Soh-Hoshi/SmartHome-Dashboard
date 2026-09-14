@@ -69,8 +69,10 @@
 
 ## 3. 開発運用ルール
 
-- `index.html`編集前: `cp index.html index.html.bak`
-- 変更後: HTMLParser & JSブラケット整合性テスト (`python3 -m py_compile` 等の構文テスト)
+- フロントエンド開発: `frontend/` (Vue 3 + Vite + Tailwind + TypeScript) で開発
+  - ビルド: `cd frontend && npm run build`（`frontend/dist/` を生成）
+  - 本番配信: `serve.py` が `frontend/dist` が存在する場合はこれを最優先でルート配信
+- 変更後構文テスト: `python3 -m py_compile serve.py` / `cd frontend && npm run build`
 - **【厳禁】実機状態の変更・強制オフの禁止:** テスト目的で実機（USBスイッチ、PC電源、照明、エアコン、ヒーター、クリーナー等）の電源をオフ・オン・変更しない。「いってきます」など全機器オフを伴う処理をテストで実行することは絶対禁止。テストは変更対象モジュールの構文・ロジック検証など必要最小限にとどめること。
 - **【厳禁】通知テストの勝手な実行禁止:** `test_notifications_e2e.py` や `smarthome notify` などの通知テストは、ユーザーのスマホへ不要な通知が飛ぶため毎回のテストとして実行しない（ユーザーから明示的なテスト依頼があった場合のみ）。
 - テスト通過後: `git commit & push` (`Soh-Hoshi/SmartHome-Dashboard`)
@@ -78,10 +80,10 @@
 
 ## 4. 現在の稼働状態 (2026-09-14)
 
-- `dashboard.service`: Active running, Port 8080 (本番URL: `https://home.sohhoshi.com/` ルート直下配信へ完全移行)
-- `dev.sohhoshi.com`: 新フロントエンド専用テスト環境（Vite 8 + Vue 3 + Tailwind + TS）常時稼働中（Oracle VPS Nginx + Certbot SSL + FRP port 15173 -> 5173、HMR対応）
-- ブランチ: `feature/modern-frontend`
+- `dashboard.service`: Active running, Port 8080 (本番URL: `https://home.sohhoshi.com/` ルート直下配信、Vue 3 新フロントエンドを本番デプロイ済み)
+- `dev.sohhoshi.com`: 新フロントエンド開発環境（Vite 8 + Vue 3 + Tailwind + TS、必要時に `npm run dev` で FRP port 15173 -> 5173 経由で利用可能）
+- ブランチ: `main` に一本化（`feature/modern-frontend` マージ済み）
 - APK: `android_bridge/app/build/outputs/apk/release/app-release.apk` v1.0.4 (2.5MB)
-- Git: `origin/feature/modern-frontend` プッシュ済み
+- Git: `origin/main` プッシュ済み
 
 

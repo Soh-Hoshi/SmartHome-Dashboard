@@ -663,6 +663,17 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         if path.startswith('/dashboard'):
             path = path[len('/dashboard'):] or '/'
+
+        # 新フロントエンド (Vue 3 / Vite ビルド成果物) の優先配信
+        dist_dir = os.path.join(DIRECTORY, 'frontend', 'dist')
+        if os.path.exists(dist_dir):
+            clean = path.split('?', 1)[0].split('#', 1)[0].lstrip('/')
+            if clean in ('', 'index.html'):
+                return os.path.join(dist_dir, 'index.html')
+            dist_path = os.path.join(dist_dir, clean)
+            if os.path.exists(dist_path) and os.path.isfile(dist_path):
+                return dist_path
+
         return super().translate_path(path)
 
     def end_headers(self):
