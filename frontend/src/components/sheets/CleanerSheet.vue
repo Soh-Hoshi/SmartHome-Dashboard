@@ -71,7 +71,7 @@ const speedLabelMap = {
     <div class="flex-1 flex flex-col items-center justify-center my-auto relative space-y-4 py-2 shrink-0">
       <!-- 円形ステータスカード -->
       <div class="relative w-48 h-48 rounded-full bg-[#242730] border border-white/[0.05] flex flex-col items-center justify-center shadow-xl overflow-hidden shrink-0">
-        <!-- ロボット掃除機アイコン (Material Symbols: vacuum) -->
+        <!-- ロボット掃除機アイコン (Material Symbols: vacuum_2) -->
         <div
           class="relative z-10 transition-colors duration-300"
           :class="[
@@ -80,7 +80,7 @@ const speedLabelMap = {
             'text-neutral-400'
           ]"
         >
-          <AppIcon name="vacuum" :size="64" />
+          <AppIcon name="vacuum_2" :size="64" />
         </div>
 
         <!-- 中央ステータステキスト ＆ バッテリー残量 -->
