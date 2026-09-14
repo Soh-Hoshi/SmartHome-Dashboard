@@ -76,10 +76,12 @@
 - テスト通過後: `git commit & push` (`Soh-Hoshi/SmartHome-Dashboard`)
 - 常駐: `systemctl --user restart dashboard.service`
 
-## 4. 現在の稼働状態 (2026-09-13)
+## 4. 現在の稼働状態 (2026-09-14)
 
-- `dashboard.service`: Active running, Port 8080
-- `index.html`: 構文テストPASS / 全詳細シート最下部コントロール高さ(`h-[58px]`)・ドロップアップ行高(`h-10`)・チェックマーク(`w-5 h-5 leading-none`)完全統一 / クリーナー吸引力ドロップアップ位置正常化 / エアコン自動ファン行間ズレ解消
+- `dashboard.service`: Active running, Port 8080 (本番URL: `https://home.sohhoshi.com/` ルート直下配信へ完全移行)
+- `dev.sohhoshi.com`: 新フロントエンド専用テスト環境（Vite 8 + Vue 3 + Tailwind + TS）常時稼働中（Oracle VPS Nginx + Certbot SSL + FRP port 15173 -> 5173、HMR対応）
+- ブランチ: `feature/modern-frontend`
 - APK: `android_bridge/app/build/outputs/apk/release/app-release.apk` v1.0.4 (2.5MB)
-- Git: `origin/main` プッシュ可能状態
+- Git: `origin/feature/modern-frontend` プッシュ済み
+
 
