@@ -39,6 +39,8 @@ class MainActivity : AppCompatActivity() {
             isAppearanceLightNavigationBars = false
         }
 
+        android.webkit.WebView.setWebContentsDebuggingEnabled(true)
+
         webView = WebView(this).apply {
             setBackgroundColor(Color.parseColor("#0d0f12"))
             settings.apply {
@@ -49,17 +51,34 @@ class MainActivity : AppCompatActivity() {
                 mediaPlaybackRequiresUserGesture = false
                 allowFileAccess = true
                 allowContentAccess = true
+                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest?) {
                     request?.grant(request.resources)
                 }
+
+                override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                    android.util.Log.d("NovaWebView", "[${consoleMessage?.messageLevel()}] ${consoleMessage?.message()} (${consoleMessage?.sourceId()}:${consoleMessage?.lineNumber()})")
+                    return super.onConsoleMessage(consoleMessage)
+                }
             }
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     android.webkit.CookieManager.getInstance().flush()
+                    android.util.Log.d("NovaWebView", "Page finished: $url")
+                }
+
+                override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                    super.onReceivedError(view, errorCode, description, failingUrl)
+                    android.util.Log.e("NovaWebView", "Error $errorCode: $description for $failingUrl")
+                }
+
+                override fun onReceivedHttpError(view: WebView?, request: android.webkit.WebResourceRequest?, errorResponse: android.webkit.WebResourceResponse?) {
+                    super.onReceivedHttpError(view, request, errorResponse)
+                    android.util.Log.e("NovaWebView", "HTTP Error ${errorResponse?.statusCode} for ${request?.url}")
                 }
             }
         }
@@ -92,9 +111,9 @@ class MainActivity : AppCompatActivity() {
         val targetUrl = intent?.getStringExtra("TARGET_URL") ?: url
         saveKeyFromUrlIfPresent(targetUrl)
 
+        val key = sharedPref.getString("access_key", NetworkUtils.DEFAULT_ACCESS_KEY) ?: NetworkUtils.DEFAULT_ACCESS_KEY
         val finalUrl = try {
             val cookie = android.webkit.CookieManager.getInstance().getCookie(targetUrl)
-            val key = sharedPref.getString("access_key", NetworkUtils.DEFAULT_ACCESS_KEY) ?: NetworkUtils.DEFAULT_ACCESS_KEY
             if ((cookie.isNullOrEmpty() || !cookie.contains("sh_auth")) && !targetUrl.contains("key=")) {
                 val sep = if (targetUrl.contains("?")) "&" else "?"
                 "$targetUrl${sep}key=$key"
@@ -105,7 +124,11 @@ class MainActivity : AppCompatActivity() {
             targetUrl
         }
 
-        webView.loadUrl(finalUrl)
+        val authHeaders = mapOf(
+            "X-Access-Key" to key,
+            "X-Requested-With" to "Nova-Android-App"
+        )
+        webView.loadUrl(finalUrl, authHeaders)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -114,7 +137,13 @@ class MainActivity : AppCompatActivity() {
         val targetUrl = intent?.getStringExtra("TARGET_URL")
         if (!targetUrl.isNullOrEmpty()) {
             saveKeyFromUrlIfPresent(targetUrl)
-            webView.loadUrl(targetUrl)
+            val sharedPref = getSharedPreferences("com.smarthome.nova_preferences", Context.MODE_PRIVATE)
+            val key = sharedPref.getString("access_key", NetworkUtils.DEFAULT_ACCESS_KEY) ?: NetworkUtils.DEFAULT_ACCESS_KEY
+            val authHeaders = mapOf(
+                "X-Access-Key" to key,
+                "X-Requested-With" to "Nova-Android-App"
+            )
+            webView.loadUrl(targetUrl, authHeaders)
         }
     }
 

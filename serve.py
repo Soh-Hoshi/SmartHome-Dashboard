@@ -338,6 +338,14 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
                 print(f"[Login Page Error] {e}")
         self.send_unauthorized("login_page_missing")
 
+    def send_auth_redirect(self, clean_url: str, cookie_val: str):
+        self.send_response(HTTPStatus.FOUND)
+        self.send_header('Location', clean_url or '/')
+        self.send_header('Set-Cookie', auth_service.build_cookie_header(cookie_val, secure=True))
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+
 
 
     def do_OPTIONS(self):
@@ -384,6 +392,10 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
             return self.send_unauthorized(auth.get('reason'))
 
         print(f"[AUTH OK] path={self.path} client={xff} ua={ua[:60]} reason={auth.get('reason')}")
+
+        # ?key=合言葉 による初回アクセス時は、永続Cookieを発行して綺麗なURLへリダイレクト
+        if auth.get('set_cookie') and auth.get('clean_url') is not None:
+            return self.send_auth_redirect(auth['clean_url'], auth['cookie_value'])
 
         query_params = urllib.parse.parse_qs(parsed.query)
 
@@ -680,6 +692,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
+        self.send_header('Access-Control-Allow-Origin', '*')
         super().end_headers()
 
     def send_head(self):

@@ -84,7 +84,7 @@
 - `dashboard.service`: Active running, Port 8080 (本番URL: `https://home.sohhoshi.com/` ルート直下配信、Vue 3 新フロントエンドを本番デプロイ済み)
 - `dev.sohhoshi.com`: 新フロントエンド開発環境（Vite 8 + Vue 3 + Tailwind + TS、必要時に `npm run dev` で FRP port 15173 -> 5173 経由で利用可能）
 - ブランチ: `main` に一本化（`feature/modern-frontend` マージ済み）
-- APK: `Nova Assist v1.1` (versionCode 13, versionName "1.1", 単一統合クライアント)
+- APK: `Nova Assist v1.2` (versionCode 14, versionName "1.2", 単一統合クライアント)
 - Git: `origin/main` プッシュ済み
 
 
