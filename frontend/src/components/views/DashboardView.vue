@@ -202,9 +202,9 @@ function getPcStatusText() {
       </div>
     </section>
 
-    <!-- セクション: 掃除 -->
+    <!-- セクション: その他 -->
     <section class="break-inside-avoid mb-6 space-y-3">
-      <h2 class="text-base font-bold text-white px-1">掃除</h2>
+      <h2 class="text-base font-bold text-white px-1">その他</h2>
       
       <div class="flex flex-col gap-3.5">
         <!-- クリーナータイル (統一 MDI: vacuum) -->
@@ -268,14 +268,7 @@ function getPcStatusText() {
             </button>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- セクション: スイッチ -->
-    <section class="break-inside-avoid mb-6 space-y-3">
-      <h2 class="text-base font-bold text-white px-1">スイッチ</h2>
-      
-      <div class="flex flex-col gap-3.5">
         <!-- デスクトップPCタイル -->
         <div
           @click="emit('openSheet', 'pc-sheet')"
