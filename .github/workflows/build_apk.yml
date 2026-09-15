@@ -1,10 +1,10 @@
-name: Build Nova Assist APK
+name: Purge Past Releases and Rebuild v1.0
 
 on:
   push:
     paths:
-      - 'android_bridge/**'
       - '.github/workflows/build_apk.yml'
+      - 'android_bridge/**'
       - 'RELEASE_NOTES.md'
   workflow_dispatch:
 
@@ -12,13 +12,59 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-and-clean:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Delete Known Past Releases by Tag Directly
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== 1. Direct tag deletion via gh release delete ==="
+          for tag in v0.1 v0.2 v0.3 v0.4 v0.5 v1.0.0 v1.0.1 v1.0.2 v1.0.3 v1.0.4 v1.0.5 android-latest; do
+            echo "Deleting tag/release: $tag"
+            gh release delete "$tag" -y --cleanup-tag 2>&1 || true
+          done
+
+      - name: Purge Releases via GraphQL (including Drafts)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== 2. Querying GraphQL API for all releases ==="
+          QUERY='query {
+            repository(owner: "'"${{ github.repository_owner }}"'", name: "SmartHome-Dashboard") {
+              releases(first: 100) {
+                nodes {
+                  id
+                  databaseId
+                  tagName
+                  name
+                  isDraft
+                }
+              }
+            }
+          }'
+          gh api graphql -f query="$QUERY" > releases.json || echo "{}" > releases.json
+          cat releases.json
+
+          if jq -e '.data.repository.releases.nodes' releases.json > /dev/null 2>&1; then
+            jq -c '.data.repository.releases.nodes[]' releases.json | while read -r node; do
+              node_id=$(echo "$node" | jq -r '.id')
+              db_id=$(echo "$node" | jq -r '.databaseId')
+              tag=$(echo "$node" | jq -r '.tagName')
+              name=$(echo "$node" | jq -r '.name')
+              draft=$(echo "$node" | jq -r '.isDraft')
+              echo "Processing: tag=$tag, name=$name, draft=$draft, id=$node_id, db_id=$db_id"
+              if [ "$tag" != "v1.0" ] || [ "$draft" = "true" ]; then
+                echo "Deleting via GraphQL mutation: $node_id"
+                gh api graphql -f query='mutation { deleteRelease(input: { id: "'"$node_id"'" }) { clientMutationId } }' || true
+                gh api -X DELETE "repos/${{ github.repository }}/releases/$db_id" || true
+              fi
+            done
+          fi
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -38,37 +84,17 @@ jobs:
             exit 1
           }
 
-      - name: Upload Debug Log on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-build-log
-          path: gradle_build.log
-
-      - name: Extract App Version
-        id: get_version
-        run: |
-          VERSION=$(grep 'versionName' android_bridge/app/build.gradle | awk -F '"' '{print $2}')
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "App Version: ${VERSION}"
-
       - name: Prepare APK Output
         run: |
           mkdir -p build_output
           cp android_bridge/app/build/outputs/apk/release/app-release.apk build_output/NovaAssist.apk
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: NovaAssist-APK
-          path: build_output/NovaAssist.apk
-
-      - name: Create GitHub Release
+      - name: Create Clean GitHub Release v1.0
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v${{ env.VERSION }}
-          name: "Nova Assist v${{ env.VERSION }}"
+          tag_name: v1.0
+          name: "Nova Assist v1.0"
           body_path: RELEASE_NOTES.md
           files: build_output/NovaAssist.apk
           make_latest: true
