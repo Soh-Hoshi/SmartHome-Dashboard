@@ -99,6 +99,19 @@ export function useSmartHome() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // --- システムバック・戻るボタンハンドラ ---
+  function handleBackAction(): boolean {
+    if (openedSheet.value) {
+      closeSheet()
+      return true
+    }
+    if (activeTab.value !== 'dashboard') {
+      switchTab('dashboard')
+      return true
+    }
+    return false
+  }
+
   // --- エアコン状態 ---
   const acTemp = ref(26)
   const acMode = ref<'cool' | 'dry' | 'off'>('cool')
@@ -715,6 +728,7 @@ export function useSmartHome() {
   let intervals: any[] = []
 
   onMounted(() => {
+    (window as any).handleAndroidBack = handleBackAction
     window.addEventListener('popstate', handlePopState)
     loadInitialState()
 
@@ -729,6 +743,7 @@ export function useSmartHome() {
   })
 
   onUnmounted(() => {
+    delete (window as any).handleAndroidBack
     window.removeEventListener('popstate', handlePopState)
     intervals.forEach(clearInterval)
   })
@@ -744,6 +759,7 @@ export function useSmartHome() {
     openSheet,
     closeSheet,
     switchTab,
+    handleBackAction,
 
     // Toast
     toast,

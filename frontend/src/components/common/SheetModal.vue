@@ -18,7 +18,7 @@ const emit = defineEmits<{
     @click="emit('close')"
   >
     <div
-      class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-24px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-6 shadow-2xl border-t sm:border border-white/[0.06] transition-all duration-300"
+      class="bottom-sheet relative w-full max-w-lg sm:max-w-[460px] h-[calc(100dvh-env(safe-area-inset-top,0px)-36px)] sm:h-[min(720px,calc(100dvh-48px))] sm:min-h-[580px] max-h-[calc(100dvh-20px)] bg-[#1e2025] rounded-t-[32px] sm:rounded-[36px] flex flex-col justify-between p-5 pt-6 pb-[calc(max(env(safe-area-inset-bottom,0px),16px)+2rem)] sm:pb-6 shadow-2xl border-t sm:border border-white/[0.06] transition-all duration-300"
       :class="scrollable ? 'overflow-y-auto' : 'overflow-visible'"
       :style="backgroundStyle ? { backgroundImage: backgroundStyle } : undefined"
       @click.stop

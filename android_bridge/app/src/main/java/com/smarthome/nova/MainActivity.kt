@@ -13,6 +13,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -129,6 +130,24 @@ class MainActivity : AppCompatActivity() {
             "X-Requested-With" to "Nova-Android-App"
         )
         webView.loadUrl(finalUrl, authHeaders)
+
+        // 戻るボタン/バックジェスチャー処理: 詳細シート閉じる -> ダッシュボードタブへ戻る -> アプリ終了
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                webView.evaluateJavascript("(function() { return (typeof window.handleAndroidBack === 'function') ? window.handleAndroidBack() : false; })();") { result ->
+                    val handled = result == "true"
+                    if (!handled) {
+                        if (webView.canGoBack()) {
+                            webView.goBack()
+                        } else {
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                            isEnabled = true
+                        }
+                    }
+                }
+            }
+        })
     }
 
     override fun onNewIntent(intent: Intent?) {
